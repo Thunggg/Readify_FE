@@ -3,7 +3,7 @@
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import envConfig from "@/configs/config-env"
 
-export const registerSchema = z.object({
+export const loginSchema = z.object({
   email: z
     .string()
     .trim()
@@ -27,44 +27,48 @@ export const registerSchema = z.object({
     .string()
     .min(8, "Password must be at least 8 characters long")
     .max(255, "Password must be less than 255 characters long"),
-  confirmPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
-    .max(255, "Password must be less than 255 characters long")
-})
-.strict() // Không cho phép thêm các field không được khai báo trong schema
-.superRefine((data, ctx) => {
-  if (data.password !== data.confirmPassword) { // Kiểm tra xem password và confirmPassword có khớp nhau không
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom, // Code lỗi custom
-      message: "Passwords do not match", // Message lỗi
-      path: ["confirmPassword"], // Path lỗi
-    })
-  }
-});
+}).strict();
 
-const RegisterForm = () => {
- const form = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
+const LoginForm = () => {
+ const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      confirmPassword: "",
     },
   })
 
-  async function onSubmit(values: z.infer<typeof registerSchema>) {
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      const response = await fetch(`${envConfig?.NEXT_PUBLIC_API_ENDPOINT ?? ""}/accounts/register`, {
+      const response = await fetch(`${envConfig?.NEXT_PUBLIC_API_ENDPOINT ?? ""}/accounts/login`, {
         method: "POST",
         body: JSON.stringify(values),
         headers: {
           "Content-Type": "application/json",
         },
-      }).then(response => response.json());
+      }).then(async (res) => {
+        const payload = await res.json();
+        const data = {
+          status: res.status,
+          payload
+        }
+
+        if(!res.ok) {
+          throw data
+        }
+        return data
+
+      });
       console.log(response);
     } catch (error) {
-      console.error(error);
+      toast.error((error as { payload: { message: string } }).payload.message, {
+          style: {
+            '--normal-bg':
+              'light-dark(var(--destructive), color-mix(in oklab, var(--destructive) 60%, var(--background)))',
+            '--normal-text': 'var(--color-white)',
+            '--normal-border': 'transparent'
+          } as React.CSSProperties
+        })
     }
   }
 
@@ -98,19 +102,7 @@ const RegisterForm = () => {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+
         <Button type="submit">Submit</Button>
       </form>
     </Form>
@@ -118,4 +110,4 @@ const RegisterForm = () => {
   
 }
 
-export default RegisterForm;
+export default LoginForm;

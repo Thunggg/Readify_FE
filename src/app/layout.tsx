@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import Header from "@/components/header";
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +26,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en" suppressHydrationWarning>
         <head />
         <body>
-          <Header />
+          <Toaster position="top-right" />
+          <Header />            
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
