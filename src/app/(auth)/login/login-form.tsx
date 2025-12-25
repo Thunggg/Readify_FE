@@ -3,6 +3,7 @@
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +31,7 @@ export const loginSchema = z.object({
 }).strict();
 
 const LoginForm = () => {
+ const router = useRouter()
  const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -40,9 +42,10 @@ const LoginForm = () => {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      const response = await fetch(`${envConfig?.NEXT_PUBLIC_API_ENDPOINT ?? ""}/accounts/login`, {
+      const response = await fetch(`${envConfig?.NEXT_PUBLIC_API_ENDPOINT ?? ""}/auth/login`, {
         method: "POST",
         body: JSON.stringify(values),
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
         },
@@ -56,10 +59,40 @@ const LoginForm = () => {
         if(!res.ok) {
           throw data
         }
-        return data
+        return data;
 
       });
-      console.log(response);
+
+      toast.success('Login successful!', {
+        style: {
+          '--normal-bg': 'light-dark(var(--color-green-600), var(--color-green-400))',
+          '--normal-text': 'var(--color-white)',
+          '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))'
+        } as React.CSSProperties
+      })
+
+      const responseFromNextServer = await fetch('/api/auth', {
+        method: 'POST',
+        body: JSON.stringify(response),
+        headers: { "Content-Type": "application/json" },
+      }).then(async (res) => {
+        const payload = await res.json();
+        const data = {
+          status: res.status,
+          payload
+        }
+
+        if(!res.ok) {
+          throw data
+        }
+        return data;
+
+      });
+
+      console.log("responseFromNextServer: ", responseFromNextServer);
+
+      router.push("/me")
+    
     } catch (error) {
       toast.error((error as { payload: { message: string } }).payload.message, {
           style: {
@@ -96,7 +129,7 @@ const LoginForm = () => {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
