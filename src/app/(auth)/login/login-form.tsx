@@ -89,8 +89,6 @@ const LoginForm = () => {
 
       });
 
-      console.log("responseFromNextServer: ", responseFromNextServer);
-
       router.push("/me")
     
     } catch (error) {
