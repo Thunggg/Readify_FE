@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import envConfig from "@/configs/config-env"
+import { authApiRequest } from "@/api-request/auth"
 
 export const loginSchema = z.object({
   email: z
@@ -42,26 +42,7 @@ const LoginForm = () => {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      const response = await fetch(`${envConfig?.NEXT_PUBLIC_API_ENDPOINT ?? ""}/auth/login`, {
-        method: "POST",
-        body: JSON.stringify(values),
-        credentials: 'include',
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then(async (res) => {
-        const payload = await res.json();
-        const data = {
-          status: res.status,
-          payload
-        }
-
-        if(!res.ok) {
-          throw data
-        }
-        return data;
-
-      });
+      const response = await authApiRequest.login(values.email, values.password);
 
       toast.success('Login successful!', {
         style: {
@@ -71,23 +52,7 @@ const LoginForm = () => {
         } as React.CSSProperties
       })
 
-      const responseFromNextServer = await fetch('/api/auth', {
-        method: 'POST',
-        body: JSON.stringify(response),
-        headers: { "Content-Type": "application/json" },
-      }).then(async (res) => {
-        const payload = await res.json();
-        const data = {
-          status: res.status,
-          payload
-        }
-
-        if(!res.ok) {
-          throw data
-        }
-        return data;
-
-      });
+      await authApiRequest.auth(response.payload.data.accessToken);
 
       router.push("/me")
     

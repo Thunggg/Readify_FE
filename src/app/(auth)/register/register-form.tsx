@@ -14,7 +14,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import envConfig from "@/configs/config-env"
+import { authApiRequest } from "@/api-request/auth"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export const registerSchema = z.object({
   email: z
@@ -44,6 +46,8 @@ export const registerSchema = z.object({
 });
 
 const RegisterForm = () => {
+  const router = useRouter()
+
  const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -55,15 +59,24 @@ const RegisterForm = () => {
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     try {
-      const response = await fetch(`${envConfig?.NEXT_PUBLIC_API_ENDPOINT ?? ""}/accounts/register`, {
-        method: "POST",
-        body: JSON.stringify(values),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then(response => response.json());
-      console.log(response);
+      await authApiRequest.register(values.email, values.password, values.confirmPassword);
+
+      toast.success('Register successful!', {
+        style: {
+          '--normal-bg': 'light-dark(var(--color-green-600), var(--color-green-400))',
+          '--normal-text': 'var(--color-white)',
+          '--normal-border': 'light-dark(var(--color-green-600), var(--color-green-400))'
+        } as React.CSSProperties
+      })
+      router.push("/login")
     } catch (error) {
+      toast.error((error as { payload: { message: string } }).payload.message, {
+        style: {
+          '--normal-bg': 'light-dark(var(--color-red-600), var(--color-red-400))',
+          '--normal-text': 'var(--color-white)',
+          '--normal-border': 'light-dark(var(--color-red-600), var(--color-red-400))'
+        } as React.CSSProperties
+      })
       console.error(error);
     }
   }
