@@ -4,15 +4,49 @@ type CustomOptions = RequestInit & {
   baseUrl?: string | undefined;
 };
 
-class HttpError extends Error {
+const ENTITY_ERROR_STATUS = 422;
+
+interface ErrorDetail {
+  field?: string;
+  message: string;
+  code?: string;
+}
+
+type EntityErrorPayload = {
+  message: string;
+  errorCode: string;
+  statusCode: number;
+  details?: ErrorDetail[];
+};
+
+export class HttpError extends Error {
   status: number;
-  payload: any;
+  payload: {
+    message: string;
+    [key: string]: any;
+  };
   message: string;
   constructor(status: number, message: string, payload: any) {
     super(message);
     this.status = status;
     this.message = message;
     this.payload = payload;
+  }
+}
+
+export class EntityError extends HttpError {
+  status: number = ENTITY_ERROR_STATUS;
+  payload: EntityErrorPayload;
+  constructor({
+    status,
+    payload,
+  }: {
+    status: number;
+    payload: EntityErrorPayload;
+  }) {
+    super(status, "Entity error", payload);
+    this.payload = payload;
+    this.status = status;
   }
 }
 
@@ -55,7 +89,18 @@ const request = async <Response>(
   };
 
   if (!response.ok) {
-    throw new HttpError(response.status, response.statusText, payload);
+    // lỗi liên quan đến dữ liệu
+    if (response.status === ENTITY_ERROR_STATUS) {
+      throw new EntityError(
+        data as {
+          status: number;
+          payload: EntityErrorPayload;
+        }
+      );
+    } else {
+      // lỗi server
+      throw new HttpError(response.status, response.statusText, payload);
+    }
   }
 
   return data;

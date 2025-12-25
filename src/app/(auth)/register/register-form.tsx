@@ -17,6 +17,8 @@ import { Input } from "@/components/ui/input"
 import { authApiRequest } from "@/api-request/auth"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { handleErrorApi } from "@/lib/utils"
+import { useState } from "react"
 
 export const registerSchema = z.object({
   email: z
@@ -46,6 +48,7 @@ export const registerSchema = z.object({
 });
 
 const RegisterForm = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter()
 
  const form = useForm<z.infer<typeof registerSchema>>({
@@ -58,7 +61,9 @@ const RegisterForm = () => {
   })
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
+    if (isLoading) return;
     try {
+      setIsLoading(true);
       await authApiRequest.register(values.email, values.password, values.confirmPassword);
 
       toast.success('Register successful!', {
@@ -70,14 +75,9 @@ const RegisterForm = () => {
       })
       router.push("/login")
     } catch (error) {
-      toast.error((error as { payload: { message: string } }).payload.message, {
-        style: {
-          '--normal-bg': 'light-dark(var(--color-red-600), var(--color-red-400))',
-          '--normal-text': 'var(--color-white)',
-          '--normal-border': 'light-dark(var(--color-red-600), var(--color-red-400))'
-        } as React.CSSProperties
-      })
-      console.error(error);
+      handleErrorApi({error, setError: form.setError, duration: 5000});
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -124,7 +124,7 @@ const RegisterForm = () => {
             </FormItem>
           )}
         />
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isLoading} className="cursor-pointer">Submit</Button>
       </form>
     </Form>
   )

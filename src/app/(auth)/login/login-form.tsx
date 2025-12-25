@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { authApiRequest } from "@/api-request/auth"
+import { handleErrorApi } from "@/lib/utils"
+import { useState } from "react"
 
 export const loginSchema = z.object({
   email: z
@@ -31,6 +33,8 @@ export const loginSchema = z.object({
 }).strict();
 
 const LoginForm = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
  const router = useRouter()
  const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -41,7 +45,9 @@ const LoginForm = () => {
   })
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
+    if (isLoading) return;
     try {
+      setIsLoading(true);
       const response = await authApiRequest.login(values.email, values.password);
 
       toast.success('Login successful!', {
@@ -57,14 +63,9 @@ const LoginForm = () => {
       router.push("/me")
     
     } catch (error) {
-      toast.error((error as { payload: { message: string } }).payload.message, {
-          style: {
-            '--normal-bg':
-              'light-dark(var(--destructive), color-mix(in oklab, var(--destructive) 60%, var(--background)))',
-            '--normal-text': 'var(--color-white)',
-            '--normal-border': 'transparent'
-          } as React.CSSProperties
-        })
+      handleErrorApi({error, setError: form.setError, duration: 5000});
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -99,7 +100,7 @@ const LoginForm = () => {
           )}
         />
 
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isLoading} className="cursor-pointer">Submit</Button>
       </form>
     </Form>
   )
