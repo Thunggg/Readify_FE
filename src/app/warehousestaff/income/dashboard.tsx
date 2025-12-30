@@ -165,7 +165,7 @@ export default function IncomeDashboard() {
       </div>
 
       {/* Charts Section */}
-      <Tabs defaultValue="revenue" className="space-y-4">
+      <Tabs defaultValue="revenue" className="space-y-4" suppressHydrationWarning>
         <TabsList>
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
