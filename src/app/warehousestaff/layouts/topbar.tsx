@@ -109,8 +109,8 @@ export function Topbar() {
         </Button>
 
         {/* Profile */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild suppressHydrationWarning>
             <Button
               variant="ghost"
               className="relative h-9 w-9 rounded-full hover:bg-muted transition-colors"
