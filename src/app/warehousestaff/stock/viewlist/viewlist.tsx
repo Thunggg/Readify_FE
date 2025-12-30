@@ -58,7 +58,9 @@ export default function StockListView() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:3000/stocks");
+        const res = await fetch("http://localhost:3000/stocks", {
+          credentials: 'include'
+        });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
         // Handle ApiResponse wrapper: { success: true, data: [...] }

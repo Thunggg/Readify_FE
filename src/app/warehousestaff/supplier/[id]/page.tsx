@@ -55,7 +55,9 @@ export default function SupplierDetailView() {
     const fetchOne = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3000/suppliers/${id}?includeDeleted=true`);
+        const res = await fetch(`http://localhost:3000/suppliers/${id}?includeDeleted=true`, {
+          credentials: 'include'
+        });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
         const data = json.data || json;
@@ -77,6 +79,7 @@ export default function SupplierDetailView() {
       setDeleting(true);
       const res = await fetch(`http://localhost:3000/suppliers/${id}`, {
         method: "DELETE",
+        credentials: 'include',
       });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
       router.push("/warehousestaff/supplier");
@@ -95,6 +98,7 @@ export default function SupplierDetailView() {
       setRestoring(true);
       const res = await fetch(`http://localhost:3000/suppliers/${id}/restore`, {
         method: "PATCH",
+        credentials: 'include',
       });
       if (!res.ok) throw new Error(`Restore failed: ${res.status}`);
       router.push("/warehousestaff/supplier");

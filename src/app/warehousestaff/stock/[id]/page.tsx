@@ -67,7 +67,9 @@ export default function StockDetailPage() {
     const fetchOne = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3000/stocks/${id}`);
+        const res = await fetch(`http://localhost:3000/stocks/${id}`, {
+          credentials: "include",
+        });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
         const stockData = json.data || json;

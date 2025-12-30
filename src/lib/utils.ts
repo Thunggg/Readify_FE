@@ -26,7 +26,12 @@ export const handleErrorApi = ({
       }
     });
   } else {
-    toast.error((error as { payload: { message: string } }).payload.message, {
+    const message = 
+      error?.payload?.message || 
+      error?.message || 
+      "An unexpected error occurred";
+    
+    toast.error(message, {
       style: {
         "--normal-bg": "light-dark(var(--color-red-600), var(--color-red-400))",
         "--normal-text": "var(--color-white)",

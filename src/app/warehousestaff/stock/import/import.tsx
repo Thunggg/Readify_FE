@@ -84,6 +84,7 @@ export default function ImportStockView() {
       const res = await fetch("http://localhost:3000/stocks/import", {
         method: "POST",
         body: formData,
+        credentials: 'include',
       });
 
       if (!res.ok) {

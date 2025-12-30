@@ -38,7 +38,9 @@ export default function EditSupplierPage() {
     const fetchOne = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`http://localhost:3000/suppliers/${id}`);
+        const res = await fetch(`http://localhost:3000/suppliers/${id}`, {
+          credentials: 'include'
+        });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
         const data = json.data || json;
@@ -81,6 +83,7 @@ export default function EditSupplierPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
+        credentials: 'include',
       });
 
       if (!res.ok) {

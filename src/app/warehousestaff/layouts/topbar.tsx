@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,8 +12,70 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+interface UserInfo {
+  email?: string;
+  name?: string;
+  role?: number;
+}
 
 export function Topbar() {
+  const router = useRouter();
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/accounts/me", {
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.data || data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user info:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear cookie
+      await fetch("/api/logout", {
+        method: "POST",
+      });
+
+      // Redirect to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  const getUserInitials = (email?: string, name?: string) => {
+    if (name) {
+      return name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    if (email) {
+      return email.slice(0, 2).toUpperCase();
+    }
+    return "WS";
+  };
+
   return (
     <div className="flex h-16 items-center justify-between border-b px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Search */}
@@ -56,7 +118,7 @@ export function Topbar() {
               <Avatar className="h-8 w-8 ring-2 ring-background">
                 <AvatarImage src="/avatar.png" alt="User" />
                 <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                  UN
+                  {loading ? "..." : getUserInitials(user?.email, user?.name)}
                 </AvatarFallback>
               </Avatar>
             </Button>
@@ -67,18 +129,20 @@ export function Topbar() {
                 <Avatar className="h-10 w-10">
                   <AvatarImage src="/avatar.png" alt="User" />
                   <AvatarFallback className="bg-primary text-primary-foreground">
-                    UN
+                    {loading ? "..." : getUserInitials(user?.email, user?.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">John Doe</p>
+                  <p className="text-sm font-medium leading-none">
+                    {loading ? "Loading..." : user?.name || "Warehouse Staff"}
+                  </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    john.doe@example.com
+                    {loading ? "" : user?.email || "warehouse@example.com"}
                   </p>
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="my-2" />
+            {/* <DropdownMenuSeparator className="my-2" />
             <DropdownMenuItem className="p-3 cursor-pointer hover:bg-muted rounded-md transition-colors">
               <span className="flex items-center gap-2">👤 Profile</span>
             </DropdownMenuItem>
@@ -88,9 +152,13 @@ export function Topbar() {
             <DropdownMenuItem className="p-3 cursor-pointer hover:bg-muted rounded-md transition-colors">
               <span className="flex items-center gap-2">💳 Billing</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="my-2" />
-            <DropdownMenuItem className="p-3 cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950 rounded-md transition-colors">
-              <span className="flex items-center gap-2">🚪 Log out</span>
+            <DropdownMenuSeparator className="my-2" /> */}
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="p-3 cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950 rounded-md transition-colors"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

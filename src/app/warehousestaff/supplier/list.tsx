@@ -97,7 +97,7 @@ export default function SupplierListView() {
           params.append("isDeleted", "true");
         }
         const url = `http://localhost:3000/suppliers?${params.toString()}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { credentials: "include" });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json: ApiResponse = await res.json();
         const supplierData = json.data?.items || [];
@@ -142,6 +142,7 @@ export default function SupplierListView() {
       setRestoring(id);
       const res = await fetch(`http://localhost:3000/suppliers/${id}/restore`, {
         method: "PATCH",
+        credentials: "include",
       });
       if (!res.ok) throw new Error(`Restore failed: ${res.status}`);
 
@@ -163,6 +164,7 @@ export default function SupplierListView() {
       setDeleting(id);
       const res = await fetch(`http://localhost:3000/suppliers/${id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 

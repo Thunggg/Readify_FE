@@ -1,4 +1,4 @@
-import { Link } from "lucide-react";
+import Link from "next/link";
 import { ModeToggle } from "./toggle-theme";
 
 export default function Header() {
@@ -15,7 +15,7 @@ export default function Header() {
                 <Link href="/contact" className="text-lg font-bold">Contact</Link>
             </li>
             <li>
-                <Link href="/contact" className="text-lg font-bold">Contact</Link>
+                <Link href="/me" className="text-lg font-bold">Profile</Link>
             </li>
             <li><ModeToggle /></li>
         </ul>

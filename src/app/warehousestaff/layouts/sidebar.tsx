@@ -17,28 +17,65 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const sidebarGroups = [
   {
     title: "General",
     items: [
-      { title: "Income Statistic", href: "/warehousestaff/income", icon: DollarSign, badge: null },
+      {
+        title: "Income Statistic",
+        href: "/warehousestaff/income",
+        icon: DollarSign,
+        badge: null,
+      },
     ],
   },
   {
     title: "Management",
     items: [
-      { title: "Stock Management", href: "/warehousestaff/stock/viewlist", icon: Package, badge: null },
-      { title: "Supplier Management", href: "/warehousestaff/supplier", icon: Truck, badge: null },
-      { title: "Category Management", href: "/warehousestaff/category", icon: FolderTree, badge: null },
-      { title: "Promotion Management", href: "/warehousestaff/promotion", icon: Tag, badge: "New" },
+      {
+        title: "Stock Management",
+        href: "/warehousestaff/stock/viewlist",
+        icon: Package,
+        badge: null,
+      },
+      {
+        title: "Supplier Management",
+        href: "/warehousestaff/supplier",
+        icon: Truck,
+        badge: null,
+      },
+      {
+        title: "Category Management",
+        href: "/warehousestaff/category",
+        icon: FolderTree,
+        badge: null,
+      },
+      {
+        title: "Promotion Management",
+        href: "/warehousestaff/promotion",
+        icon: Tag,
+        badge: "New",
+      },
     ],
   },
   {
     title: "Others",
     items: [
-      { title: "Orders", href: "/warehousestaff/orders", icon: ShoppingCart, badge: "5" },
-      { title: "Settings", href: "/warehousestaff/settings", icon: Settings, badge: null },
+      {
+        title: "Orders",
+        href: "/warehousestaff/orders",
+        icon: ShoppingCart,
+        badge: "5",
+      },
+      {
+        title: "Settings",
+        href: "/warehousestaff/settings",
+        icon: Settings,
+        badge: null,
+      },
     ],
   },
 ];
@@ -46,6 +83,21 @@ const sidebarGroups = [
 export default function WarehouseSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear cookie
+      await fetch("/api/logout", {
+        method: "POST",
+      });
+
+      // Redirect to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <div
@@ -57,13 +109,21 @@ export default function WarehouseSidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6 justify-between">
         {!isCollapsed && (
-          <Link href="/warehousestaff" className="flex items-center gap-3 group">
+          <Link
+            href="/warehousestaff"
+            className="flex items-center gap-3 group"
+          >
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <LayoutDashboard className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold group-hover:text-primary transition-colors">
-              Readify
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold group-hover:text-primary transition-colors">
+                Readify
+              </span>
+              <span className="text-sm font-light group-hover:text-primary transition-colors">
+                Warehouse Staff
+              </span>
+            </div>
           </Link>
         )}
         {isCollapsed && (
@@ -99,7 +159,9 @@ export default function WarehouseSidebar() {
             {/* Group Items */}
             <div className="space-y-2">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                const isActive =
+                  pathname === item.href ||
+                  pathname?.startsWith(item.href + "/");
                 const Icon = item.icon;
 
                 return (
@@ -157,9 +219,7 @@ export default function WarehouseSidebar() {
             "w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950",
             isCollapsed && "justify-center px-0"
           )}
-          onClick={() => {
-            console.log("Logout clicked");
-          }}
+          onClick={handleLogout}
         >
           <LogOut className={cn("h-4 w-4", !isCollapsed && "mr-2")} />
           {!isCollapsed && <span>Logout</span>}
