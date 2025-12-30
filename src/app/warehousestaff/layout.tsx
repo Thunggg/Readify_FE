@@ -1,17 +1,25 @@
+"use client";
 import React from "react";
 import WarehouseSidebar from "./layouts/sidebar";
+import { Topbar } from "./layouts/topbar";
 
-export const metadata = {
-  title: "Warehouse",
-};
-
-export default function WarehouseLayout({ children }: { children: React.ReactNode }) {
+export default function WarehouseLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-900">
+    <div className="relative flex h-screen overflow-hidden bg-background">
+      {/* Sidebar */}
       <WarehouseSidebar />
-      <main className="flex-1 p-8">
-        <div className="max-w-6xl mx-auto">{children}</div>
-      </main>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <Topbar />
+        <main className="p-8 max-w-[calc(100vw-18rem)] mx-auto">
+          <div className="min-h-[calc(100vh-8rem)]">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

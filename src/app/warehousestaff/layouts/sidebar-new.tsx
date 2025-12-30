@@ -22,23 +22,58 @@ const sidebarGroups = [
   {
     title: "General",
     items: [
-      { title: "Income Statistic", href: "/warehousestaff/income", icon: DollarSign, badge: null },
+      {
+        title: "Income Statistic",
+        href: "/warehousestaff/income",
+        icon: DollarSign,
+        badge: null,
+      },
     ],
   },
   {
     title: "Management",
     items: [
-      { title: "Stock Management", href: "/warehousestaff/stock/viewlist", icon: Package, badge: null },
-      { title: "Supplier Management", href: "/warehousestaff/supplier", icon: Truck, badge: null },
-      { title: "Category Management", href: "/warehousestaff/category", icon: FolderTree, badge: null },
-      { title: "Promotion Management", href: "/warehousestaff/promotion", icon: Tag, badge: "New" },
+      {
+        title: "Stock Management",
+        href: "/warehousestaff/stock/viewlist",
+        icon: Package,
+        badge: null,
+      },
+      {
+        title: "Supplier Management",
+        href: "/warehousestaff/supplier",
+        icon: Truck,
+        badge: null,
+      },
+      {
+        title: "Category Management",
+        href: "/warehousestaff/category",
+        icon: FolderTree,
+        badge: null,
+      },
+      {
+        title: "Promotion Management",
+        href: "/warehousestaff/promotion",
+        icon: Tag,
+        badge: "New",
+      },
     ],
   },
   {
     title: "Others",
     items: [
-      { title: "Orders", href: "/warehousestaff/orders", icon: ShoppingCart, badge: "5" },
-      { title: "Settings", href: "/warehousestaff/settings", icon: Settings, badge: null },
+      {
+        title: "Orders",
+        href: "/warehousestaff/orders",
+        icon: ShoppingCart,
+        badge: "5",
+      },
+      {
+        title: "Settings",
+        href: "/warehousestaff/settings",
+        icon: Settings,
+        badge: null,
+      },
     ],
   },
 ];
@@ -57,7 +92,10 @@ export default function WarehouseSidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6 justify-between">
         {!isCollapsed && (
-          <Link href="/warehousestaff" className="flex items-center gap-3 group">
+          <Link
+            href="/warehousestaff"
+            className="flex items-center gap-3 group"
+          >
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <LayoutDashboard className="w-4 h-4 text-primary-foreground" />
             </div>
@@ -86,7 +124,7 @@ export default function WarehouseSidebar() {
       </div>
 
       {/* Navigation Groups */}
-      <nav className="flex-1 space-y-8 p-6 overflow-y-auto">
+      <nav className="flex-1 space-y-8 p-6">
         {sidebarGroups.map((group) => (
           <div key={group.title} className="space-y-3">
             {/* Group Title */}
@@ -99,7 +137,7 @@ export default function WarehouseSidebar() {
             {/* Group Items */}
             <div className="space-y-2">
               {group.items.map((item) => {
-                const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                const isActive = pathname === item.href;
                 const Icon = item.icon;
 
                 return (
