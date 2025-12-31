@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ModeToggle } from "./toggle-theme";
+import ButtonLogout from "./button-logout";
 
 export default function Header() {
   return (
@@ -16,6 +17,7 @@ export default function Header() {
             </li>
             <li>
                 <Link href="/me" className="text-lg font-bold">Profile</Link>
+                <ButtonLogout />
             </li>
             <li><ModeToggle /></li>
         </ul>
