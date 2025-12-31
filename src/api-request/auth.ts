@@ -10,15 +10,21 @@ export const authApiRequest = {
     return response;
   },
 
-  register: async (
-    email: string,
-    password: string,
-    confirmPassword: string
-  ) => {
-    const response = await http.post<{ data: { accessToken: string } }>(
+  register: async (payload: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+    sex: number;
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }) => {
+    const response = await http.post<{ data: { message?: string } }>(
       "/accounts/register",
-      { email, password, confirmPassword },
-      { headers: { "Content-Type": "application/json" } }
+      payload,
+      { credentials: "include" }
     );
     return response;
   },
