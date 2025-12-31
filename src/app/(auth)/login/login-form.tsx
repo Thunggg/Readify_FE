@@ -2,13 +2,12 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
-import AuthBackgroundShape from "@/assets/svg/auth-background-shape"
 import { authApiRequest } from "@/api-request/auth"
 import Logo from "@/components/shadcn-studio/logo"
 import { Button } from "@/components/ui/button"
@@ -19,6 +18,8 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { handleErrorApi } from "@/lib/utils"
 import { EyeIcon, EyeOffIcon } from "lucide-react"
+
+import styles from "./pattern.module.css"
 
 export const loginSchema = z
   .object({
@@ -36,6 +37,9 @@ export const loginSchema = z
   .strict();
 
 const LoginForm = () => {
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const rafRef = useRef<number | null>(null)
+
   const [isLoading, setIsLoading] = useState(false);
   const [isVisible, setIsVisible] = useState(false)
 
@@ -91,12 +95,47 @@ const LoginForm = () => {
   }
 
   return (
-    <div className="relative flex h-auto min-h-screen items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8">
-      <div className="absolute">
-        <AuthBackgroundShape />
-      </div>
+    <div
+      ref={containerRef}
+      className={`${styles.container} relative flex h-auto min-h-screen items-center justify-center overflow-hidden px-4 py-10 sm:px-6 lg:px-8`}
+      onPointerMove={(e) => {
+        const el = containerRef.current
+        if (!el) return
 
-      <Card className="z-[1] w-full border-none shadow-md sm:max-w-lg">
+        // Avoid excessive style recalcs by batching into rAF
+        if (rafRef.current) cancelAnimationFrame(rafRef.current)
+        rafRef.current = requestAnimationFrame(() => {
+          const r = el.getBoundingClientRect()
+          const x = ((e.clientX - r.left) / r.width) * 100
+          const y = ((e.clientY - r.top) / r.height) * 100
+
+          el.style.setProperty("--spot-x", `${x}%`)
+          el.style.setProperty("--spot-y", `${y}%`)
+        })
+      }}
+      onPointerLeave={() => {
+        const el = containerRef.current
+        if (!el) return
+        el.style.setProperty("--spot-x", "50%")
+        el.style.setProperty("--spot-y", "45%")
+      }}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-black/30" />
+
+      <Card
+        className="z-1 w-full border-none shadow-md sm:max-w-lg"
+        onPointerEnter={() => {
+          const el = containerRef.current
+          if (!el) return
+          el.style.setProperty("--spot-size", "0px")
+        }}
+        onPointerLeave={() => {
+          const el = containerRef.current
+          if (!el) return
+          // restore default spotlight size
+          el.style.setProperty("--spot-size", "170px")
+        }}
+      >
         <CardHeader className="gap-6">
           <Logo className="gap-3" />
 
