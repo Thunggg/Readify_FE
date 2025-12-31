@@ -55,10 +55,18 @@ const request = async <Response>(
   url: string,
   options: CustomOptions | undefined
 ) => {
-  const body = options?.body ? JSON.stringify(options.body) : undefined;
-  const baseHeaders = {
-    "Content-Type": "application/json",
-  };
+  const body =
+    options?.body instanceof FormData
+      ? options.body
+      : options?.body
+      ? JSON.stringify(options.body)
+      : undefined;
+  const baseHeaders =
+    options?.body instanceof FormData
+      ? {}
+      : {
+          "Content-Type": "application/json",
+        };
 
   // nếu baseUrl không được cung cấp thì sử dụng NEXT_PUBLIC_API_ENDPOINT từ env
   // nếu baseUrl được cung cấp thì sử dụng baseUrl
@@ -76,8 +84,8 @@ const request = async <Response>(
     ...options,
     headers: {
       ...baseHeaders,
-      ...options?.headers,
-    },
+      ...(options?.headers as Record<string, string>),
+    } as HeadersInit,
     body,
     method,
   });
