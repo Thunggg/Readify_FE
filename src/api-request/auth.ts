@@ -37,4 +37,22 @@ export const authApiRequest = {
     );
     return response;
   },
+
+  logoutFromNextServerToServer: async (accessToken: string) => {
+    const response = await http.post<{
+      data: { status: number; message: string };
+    }>("/auth/logout", null, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
+      },
+    });
+    return response;
+  },
+
+  logoutFromNextClientToServer: async () => {
+    http.post("/api/auth/logout", null, {
+      baseUrl: "",
+    });
+  },
 };

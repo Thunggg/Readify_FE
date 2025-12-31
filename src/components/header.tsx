@@ -1,5 +1,6 @@
 import { Link } from "lucide-react";
 import { ModeToggle } from "./toggle-theme";
+import ButtonLogout from "./button-logout";
 
 export default function Header() {
   return (
@@ -15,7 +16,7 @@ export default function Header() {
                 <Link href="/contact" className="text-lg font-bold">Contact</Link>
             </li>
             <li>
-                <Link href="/contact" className="text-lg font-bold">Contact</Link>
+                <ButtonLogout />
             </li>
             <li><ModeToggle /></li>
         </ul>
