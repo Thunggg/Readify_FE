@@ -120,7 +120,7 @@ const RegisterForm = () => {
           "--normal-border": "light-dark(var(--color-green-600), var(--color-green-400))",
         } as React.CSSProperties,
       })
-      router.push("/login")
+      router.push("/verify-email")
     } catch (error) {
       handleErrorApi({ error, setError: form.setError, duration: 5000 })
     } finally {
