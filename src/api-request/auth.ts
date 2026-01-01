@@ -17,7 +17,23 @@ export type VerifyRegisterPayload = {
   otp: string;
 };
 
-// Returned after successful OTP verification (based on your backend `account` object)
+export type ForgotPasswordRequestPayload = {
+  email: string;
+};
+
+export type VerifyForgotPasswordOtpPayload = {
+  otp: string;
+};
+
+export type ResetPasswordPayload = {
+  newPassword: string;
+  confirmPassword: string;
+};
+
+export type VerifyForgotPasswordOtpResponseData = {
+  resetPasswordToken?: string;
+};
+
 export type VerifiedAccount = {
   _id?: string;
   id?: string;
@@ -53,9 +69,9 @@ export const authApiRequest = {
   },
 
   resendRegisterOtp: async () => {
-    // Backend reads regEmail from cookie
+    // New flow: backend reads otpEmail + otpPurpose from cookie
     const response = await http.post<ApiResponse<null>>(
-      "/accounts/register/resend-otp",
+      "/accounts/otp/resend",
       {},
       { credentials: "include" }
     );
@@ -63,9 +79,44 @@ export const authApiRequest = {
   },
 
   verifyRegisterOtp: async (payload: VerifyRegisterPayload) => {
-    // Backend reads regEmail from cookie + clears it on success
+    const response = await http.post<ApiResponse<VerifiedAccount | null>>(
+      "/accounts/otp/verify",
+      payload,
+      { credentials: "include" }
+    );
+    return response;
+  },
+
+  forgotPassword: async (payload: ForgotPasswordRequestPayload) => {
+    const response = await http.post<ApiResponse<null>>(
+      "/accounts/forgot-password",
+      payload,
+      { credentials: "include" }
+    );
+    return response;
+  },
+
+  verifyForgotPasswordOtp: async (payload: VerifyForgotPasswordOtpPayload) => {
+    const response = await http.post<ApiResponse<null>>(
+      "/accounts/otp/verify",
+      payload,
+      { credentials: "include" }
+    );
+    return response;
+  },
+
+  resendForgotPasswordOtp: async () => {
+    const response = await http.post<ApiResponse<null>>(
+      "/accounts/otp/resend",
+      {},
+      { credentials: "include" }
+    );
+    return response;
+  },
+
+  resetPassword: async (payload: ResetPasswordPayload) => {
     const response = await http.post<ApiResponse<VerifiedAccount>>(
-      "/accounts/register/verify",
+      "/accounts/reset-password",
       payload,
       { credentials: "include" }
     );
@@ -80,7 +131,6 @@ export const authApiRequest = {
       { accessToken: accessToken },
       {
         headers: { "Content-Type": "application/json" },
-        // call Next route handler on the same origin
         baseUrl: "",
       }
     );

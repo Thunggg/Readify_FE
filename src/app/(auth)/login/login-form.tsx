@@ -61,6 +61,18 @@ const LoginForm = () => {
         values.password
       );
 
+      if (!response.payload.success) {
+        toast.error(response.payload.data.message, {
+          style: {
+            "--normal-bg": "light-dark(var(--color-red-600), var(--color-red-400))",
+            "--normal-text": "var(--color-white)",
+            "--normal-border": "light-dark(var(--color-red-600), var(--color-red-400))",
+          } as React.CSSProperties,
+          duration: 5000,
+        });
+        return;
+      }
+
       const accessToken = response.payload.data.accessToken;
 
       // Decode JWT token để lấy role (không cần verify vì đã tin backend)
@@ -210,9 +222,9 @@ const LoginForm = () => {
                     </label>
                   </div>
 
-                  <a href="#" className="text-sm hover:underline">
+                  <Link href="/forgot-password" className="text-sm hover:underline">
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
 
                 <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
