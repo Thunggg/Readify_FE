@@ -83,7 +83,7 @@ const LoginForm = () => {
       } else if (role === 2) {
         router.push("/seller");
       } else if (role === 1) {
-        router.push("/admin");
+        router.push("/admin/income");
       } else {
         router.push("/me");
       }
