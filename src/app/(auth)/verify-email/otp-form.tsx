@@ -21,20 +21,24 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { handleErrorApi } from "@/lib/utils"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import React, { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
-import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp"
 
-import { Spinner, type SpinnerProps } from '@/components/ui/shadcn-io/spinner';
+import { Spinner } from "@/components/ui/shadcn-io/spinner"
+
+type OTPFlow = "register" | "forgot-password"
 
 
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [otp, setOtp] = useState("")
   const [isResending, setIsResending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const verifyingRef = useRef(false)
 
   const canResend = !isResending && resendCooldown === 0 && !isLoading
   
@@ -46,16 +50,22 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
     return () => window.clearInterval(intervalId)
   }, [resendCooldown])
 
+  const flow: OTPFlow =
+    searchParams.get("flow") === "forgot-password" ? "forgot-password" : "register"
+
   const verifyOtp = React.useCallback(async (code: string) => {
     try {
       setIsLoading(true)
       // Simulate slow network/backend (dev only)
-      if (process.env.NODE_ENV === "development") {
-        await new Promise((resolve) => setTimeout(resolve, 10_000))
-      }
-      const response = await authApiRequest.verifyRegisterOtp({
-        otp: code.toString(),
-      });
+      // if (process.env.NODE_ENV === "development") {
+      //   await new Promise((resolve) => setTimeout(resolve, 10_000))
+      // }
+      const response =
+        flow === "forgot-password"
+          ? await authApiRequest.verifyForgotPasswordOtp({ otp: code.toString() })
+          : await authApiRequest.verifyRegisterOtp({
+              otp: code.toString(),
+            })
 
       if (response.payload.success) {
         toast.success("OTP verified successfully", {
@@ -66,30 +76,34 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
             "--normal-border":
               "light-dark(var(--color-green-600), var(--color-green-400))",
           } as React.CSSProperties,
-        });
+        })
 
-        router.push("/login");
+        router.push(flow === "forgot-password" ? "/reset-password" : "/login")
       } else {
         handleErrorApi({
           error: new Error(response.payload.message),
           duration: 5000,
-        });
+        })
         setOtp("");
       }
     } catch (error) {
-      handleErrorApi({ error, duration: 5000 });
+      handleErrorApi({ error, duration: 5000 })
       setOtp("");
     } finally {
       setIsLoading(false)
     }
-  }, [router])
+  }, [router, flow])
 
 
   useEffect(() => {
     if(isLoading) return
     if(otp.length !== 6) return
-
-    verifyOtp(otp)
+    if (verifyingRef.current) return
+    
+    verifyingRef.current = true
+    verifyOtp(otp).finally(() => {
+      verifyingRef.current = false
+    })
     
   }, [otp, isLoading, verifyOtp])
 
@@ -132,7 +146,11 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
       <CardHeader>
         <CardTitle>Enter verification code</CardTitle>
-        <CardDescription>We sent a 6-digit code to your email.</CardDescription>
+        <CardDescription>
+          {flow === "forgot-password"
+            ? "We sent a 6-digit reset code to your email."
+            : "We sent a 6-digit code to your email."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form>

@@ -75,6 +75,7 @@ const RegisterForm = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
   const [isConfirmVisible, setIsConfirmVisible] = useState(false)
+  const [isAcceptTerm, setIsAcceptTerm] = useState(false)
 
   const router = useRouter()
 
@@ -120,7 +121,7 @@ const RegisterForm = () => {
           "--normal-border": "light-dark(var(--color-green-600), var(--color-green-400))",
         } as React.CSSProperties,
       })
-      router.push("/verify-email")
+      router.push("/verify-email?flow=register")
     } catch (error) {
       handleErrorApi({ error, setError: form.setError, duration: 5000 })
     } finally {
@@ -366,8 +367,8 @@ const RegisterForm = () => {
                   <div className="flex items-center gap-3">
                     <Checkbox
                       id="acceptTerms"
-                      checked={!!form.watch("acceptTerms")}
-                      onCheckedChange={(v) => form.setValue("acceptTerms", Boolean(v))}
+                      checked={isAcceptTerm}
+                      onCheckedChange={() => setIsAcceptTerm((prev) => !prev)}
                       className="size-6 cursor-pointer"
                     />
                     <label htmlFor="acceptTerms" className="text-muted-foreground text-sm">
@@ -376,8 +377,8 @@ const RegisterForm = () => {
                   </div>
                 </div>
 
-                <Button className="w-full cursor-pointer" type="submit" disabled={isLoading}>
-                  {isLoading ? (
+                <Button disabled={isLoading || !isAcceptTerm} className="w-full cursor-pointer" type="submit">
+                  {isLoading ? (  
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating account...
