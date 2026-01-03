@@ -1,15 +1,16 @@
 import { cookies } from "next/headers";
 
-import { getAccountsList } from "@/api-request/account";
 import type { AdminAccount } from "@/types/account";
 
 import AccountsTable from "./accounts-table";
+import { AccountApiRequest } from "@/api-request/account";
 
 export default async function AccountsPage() {
+
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value ?? "";
 
-  const res = await getAccountsList(accessToken, { page: 1, limit: 10 });
+  const res = await AccountApiRequest.getAccountsList(accessToken, { page: 1, limit: 20 });
 
   let accounts: AdminAccount[] = [];
 
