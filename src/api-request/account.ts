@@ -1,5 +1,6 @@
 import http from "@/lib/http";
-import type { ApiResponse } from "@/types/api";
+import type { ApiPaginatedResponse, ApiResponse } from "@/types/api";
+import type { AdminAccount } from "@/types/account";
 
 export const AccountApiRequest = {
   getMe: async (accessToken: string) => {
@@ -14,4 +15,25 @@ export const AccountApiRequest = {
     );
     return response;
   },
+};
+
+export const getAccountsList = async (
+  accessToken: string,
+  params?: { page?: number; limit?: number; q?: string }
+) => {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.q) qs.set("q", params.q);
+
+  const url = qs.toString() ? `/accounts?${qs.toString()}` : "/accounts";
+
+  const response = await http.get<ApiPaginatedResponse<AdminAccount>>(url, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
+    },
+    cache: "no-store",
+  });
+  return response;
 };
