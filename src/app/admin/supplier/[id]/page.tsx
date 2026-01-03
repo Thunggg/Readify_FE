@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
-  AlertCircle,
+  TriangleAlert,
   Truck,
   Phone,
   Mail,
@@ -62,9 +62,8 @@ export default function SupplierDetailView() {
         const json = await res.json();
         const data = json.data || json;
         setSupplier(data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        setError(e.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Fetch error");
       } finally {
         setLoading(false);
       }
@@ -82,10 +81,11 @@ export default function SupplierDetailView() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
-      router.push("/warehousestaff/supplier");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      alert(`Delete error: ${e.message}`);
+      router.push("/admin/supplier");
+    } catch (e: unknown) {
+      alert(
+        `Delete error: ${e instanceof Error ? e.message : "Unknown delete error"}`
+      );
     } finally {
       setDeleting(false);
     }
@@ -101,10 +101,11 @@ export default function SupplierDetailView() {
         credentials: 'include',
       });
       if (!res.ok) throw new Error(`Restore failed: ${res.status}`);
-      router.push("/warehousestaff/supplier");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      alert(`Restore error: ${e.message}`);
+      router.push("/admin/supplier");
+    } catch (e: unknown) {
+      alert(
+        `Restore error: ${e instanceof Error ? e.message : "Unknown restore error"}`
+      );
     } finally {
       setRestoring(false);
     }
@@ -113,10 +114,12 @@ export default function SupplierDetailView() {
   if (!id)
     return (
       <div className="py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
           <AlertTitle>Missing ID</AlertTitle>
-          <AlertDescription>No supplier id provided.</AlertDescription>
+          <AlertDescription className="text-destructive/80">
+            No supplier id provided.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -143,10 +146,12 @@ export default function SupplierDetailView() {
   if (error)
     return (
       <div className="py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Load failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -190,7 +195,7 @@ export default function SupplierDetailView() {
           ) : (
             <>
               <Button variant="outline" asChild>
-                <a href={`/warehousestaff/supplier/edit/${id}`}>
+                <a href={`/admin/supplier/edit/${id}`}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </a>
@@ -286,7 +291,7 @@ export default function SupplierDetailView() {
             ) : (
               <>
                 <Button asChild className="w-full" variant="outline">
-                  <a href={`/warehousestaff/supplier/edit/${id}`}>
+                  <a href={`/admin/supplier/edit/${id}`}>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit Supplier
                   </a>

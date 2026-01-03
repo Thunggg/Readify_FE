@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Save, AlertCircle, Truck } from "lucide-react";
+import { ArrowLeft, Save, Truck, TriangleAlert } from "lucide-react";
 
 export default function EditSupplierPage() {
   const params = useParams();
@@ -52,9 +52,8 @@ export default function EditSupplierPage() {
           phone: data.phone || "",
           address: data.address || "",
         });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        setError(e.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Fetch error");
       } finally {
         setLoading(false);
       }
@@ -91,10 +90,9 @@ export default function EditSupplierPage() {
         throw new Error(errData.message || `${res.status} ${res.statusText}`);
       }
 
-      router.push("/warehousestaff/supplier");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      setError(e.message ?? "Update error");
+      router.push("/admin/supplier");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Update error");
     } finally {
       setSaving(false);
     }
@@ -103,10 +101,12 @@ export default function EditSupplierPage() {
   if (!id)
     return (
       <div className="py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
           <AlertTitle>Missing ID</AlertTitle>
-          <AlertDescription>No supplier id provided.</AlertDescription>
+          <AlertDescription className="text-destructive/80">
+            No supplier id provided.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -133,10 +133,12 @@ export default function EditSupplierPage() {
   if (error && !formData.name)
     return (
       <div className="py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Load failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -158,10 +160,12 @@ export default function EditSupplierPage() {
       </div>
 
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Update failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       )}
 

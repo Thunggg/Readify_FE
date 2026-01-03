@@ -91,7 +91,7 @@ const LoginForm = () => {
 
       // Redirect dựa vào role
       if (role === 3) {
-        router.push("/warehousestaff/income");
+        router.push("/admin/income");
       } else if (role === 2) {
         router.push("/seller");
       } else if (role === 1) {

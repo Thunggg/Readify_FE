@@ -14,14 +14,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   ArrowLeft,
-  AlertCircle,
+  TriangleAlert,
   Package,
   MapPin,
   DollarSign,
   Calendar,
   Tag,
-  Edit,
-  Trash2,
   BookOpen,
   Layers,
 } from "lucide-react";
@@ -74,9 +72,8 @@ export default function StockDetailPage() {
         const json = await res.json();
         const stockData = json.data || json;
         setData(stockData);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        setError(e.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Fetch error");
       } finally {
         setLoading(false);
       }
@@ -87,10 +84,12 @@ export default function StockDetailPage() {
   if (!id) {
     return (
       <div className="container max-w-7xl py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
           <AlertTitle>Missing ID</AlertTitle>
-          <AlertDescription>No stock ID provided.</AlertDescription>
+          <AlertDescription className="text-destructive/80">
+            No stock ID provided.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -131,7 +130,7 @@ export default function StockDetailPage() {
               <Skeleton className="h-6 w-32" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="w-full aspect-[2/3] rounded-lg" />
+              <Skeleton className="w-full aspect-2/3 rounded-lg" />
             </CardContent>
           </Card>
         </div>
@@ -142,10 +141,12 @@ export default function StockDetailPage() {
   if (error) {
     return (
       <div className="container max-w-7xl py-8">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Load failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -175,7 +176,7 @@ export default function StockDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push("/warehousestaff/stock/viewlist")}
+              onClick={() => router.push("/admin/stock/viewlist")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -207,10 +208,10 @@ export default function StockDetailPage() {
       </div>
 
       {isLowStock && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
           <AlertTitle>Low Stock Warning</AlertTitle>
-          <AlertDescription>
+          <AlertDescription className="text-destructive/80">
             This item has only {data.quantity} units remaining. Consider
             restocking soon.
           </AlertDescription>
@@ -429,7 +430,7 @@ export default function StockDetailPage() {
             </CardHeader>
             <CardContent>
               {book?.coverUrl ? (
-                <div className="w-full aspect-[2/3] bg-muted rounded-lg overflow-hidden border">
+                <div className="w-full aspect-2/3 bg-muted rounded-lg overflow-hidden border">
                   <img
                     src={book.coverUrl}
                     alt={book.title || "Book cover"}
@@ -437,7 +438,7 @@ export default function StockDetailPage() {
                   />
                 </div>
               ) : (
-                <div className="w-full aspect-[2/3] bg-muted rounded-lg flex flex-col items-center justify-center text-muted-foreground border border-dashed">
+                <div className="w-full aspect-2/3 bg-muted rounded-lg flex flex-col items-center justify-center text-muted-foreground border border-dashed">
                   <Package className="h-16 w-16 mb-2" />
                   <span className="text-sm">No cover image</span>
                 </div>
