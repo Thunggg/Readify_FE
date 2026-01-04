@@ -78,25 +78,36 @@ export default function UpdateAccountModal({
   });
 
     useEffect(() => {
-    if (!open) return;
+  if (!open) return;
 
-    if(selectedAccount) {
-      form.setValue("password", "");
-      form.setValue("email", selectedAccount.email);
-      form.setValue("firstName", selectedAccount.firstName || "");
-      form.setValue("lastName", selectedAccount.lastName || "");
-      form.setValue("dateOfBirth", selectedAccount.dateOfBirth
-        ? dayjs(selectedAccount.dateOfBirth).format("YYYY-MM-DD")
-        : "");
-      form.setValue("phone", selectedAccount.phone || "");
-      form.setValue("address", selectedAccount.address || "");
-      form.setValue("role", selectedAccount.role || 0);
-      form.setValue("status", selectedAccount.status || 1);
-      form.setValue("sex", selectedAccount.sex || 1);
-    } else{
-        form.reset();
+  if (selectedAccount) {
+      form.reset(
+        {
+          email: selectedAccount.email ?? "",
+          password: "",
+          firstName: selectedAccount.firstName ?? "",
+          lastName: selectedAccount.lastName ?? "",
+          dateOfBirth: selectedAccount.dateOfBirth
+            ? dayjs(selectedAccount.dateOfBirth).format("YYYY-MM-DD")
+            : "",
+          phone: selectedAccount.phone ?? "",
+          address: selectedAccount.address ?? "",
+          role: selectedAccount.role ?? 0,
+          status: selectedAccount.status ?? 1,
+          sex: selectedAccount.sex ?? 1,
+        },
+        {
+          keepErrors: false,
+          keepDirty: false,
+          keepTouched: false,
+          keepIsSubmitted: false,
+          keepSubmitCount: false,
+        }
+      );
+    } else {
+      form.reset(undefined, { keepErrors: false });
     }
-  }, [open, form, selectedAccount]);
+  }, [open, selectedAccount, form]);
 
   const { handleSubmit, register, control, formState: { errors } } = form;
 
