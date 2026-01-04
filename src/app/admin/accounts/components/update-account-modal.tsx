@@ -58,8 +58,6 @@ export default function UpdateAccountModal({
   selectedAccount: AdminAccount | null;
   onUpdateAccount: (data: AdminAccount) => void;
 }) {
-    console.log(selectedAccount);
-
   const [error] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 

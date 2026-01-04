@@ -14,10 +14,11 @@ import { AdminAccount } from "@/types/account";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontalIcon, Plus } from "lucide-react";
+import { BanIcon, CheckCircleIcon, CircleHelpIcon, CircleMinusIcon, MailIcon, MarsIcon, MoreHorizontalIcon, Plus, VenusIcon } from "lucide-react";
 import CreateAccountModal from "./components/create-account-modal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UpdateAccountModal from "./components/update-account-modal";
+import { Badge } from "@/components/ui/badge";
 
 
 export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }) {
@@ -29,16 +30,90 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
 
 
   const sexLabel = (sex: number) => {
-    if(sex === 1) return "Male";
-    if(sex === 2) return "Female";
-    return "Unknown";
+  if (sex === 1) {
+    return (
+      <Badge
+        className="
+          border-none
+          bg-blue-600/10 text-blue-600
+          dark:bg-blue-400/10 dark:text-blue-400
+        "
+      >
+        <MarsIcon className="size-3" />
+        Male
+      </Badge>
+    );
   }
 
+  if (sex === 2) {
+    return (
+      <Badge
+        className="
+          border-none
+          bg-rose-600/10 text-rose-600
+          dark:bg-rose-400/10 dark:text-rose-400
+        "
+      >
+        <VenusIcon className="size-3" />
+        Female
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge
+      variant="outline"
+      className="text-muted-foreground"
+    >
+      <CircleHelpIcon className="size-3" />
+      Unknown
+    </Badge>
+  );
+};
+
+
   const statusLabel = (status: number) => {
-    if(status === 1) return "Active";
-    if(status === 0) return "Inactive";
-    if(status === -1) return "Banned";
-    if(status === 2) return "Email not verified";
+    if(status === 1){
+      return (
+        <>
+          <Badge className="border-none bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 focus-visible:outline-none dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5">
+            <CheckCircleIcon className="size-3" />
+            Active
+          </Badge>
+        </>
+      );
+      
+    }
+    if(status === 0){
+      return (
+        <>
+          <Badge className="border-none bg-red-600/10 text-red-600 focus-visible:ring-red-600/20 focus-visible:outline-none dark:bg-red-400/10 dark:text-red-400 dark:focus-visible:ring-red-400/40 [a&]:hover:bg-red-600/5 dark:[a&]:hover:bg-red-400/5">
+            <CircleMinusIcon className="size-3" />
+            Inactive
+          </Badge>
+        </>
+      );
+    };
+    if(status === -1){
+      return (
+        <>
+          <Badge variant="destructive">
+            <BanIcon className="size-3" />
+            Banned
+          </Badge>
+        </>
+      );
+    }
+    if(status === 2){
+      return (
+        <>
+          <Badge className="border-none bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 focus-visible:outline-none dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5">
+            <MailIcon className="size-3" />
+            Email not verified
+          </Badge>
+        </>
+      );
+    }
     return "Unknown";
   }
 
