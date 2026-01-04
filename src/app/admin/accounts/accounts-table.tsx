@@ -14,19 +14,21 @@ import { AdminAccount } from "@/types/account";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BanIcon, CheckCircleIcon, CircleHelpIcon, CircleMinusIcon, MailIcon, MarsIcon, MoreHorizontalIcon, Plus, VenusIcon } from "lucide-react";
+import { BanIcon, CheckCircleIcon, CircleHelpIcon, CircleMinusIcon, EyeIcon, MailIcon, MarsIcon, MoreHorizontalIcon, Plus, VenusIcon } from "lucide-react";
 import CreateAccountModal from "./components/create-account-modal";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UpdateAccountModal from "./components/update-account-modal";
 import { Badge } from "@/components/ui/badge";
+import DetailAccountDrawer from "./components/detail-account-drawer";
 
 
 export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }) {
   const [createOpen, setCreateOpen] = useState(false); // Đóng mở modal tạo tài khoản
   const [showUpdateDialog, setShowUpdateDialog] = useState(false); // Đóng mở modal cập nhật tài khoản
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
+  const [, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
+  const [showDetailAccount, setShowDetailAccount] = useState(false); // Đóng mở drawer chi tiết tài khoản
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts); // Danh sách tài khoản trong local
-  const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null); // Tài khoản được chọn để cập nhật hoặc xóa
+  const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
 
 
   const sexLabel = (sex: number) => {
@@ -69,7 +71,7 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
       Unknown
     </Badge>
   );
-};
+  };
 
 
   const statusLabel = (status: number) => {
@@ -140,6 +142,11 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
           setLocalAccounts(localAccounts.map((account) => account._id === data._id ? data : account));
         }}
       />
+      <DetailAccountDrawer
+        open={showDetailAccount}
+        onOpenChange={setShowDetailAccount}
+        selectedAccount={selectedAccount}
+      />
       <Table>
         <TableCaption>A list of your recent invoices.</TableCaption>
         <TableHeader>
@@ -168,7 +175,13 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
                   </AvatarFallback>
                 </Avatar>
               </TableCell>
-              <TableCell>{account.email}</TableCell>
+              <TableCell
+              className="cursor-pointer"
+              onClick={() => {
+                setShowDetailAccount(true);
+                setSelectedAccount(account);
+              }}
+              >{account.email}</TableCell>
               <TableCell>{`${account.firstName} ${account.lastName}`}</TableCell>
               <TableCell>{account.phone}</TableCell>
               <TableCell>
