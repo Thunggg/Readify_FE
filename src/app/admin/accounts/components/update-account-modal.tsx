@@ -1,7 +1,7 @@
  "use client";
 
 import React, { useEffect, useState } from "react";
-import { TriangleAlert, UserPlus } from "lucide-react";
+import { Eye, EyeOff, TriangleAlert, UserPlus } from "lucide-react";
 
 import type { AdminAccount } from "@/types/account";
 
@@ -26,81 +26,26 @@ import {
 } from "@/components/ui/select";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { AccountApiRequest } from "@/api-request/account";
 import { toast } from "sonner"
 import { handleErrorApi } from "@/lib/utils";
 import dayjs from "dayjs";
 
-const ROLE_VALUES = [0, 1, 2, 3] as const;
+import type { UpdateAccountApiRequest } from "@/validation/api-schemas";
+import { updateAccountFormSchema, type UpdateAccountFormInput } from "@/validation/form-schemas";
 
-export const updateAccountSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email can not be empty")
-    .min(5, "Email must be at least 5 characters long")
-    .max(255, "Email must be less than 255 characters long")
-    .email("Invalid email format")
-    .optional(),
+function transformFormToApi(formData: UpdateAccountFormInput): UpdateAccountApiRequest {
+  const { role, ...rest } = formData;
+  void role;
 
-  password: z
-    .string()
-    .min(1, "Password can not be empty")
-    .min(6, "Password must be at least 6 characters long")
-    .max(255, "Password must be less than 255 characters long")
-        .optional(),
-
-
-  firstName: z
-    .string()
-    .max(100, "First name must be less than 100 characters long")
-    .min(1, "First name can not be empty")
-        .optional(),
-
-
-  lastName: z
-    .string()
-    .max(100, "Last name must be less than 100 characters long")
-    .min(1, "Last name can not be empty")
-        .optional(),
-
-
-  dateOfBirth: z.string().min(1, "Date of birth can not be empty")
-      .optional(),
-
-
-  phone: z
-    .string()
-    .max(20, "Phone must be less than 20 characters long")
-    .min(1, "Phone can not be empty")
-        .optional(),
-
-
-  address: z
-    .string()
-    .max(255, "Address must be less than 255 characters long")
-    .min(1, "Address can not be empty")
-        .optional(),
-
-
-  role: z
-    .number()
-    .int("Role must be a number")
-    .refine((val) => ROLE_VALUES.includes(val as any), {
-      message: "Role must be one of 0,1,2,3",
-    })
-    .optional(),
-
-  status: z.number().int("Status must be a number")
-      .optional(),
-
-
-  sex: z.number().int("Sex must be a number")
-      .optional(),
-
-});
-
-export type UpdateAccountInput = z.infer<typeof updateAccountSchema>;
+  return {
+    ...rest,
+    password:
+      formData.password && formData.password.length >= 6
+        ? formData.password
+        : undefined,
+  };
+}
 
 export default function UpdateAccountModal({
   open,
@@ -114,9 +59,10 @@ export default function UpdateAccountModal({
   onUpdateAccount: (data: AdminAccount) => void;
 }) {
   const [error] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const form = useForm<UpdateAccountInput>({
-    resolver: zodResolver(updateAccountSchema),
+  const form = useForm<UpdateAccountFormInput>({
+    resolver: zodResolver(updateAccountFormSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -132,21 +78,21 @@ export default function UpdateAccountModal({
   });
 
     useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
     if(selectedAccount) {
+      form.setValue("password", "");
       form.setValue("email", selectedAccount.email);
-      form.setValue("password", selectedAccount.password);
-      form.setValue("firstName", selectedAccount.firstName);
-      form.setValue("lastName", selectedAccount.lastName);
+      form.setValue("firstName", selectedAccount.firstName || "");
+      form.setValue("lastName", selectedAccount.lastName || "");
       form.setValue("dateOfBirth", selectedAccount.dateOfBirth
         ? dayjs(selectedAccount.dateOfBirth).format("YYYY-MM-DD")
         : "");
-      form.setValue("phone", selectedAccount.phone);
-      form.setValue("address", selectedAccount.address);
-      form.setValue("role", selectedAccount.role);
-      form.setValue("status", selectedAccount.status);
-      form.setValue("sex", selectedAccount.sex);
+      form.setValue("phone", selectedAccount.phone || "");
+      form.setValue("address", selectedAccount.address || "");
+      form.setValue("role", selectedAccount.role || 0);
+      form.setValue("status", selectedAccount.status || 1);
+      form.setValue("sex", selectedAccount.sex || 1);
     } else{
         form.reset();
     }
@@ -154,25 +100,28 @@ export default function UpdateAccountModal({
 
   const { handleSubmit, register, control, formState: { errors } } = form;
 
-  async function onSubmit(data: UpdateAccountInput) {
+  async function onSubmit(formData: UpdateAccountFormInput) {
     try {
-    //   const res = await AccountApiRequest.updateAccount(data);
-    //   if (!res.payload.success) {
-    //     handleErrorApi({ error: res.payload, setError: form.setError, duration: 5000 });
-    //     return;
-    //   }
+      if (!selectedAccount?._id) return;
 
-    //   onUpdateAccount(res.payload.data);
-    //   toast.success(res.payload.message, {
-    //     style: {
-    //       "--normal-bg":
-    //         "light-dark(var(--color-green-600), var(--color-green-400))",
-    //       "--normal-text": "var(--color-white)",
-    //       "--normal-border":
-    //         "light-dark(var(--color-green-600), var(--color-green-400))",
-    //     } as React.CSSProperties,
-    //   });
-    //   onOpenChange(false);
+      const apiData = transformFormToApi(formData);
+      const res = await AccountApiRequest.updateAccount(selectedAccount._id, apiData);
+      if (!res.payload.success) {
+        handleErrorApi({ error: res.payload, setError: form.setError, duration: 5000 });
+        return;
+      }
+
+      onUpdateAccount(res.payload.data);
+      toast.success(res.payload.message, {
+        style: {
+          "--normal-bg":
+            "light-dark(var(--color-green-600), var(--color-green-400))",
+          "--normal-text": "var(--color-white)",
+          "--normal-border":
+            "light-dark(var(--color-green-600), var(--color-green-400))",
+        } as React.CSSProperties,
+      });
+      onOpenChange(false);
     } catch (error) {
       handleErrorApi({ error, setError: form.setError, duration: 5000 });
     }
@@ -202,6 +151,12 @@ export default function UpdateAccountModal({
 
         {/* form wrapper */}
         <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
+            {/* ID (hidden) */}
+          <div className="grid gap-2">
+            <Label htmlFor="ca-email">ID</Label>
+            <Input disabled value={selectedAccount?._id} id="ca-id"/>
+          </div>
+
           {/* Email (full width) */}
           <div className="grid gap-2">
             <Label htmlFor="ca-email">Email</Label>
@@ -218,12 +173,30 @@ export default function UpdateAccountModal({
           {/* Password (full width) */}
           <div className="grid gap-2">
             <Label htmlFor="ca-password">Password</Label>
-            <Input
-              id="ca-password"
-              type="password"
-              placeholder="••••••"
-              {...register("password")}
-            />
+            <div className="relative">
+              <Input
+                id="ca-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••"
+                {...register("password")}
+                className="pr-10"
+              />
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:bg-transparent"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
             {errors.password?.message && (
               <p className="text-sm text-destructive">
                 {errors.password.message}
@@ -235,7 +208,11 @@ export default function UpdateAccountModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ca-firstName">First name</Label>
-              <Input id="ca-firstName" placeholder="Son" {...register("firstName")} />
+              <Input
+                id="ca-firstName"
+                placeholder="Son"
+                {...register("firstName")}
+              />
               {errors.firstName?.message && (
                 <p className="text-sm text-destructive">
                   {errors.firstName.message}
@@ -245,7 +222,11 @@ export default function UpdateAccountModal({
 
             <div className="grid gap-2">
               <Label htmlFor="ca-lastName">Last name</Label>
-              <Input id="ca-lastName" placeholder="Admin" {...register("lastName")} />
+              <Input
+                id="ca-lastName"
+                placeholder="Admin"
+                {...register("lastName")}
+              />
               {errors.lastName?.message && (
                 <p className="text-sm text-destructive">
                   {errors.lastName.message}
@@ -258,7 +239,11 @@ export default function UpdateAccountModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ca-dateOfBirth">Date of birth</Label>
-              <Input id="ca-dateOfBirth" type="date" {...register("dateOfBirth")} />
+              <Input
+                id="ca-dateOfBirth"
+                type="date"
+                {...register("dateOfBirth")}
+              />
               {errors.dateOfBirth?.message && (
                 <p className="text-sm text-destructive">
                   {errors.dateOfBirth.message}
@@ -274,7 +259,7 @@ export default function UpdateAccountModal({
                   name="sex"
                   render={({ field }) => (
                     <Select
-                    value={String(field.value)}
+                      value={String(field.value)}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
                       <SelectTrigger id="ca-sex" className="cursor-pointer">
@@ -288,7 +273,9 @@ export default function UpdateAccountModal({
                   )}
                 />
                 {errors.sex?.message && (
-                  <p className="text-sm text-destructive">{errors.sex.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.sex.message}
+                  </p>
                 )}
               </div>
 
@@ -299,7 +286,7 @@ export default function UpdateAccountModal({
                   name="role"
                   render={({ field }) => (
                     <Select
-                    value={String(field.value)}
+                      value={String(field.value)}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
                       <SelectTrigger id="ca-role" className="cursor-pointer">
@@ -315,7 +302,9 @@ export default function UpdateAccountModal({
                   )}
                 />
                 {errors.role?.message && (
-                  <p className="text-sm text-destructive">{errors.role.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.role.message}
+                  </p>
                 )}
               </div>
 
@@ -326,8 +315,7 @@ export default function UpdateAccountModal({
                   name="status"
                   render={({ field }) => (
                     <Select
-                                        value={String(field.value)}
-
+                      value={String(field.value)}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
                       <SelectTrigger id="ca-status" className="cursor-pointer">
@@ -355,23 +343,37 @@ export default function UpdateAccountModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ca-phone">Phone</Label>
-              <Input id="ca-phone" placeholder="0909999999" {...register("phone")} />
+              <Input
+                id="ca-phone"
+                placeholder="0909999999"
+                {...register("phone")}
+              />
               {errors.phone?.message && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
               )}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="ca-address">Address</Label>
-              <Input id="ca-address" placeholder="HCM" {...register("address")} />
+              <Input
+                id="ca-address"
+                placeholder="HCM"
+                {...register("address")}
+              />
               {errors.address?.message && (
-                <p className="text-sm text-destructive">{errors.address.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.message}
+                </p>
               )}
             </div>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="submit" className="cursor-pointer">Create</Button>
+            <Button type="submit" className="cursor-pointer">
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

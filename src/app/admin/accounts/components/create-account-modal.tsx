@@ -30,6 +30,7 @@ import { z } from "zod";
 import { AccountApiRequest } from "@/api-request/account";
 import { toast } from "sonner"
 import { handleErrorApi } from "@/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
 
 const ROLE_VALUES = [0, 1, 2, 3] as const;
 
@@ -93,6 +94,8 @@ export default function CreateAccountModal({
   onCreateAccount: (data: AdminAccount) => void;
 }) {
   const [error] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const form = useForm<CreateAccountInput>({
     resolver: zodResolver(createAccountSchema),
@@ -182,12 +185,31 @@ export default function CreateAccountModal({
           {/* Password (full width) */}
           <div className="grid gap-2">
             <Label htmlFor="ca-password">Password</Label>
-            <Input
-              id="ca-password"
-              type="password"
-              placeholder="••••••"
-              {...register("password")}
-            />
+            <div className="relative">
+              <Input
+                id="ca-password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••"
+                {...register("password")}
+                className="pr-10"
+              />
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:bg-transparent"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
             {errors.password?.message && (
               <p className="text-sm text-destructive">
                 {errors.password.message}
@@ -199,7 +221,11 @@ export default function CreateAccountModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ca-firstName">First name</Label>
-              <Input id="ca-firstName" placeholder="Son" {...register("firstName")} />
+              <Input
+                id="ca-firstName"
+                placeholder="Son"
+                {...register("firstName")}
+              />
               {errors.firstName?.message && (
                 <p className="text-sm text-destructive">
                   {errors.firstName.message}
@@ -209,7 +235,11 @@ export default function CreateAccountModal({
 
             <div className="grid gap-2">
               <Label htmlFor="ca-lastName">Last name</Label>
-              <Input id="ca-lastName" placeholder="Admin" {...register("lastName")} />
+              <Input
+                id="ca-lastName"
+                placeholder="Admin"
+                {...register("lastName")}
+              />
               {errors.lastName?.message && (
                 <p className="text-sm text-destructive">
                   {errors.lastName.message}
@@ -222,7 +252,11 @@ export default function CreateAccountModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ca-dateOfBirth">Date of birth</Label>
-              <Input id="ca-dateOfBirth" type="date" {...register("dateOfBirth")} />
+              <Input
+                id="ca-dateOfBirth"
+                type="date"
+                {...register("dateOfBirth")}
+              />
               {errors.dateOfBirth?.message && (
                 <p className="text-sm text-destructive">
                   {errors.dateOfBirth.message}
@@ -252,7 +286,9 @@ export default function CreateAccountModal({
                   )}
                 />
                 {errors.sex?.message && (
-                  <p className="text-sm text-destructive">{errors.sex.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.sex.message}
+                  </p>
                 )}
               </div>
 
@@ -279,7 +315,9 @@ export default function CreateAccountModal({
                   )}
                 />
                 {errors.role?.message && (
-                  <p className="text-sm text-destructive">{errors.role.message}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.role.message}
+                  </p>
                 )}
               </div>
 
@@ -318,23 +356,37 @@ export default function CreateAccountModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="ca-phone">Phone</Label>
-              <Input id="ca-phone" placeholder="0909999999" {...register("phone")} />
+              <Input
+                id="ca-phone"
+                placeholder="0909999999"
+                {...register("phone")}
+              />
               {errors.phone?.message && (
-                <p className="text-sm text-destructive">{errors.phone.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.phone.message}
+                </p>
               )}
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="ca-address">Address</Label>
-              <Input id="ca-address" placeholder="HCM" {...register("address")} />
+              <Input
+                id="ca-address"
+                placeholder="HCM"
+                {...register("address")}
+              />
               {errors.address?.message && (
-                <p className="text-sm text-destructive">{errors.address.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.address.message}
+                </p>
               )}
             </div>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="submit" className="cursor-pointer">Create</Button>
+            <Button type="submit" className="cursor-pointer">
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
