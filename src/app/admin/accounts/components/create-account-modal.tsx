@@ -1,9 +1,9 @@
  "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TriangleAlert, UserPlus } from "lucide-react";
 
-import type { AdminAccount, CreateAccountModel } from "@/types/account";
+import type { AdminAccount } from "@/types/account";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AccountApiRequest } from "@/api-request/account";
 import { toast } from "sonner"
-import { setErrorMap } from "zod/v3";
 import { handleErrorApi } from "@/lib/utils";
 
 const ROLE_VALUES = [0, 1, 2, 3] as const;
@@ -95,41 +94,51 @@ export default function CreateAccountModal({
 }) {
   const [error] = useState<string | null>(null);
 
-  const { handleSubmit, register, control, formState: { errors } } =
-    useForm<CreateAccountInput>({
+  const form = useForm<CreateAccountInput>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
-        firstName: "",
-        lastName: "",
-        phone: "",
-        address: "",
-        dateOfBirth: "",
-        email: "",
-        password: "",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      address: "",
+      dateOfBirth: "",
+      email: "",
+      password: "",
       role: 0,
       status: 1,
       sex: 1,
     },
   });
 
-  async function onSubmit(data: CreateAccountModel) {
+    useEffect(() => {
+    if (!open) {
+      form.reset();
+    }
+  }, [open, form]);
+
+  const { handleSubmit, register, control, formState: { errors } } = form;
+
+  async function onSubmit(data: CreateAccountInput) {
     try {
       const res = await AccountApiRequest.createAccount(data);
-      if (res.payload.success) {
-        onCreateAccount(res.payload.data);
-        toast.success(res.payload.message, {
-          style: {
-            "--normal-bg": "light-dark(var(--color-green-600), var(--color-green-400))",
-            "--normal-text": "var(--color-white)",
-            "--normal-border": "light-dark(var(--color-green-600), var(--color-green-400))",
-          } as React.CSSProperties,
-        })
-        onOpenChange(false);
-      } else {
-      handleErrorApi({ error: res.payload.data, duration: 5000 })
+      if (!res.payload.success) {
+        handleErrorApi({ error: res.payload, setError: form.setError, duration: 5000 });
+        return;
       }
+
+      onCreateAccount(res.payload.data);
+      toast.success(res.payload.message, {
+        style: {
+          "--normal-bg":
+            "light-dark(var(--color-green-600), var(--color-green-400))",
+          "--normal-text": "var(--color-white)",
+          "--normal-border":
+            "light-dark(var(--color-green-600), var(--color-green-400))",
+        } as React.CSSProperties,
+      });
+      onOpenChange(false);
     } catch (error) {
-      handleErrorApi({ error, duration: 5000 })
+      handleErrorApi({ error, setError: form.setError, duration: 5000 });
     }
   }
 
@@ -232,7 +241,7 @@ export default function CreateAccountModal({
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
-                      <SelectTrigger id="ca-sex">
+                      <SelectTrigger id="ca-sex" className="cursor-pointer">
                         <SelectValue placeholder="Sex" />
                       </SelectTrigger>
                       <SelectContent>
@@ -257,7 +266,7 @@ export default function CreateAccountModal({
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
-                      <SelectTrigger id="ca-role">
+                      <SelectTrigger id="ca-role" className="cursor-pointer">
                         <SelectValue placeholder="Role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -284,7 +293,7 @@ export default function CreateAccountModal({
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(Number(v))}
                     >
-                      <SelectTrigger id="ca-status">
+                      <SelectTrigger id="ca-status" className="cursor-pointer">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -325,7 +334,7 @@ export default function CreateAccountModal({
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="submit">Create (local)</Button>
+            <Button type="submit" className="cursor-pointer">Create</Button>
           </DialogFooter>
         </form>
       </DialogContent>

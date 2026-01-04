@@ -62,7 +62,7 @@ const LoginForm = () => {
       );
 
       if (!response.payload.success) {
-        toast.error(response.payload.data.message, {
+        toast.error(response.payload.message, {
           style: {
             "--normal-bg": "light-dark(var(--color-red-600), var(--color-red-400))",
             "--normal-text": "var(--color-white)",

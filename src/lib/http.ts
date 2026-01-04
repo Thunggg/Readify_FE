@@ -13,10 +13,14 @@ interface ErrorDetail {
 }
 
 type EntityErrorPayload = {
+  success: false;
   message: string;
-  errorCode: string;
+  data: {
+    code: string;
+    details?: ErrorDetail[];
+  };
   statusCode: number;
-  details?: ErrorDetail[];
+  timestamp?: string;
 };
 
 export class HttpError extends Error {

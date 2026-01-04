@@ -17,7 +17,7 @@ export default async function AccountsPage() {
   if(res.payload.success){
     accounts = res.payload.data.items;
   } else {
-    console.error(res.payload.data.message);
+    console.error(res.payload.message);
   }
 
   return (
