@@ -1,7 +1,10 @@
 import http from "@/lib/http";
 import type { ApiPaginatedResponse, ApiResponse } from "@/types/api";
-import type { AdminAccount, CreateAccountModel } from "@/types/account";
-import type { UpdateAccountApiRequest } from "@/validation/api-schemas";
+import type { AdminAccount } from "@/types/account";
+import type {
+  CreateAccountApiRequest,
+  UpdateAccountApiRequest,
+} from "@/validation/api-schemas";
 
 export const AccountApiRequest = {
   getMe: async (accessToken: string) => {
@@ -38,7 +41,7 @@ export const AccountApiRequest = {
     return response;
   },
 
-  createAccount: async (data: CreateAccountModel) => {
+  createAccount: async (data: CreateAccountApiRequest) => {
     const response = await http.post<ApiResponse<AdminAccount>>(
       "/accounts/create",
       data,
