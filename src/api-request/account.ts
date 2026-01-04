@@ -68,4 +68,17 @@ export const AccountApiRequest = {
     );
     return response;
   },
+
+  deleteAccount: async (id: string) => {
+    const response = await http.delete<ApiResponse<AdminAccount>>(
+      `/accounts/delete/${id}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    return response;
+  },
 };

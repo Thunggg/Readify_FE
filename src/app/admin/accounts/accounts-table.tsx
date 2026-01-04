@@ -20,12 +20,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import UpdateAccountModal from "./components/update-account-modal";
 import { Badge } from "@/components/ui/badge";
 import DetailAccountDrawer from "./components/detail-account-drawer";
+import DeleteAccountModal from "./components/delete-account-modal";
 
 
 export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }) {
   const [createOpen, setCreateOpen] = useState(false); // Đóng mở modal tạo tài khoản
   const [showUpdateDialog, setShowUpdateDialog] = useState(false); // Đóng mở modal cập nhật tài khoản
-  const [, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
   const [showDetailAccount, setShowDetailAccount] = useState(false); // Đóng mở drawer chi tiết tài khoản
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts); // Danh sách tài khoản trong local
   const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
@@ -146,6 +147,14 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
         open={showDetailAccount}
         onOpenChange={setShowDetailAccount}
         selectedAccount={selectedAccount}
+      />
+      <DeleteAccountModal
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        selectedAccount={selectedAccount}
+        onDeleteAccount={() => {
+          setLocalAccounts(localAccounts.filter((account) => account._id !== selectedAccount?._id));
+        }}
       />
       <Table>
         <TableCaption>A list of your recent invoices.</TableCaption>
