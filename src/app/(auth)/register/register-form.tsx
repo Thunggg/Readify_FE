@@ -7,7 +7,6 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-
 import { authApiRequest } from "@/api-request/auth"
 import Logo from "@/components/shadcn-studio/logo"
 import { Button } from "@/components/ui/button"
@@ -18,8 +17,6 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { handleErrorApi } from "@/lib/utils"
 import { EyeIcon, EyeOffIcon, Loader2 } from "lucide-react"
-
-// Reuse the exact same pattern module as the Login page
 import styles from "../login/pattern.module.css"
 
 function isAtLeast16YearsOld(dateString: string) {

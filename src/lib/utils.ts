@@ -13,13 +13,15 @@ type ErrorDetail = { field: string; message: string };
 function getDetails(error: any): ErrorDetail[] | undefined {
   // 1) Error được wrap bởi EntityError (custom FE error), ưu tiên lấy details từ payload
   if (error instanceof EntityError) {
-    const detail = error.payload.data.details;
+    const detail = error?.payload?.data?.details;
     if (Array.isArray(detail)) {
       return detail as ErrorDetail[];
     }
   }
-  // 2) Error trả về trực tiếp từ API (chưa wrap), kiểm tra payload.data.details
-  const candidates = [error.payload.data.details];
+  // 2) Error trả về từ API:
+  // - trường hợp throw HttpError: error.payload.data.details
+  // - trường hợp bạn truyền thẳng response.payload: error.data.details
+  const candidates = [error?.payload?.data?.details, error?.data?.details];
 
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) {
@@ -51,8 +53,11 @@ export const handleErrorApi = ({
   }
 
   const message =
-    error?.message ||
+    // HttpError: ưu tiên payload.message (backend) thay vì statusText (Bad Request)
     error?.payload?.message ||
+    // ApiErrorResponse (truyền trực tiếp): message nằm ở top-level
+    error?.message ||
+    // fallback
     error?.data?.message ||
     "An unexpected error occurred";
 
