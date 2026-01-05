@@ -1,60 +1,96 @@
-import Image from "next/image"
-import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Star, ShoppingCart } from "lucide-react"
-
+import Image from "next/image";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Star } from "lucide-react";
 interface BookCardProps {
-  id?: number
-  title: string
-  author: string
-  price: string
-  originalPrice?: string
-  rating: number
-  reviews: number
-  imageUrl: string
-  badge?: string
+  _id: string;
+  slug: string;
+  title: string;
+  authors: string[];
+  thumbnailUrl?: string;
+
+  basePrice: number;
+  currency?: string;
+  soldCount?: number;
+
+  // future fields (BE chưa có)
+  rating?: number; // e.g. 4.5
+  reviews?: number; // e.g. 120
+
+  badge?: string;
 }
 
-export function BookCard({ id, title, author, price, originalPrice, rating, reviews, imageUrl, badge }: BookCardProps) {
+function getSafeImageUrl(url?: string) {
+  if (!url || typeof url !== "string") return "/book-default-cover.jpg";
+  if (!url.startsWith("http") && !url.startsWith("/"))
+    return "/book-default-cover.jpg";
+  return url;
+}
+
+export function BookCard({
+  slug,
+  title,
+  authors,
+  thumbnailUrl,
+  basePrice,
+  currency = "VND",
+  soldCount,
+  rating,
+  reviews,
+  badge,
+}: BookCardProps) {
   return (
     <Card className="overflow-hidden border border-border p-0">
-      <Link href={`/book/${id || "1"}`}>
+      <Link href={`/book/${slug}`}>
         <div className="relative aspect-[4/4] overflow-hidden bg-muted">
-          {badge && <Badge className="absolute top-2 left-2 z-10 bg-red-500 hover:bg-red-600">{badge}</Badge>}
+          {badge && (
+            <Badge className="absolute top-2 left-2 z-10 bg-red-500">
+              {badge}
+            </Badge>
+          )}
           <Image
-            src={  "/book-default-cover.jpg"}
-            // src={imageUrl || "/book-default-cover.jpg"}
+            src={getSafeImageUrl(thumbnailUrl)}
             alt={title}
             fill
             className="object-cover"
           />
         </div>
       </Link>
+
       <CardContent className="p-4 pt-0 space-y-2">
-        <Link href={`/book/${id || 1}`}>
-          <h3 className="font-semibold line-clamp-2 text-balance h-12 overflow-hidden">
-            {title}
-          </h3>
+        <Link href={`/book/${slug}`}>
+          <h3 className="font-semibold line-clamp-2 h-12">{title}</h3>
         </Link>
-        <p className="text-sm text-muted-foreground truncate">{author}</p>
-        <div className="flex items-center gap-1">
-          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-medium">{rating}</span>
-          <span className="text-sm text-muted-foreground">({reviews})</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-primary">{price}</span>
-            {originalPrice && <span className="text-sm text-muted-foreground line-through">{originalPrice}</span>}
+
+        <p className="text-sm text-muted-foreground truncate">
+          {Array.isArray(authors) ? authors.join(", ") : "Đang cập nhật"}
+        </p>
+
+        {rating !== undefined && reviews !== undefined && (
+          <div className="flex items-center gap-1">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm font-medium">{rating}</span>
+            <span className="text-sm text-muted-foreground">({reviews})</span>
           </div>
+        )}
+
+        {soldCount !== undefined && (
+          <p className="text-xs text-muted-foreground">Đã bán {soldCount}</p>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className="text-lg font-bold text-primary">
+            {basePrice.toLocaleString("vi-VN")} {currency}
+          </span>
         </div>
+
         <Button className="w-full" size="sm">
           <ShoppingCart className="h-4 w-4 mr-2" />
           Thêm vào giỏ
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

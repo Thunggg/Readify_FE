@@ -10,7 +10,7 @@ export default function StorefrontLayout({
   return (
     <div className="theme-store min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 bg-background">{children}</main>
       <Footer />
     </div>
   );

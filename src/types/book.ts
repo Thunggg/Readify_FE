@@ -3,40 +3,49 @@ export type PublicBook = {
   title: string;
   slug: string;
 
-  coverImage: string;
-  images?: string[];
+  thumbnailUrl: string;
+
+  images?: {
+    _id: string;
+    url: string;
+  }[];
 
   authors: string[];
-  categories: {
+
+  categoryIds: {
     _id: string;
     name: string;
     slug: string;
   }[];
 
   basePrice: number;
-  originalPrice?: number;
+  currency: string;
 
-  // averageRating?: number;
-  // totalReviews?: number;
+  averageRating?: number;
+  totalReviews?: number;
+
+  isInStock?: boolean;
+
   soldCount?: number;
 
-  // isInStock?: boolean;
-  status: number;
+  tags?: string[];
 
   createdAt: string;
-  updatedAt: string;
 };
 
 export type PublicBookDetail = PublicBook & {
+  subtitle?: string;
   description?: string;
-  publisher?: string;
-  publishDate?: string;
 
-  pages?: number;
+  publisherId?: {
+    _id: string;
+    name: string;
+  };
+
+  publishDate?: string;
+  pageCount?: number;
   language?: string;
   isbn?: string;
-
-  tags?: string[];
 };
 
 export type SearchPublicBooksParams = {
@@ -61,10 +70,9 @@ export type SearchPublicBooksParams = {
 };
 
 export type SearchBookSuggestion = {
-q: string;
-limit?: number;
+  q: string;
+  limit?: number;
 };
-
 
 export type BookSuggestion = {
   _id: string;

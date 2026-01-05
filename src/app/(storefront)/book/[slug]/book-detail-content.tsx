@@ -21,48 +21,7 @@ import {
   Plus,
 } from "lucide-react";
 import { BookApiRequest } from "@/api-request/book";
-import { PublicBookDetail } from "@/types/book";
-
-const relatedBooks = [
-  {
-    id: 3,
-    title: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-    author: "Rosie Nguyễn",
-    price: "90.000đ",
-    rating: 4.7,
-    reviews: 3000,
-    imageUrl: "/youth-motivation-book.jpg",
-  },
-  {
-    id: 4,
-    title: "Cây Cam Ngọt Của Tôi",
-    author: "José Mauro",
-    price: "105.000đ",
-    rating: 4.9,
-    reviews: 4000,
-    imageUrl: "/my-sweet-orange-tree.jpg",
-  },
-  {
-    id: 5,
-    title: "Thay Đổi Tí Hon",
-    author: "James Clear",
-    price: "160.000đ",
-    rating: 4.8,
-    reviews: 8000,
-    imageUrl: "/atomic-habits-book.png",
-  },
-  {
-    id: 6,
-    title: "Sapiens: Lược Sử Loài Người",
-    author: "Yuval Noah Harari",
-    price: "195.000đ",
-    originalPrice: "220.000đ",
-    rating: 4.9,
-    reviews: 6000,
-    imageUrl: "/sapiens-book-cover.png",
-  },
-];
-
+import { PublicBook, PublicBookDetail } from "@/types/book";
 interface BookDetailContentProps {
   bookSlug: string;
 }
@@ -72,33 +31,56 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [book, setBook] = useState<PublicBookDetail | null>(null);
+  const [relatedBooks, setRelatedBooks] = useState<PublicBook[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!bookSlug) return;
 
-    const fetchBook = async () => {
+    let mounted = true;
+
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await BookApiRequest.getBySlug(bookSlug);
-        const data = res.payload.data;
-        console.log("Book detail data:", data);
 
-        if (data && typeof data === "object" && "slug" in data) {
-          setBook(data as PublicBookDetail);
+        const [bookRes, relatedRes] = await Promise.all([
+          BookApiRequest.getBySlug(bookSlug),
+          BookApiRequest.getRelatedBySlug(bookSlug,4),
+        ]);
+
+        if (!mounted) return;
+
+        // book detail
+        if (bookRes.status >= 200 && bookRes.status < 300) {
+          setBook(bookRes.payload.data as PublicBookDetail);
         } else {
-          console.error("Get book error:", data);
           setBook(null);
         }
+
+        // related books
+        if (relatedRes.status >= 200 && relatedRes.status < 300) {
+          setRelatedBooks(relatedRes.payload.data as PublicBook[] ?? []);
+        } else {
+          setRelatedBooks([]);
+        }
       } catch (err) {
-        console.error("Get book by slug failed", err);
+        if (!mounted) return;
+        console.error("Fetch book data failed", err);
+        setBook(null);
+        setRelatedBooks([]);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    fetchBook();
+    fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, [bookSlug]);
+
+  console.log("Book detail data:", relatedBooks);
 
   const handleQuantityChange = (delta: number) => {
     setQuantity(Math.max(1, quantity + delta));
@@ -126,12 +108,6 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
     return num.toLocaleString("vi-VN") + " ₫";
   }
 
-  const discount = book.originalPrice
-    ? Math.round(
-        ((book.originalPrice - book.basePrice) / book.originalPrice) * 100
-      )
-    : 0;
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
@@ -147,13 +123,13 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
           Products
         </Link>
         <span>/</span>
-        {book.categories?.[0] && (
+        {book.categoryIds?.[0] && (
           <>
             <Link
-              href={`/category/${book.categories[0].slug}`}
+              href={`/category/${book.categoryIds[0].slug}`}
               className="transition-colors hover:text-foreground"
             >
-              {book.categories[0].name}
+              {book.categoryIds[0].name}
             </Link>
             <span>/</span>
           </>
@@ -171,9 +147,9 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                 <div className="relative aspect-[3/4] bg-muted">
                   <Image
                     src={
-                      book.images?.[selectedImage] ||
-                      book.coverImage ||
-                      "/placeholder.svg"
+                      book.images?.[selectedImage].url ||
+                      book.thumbnailUrl ||
+                      "/book-default-cover.jpg"
                     }
                     alt={book.title}
                     fill
@@ -197,7 +173,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                     }`}
                   >
                     <Image
-                      src={image || "/placeholder.svg"}
+                      src={image.url || "/book-default-cover.jpg"}
                       alt={`${book.title} image ${index + 1}`}
                       fill
                       className="object-cover"
@@ -213,8 +189,8 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
         <div className="space-y-6 lg:col-span-3">
           {/* Title & Category */}
           <div>
-            {book.categories?.[0] && (
-              <Badge className="mb-3">{book.categories[0].name}</Badge>
+            {book.categoryIds?.[0] && (
+              <Badge className="mb-3">{book.categoryIds[0].name}</Badge>
             )}
             <h1 className="mb-2 text-3xl font-bold text-balance md:text-4xl">
               {book.title}
@@ -224,6 +200,14 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                 Author:{" "}
                 <span className="font-medium text-foreground">
                   {book.authors.join(", ")}
+                </span>
+              </p>
+            )}
+            {book.publisherId && (
+              <p className="text-lg text-muted-foreground">
+                Publisher:{" "}
+                <span className="font-medium text-foreground">
+                  {book.publisherId.name}
                 </span>
               </p>
             )}
@@ -269,16 +253,6 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                 <span className="text-4xl font-bold text-primary">
                   {formatPrice(book.basePrice)}
                 </span>
-                {book.originalPrice && (
-                  <>
-                    <span className="text-xl text-muted-foreground line-through">
-                      {formatPrice(book.originalPrice)}
-                    </span>
-                    <Badge variant="destructive" className="text-base">
-                      -{discount}%
-                    </Badge>
-                  </>
-                )}
               </div>
               <p className="text-sm text-muted-foreground">VAT included</p>
             </CardContent>
@@ -354,15 +328,15 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
           </div>
 
           {/* Features */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Card>
               <CardContent className="flex items-center gap-3 p-4">
                 <Truck className="h-8 w-8 text-primary" />
                 <div>
                   <p className="text-sm font-medium">Free shipping</p>
-                  <p className="text-xs text-muted-foreground">
+                  {/* <p className="text-xs text-muted-foreground">
                     Orders over 200,000₫
-                  </p>
+                  </p> */}
                 </div>
               </CardContent>
             </Card>
@@ -379,7 +353,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            {/* <Card>
               <CardContent className="flex items-center gap-3 p-4">
                 <RotateCcw className="h-8 w-8 text-primary" />
                 <div>
@@ -387,7 +361,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                   <p className="text-xs text-muted-foreground">Within 7 days</p>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>
@@ -435,28 +409,28 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                     </span>
                   </div>
                 )}
-                {book.publisher && (
+                {book.publisherId && (
                   <div className="flex justify-between border-b py-3">
                     <span className="text-muted-foreground">Publisher</span>
-                    <span className="font-medium">{book.publisher}</span>
+                    <span className="font-medium">{book.publisherId.name}</span>
                   </div>
                 )}
-                {book.publicationDate && (
+                {book.publishDate && (
                   <div className="flex justify-between border-b py-3">
                     <span className="text-muted-foreground">
                       Publication Date
                     </span>
                     <span className="font-medium">
-                      {new Date(book.publicationDate).toLocaleDateString(
+                      {new Date(book.publishDate).toLocaleDateString(
                         "vi-VN"
                       )}
                     </span>
                   </div>
                 )}
-                {book.pages && (
+                {book.pageCount && (
                   <div className="flex justify-between border-b py-3">
                     <span className="text-muted-foreground">Pages</span>
-                    <span className="font-medium">{book.pages} pages</span>
+                    <span className="font-medium">{book.pageCount} pages</span>
                   </div>
                 )}
                 {book.language && (
@@ -488,7 +462,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
         <div className="grid gap-4 md:gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {relatedBooks.map((book) => (
-            <BookCard key={book.id} {...book} />
+            <BookCard key={book.slug} {...book} />
           ))}
         </div>
       </div>
