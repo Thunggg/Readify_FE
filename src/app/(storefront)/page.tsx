@@ -18,13 +18,14 @@ export default async function HomePage() {
     accessToken ?? ""
   );
 
-  console.log(res.payload.data);
+  const books = res.payload.success ? res.payload.data.items : [];
+  
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         <HeroSection />
         <CategoryTabs />
-        <FeaturedBooks />
+        <FeaturedBooks books={books} />
         {/* <Newsletter /> */}
       </main>
     </div>

@@ -147,7 +147,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                 <div className="relative aspect-[3/4] bg-muted">
                   <Image
                     src={
-                      book.images?.[selectedImage].url ||
+                      book.images?.[selectedImage]?.url ||
                       book.thumbnailUrl ||
                       "/book-default-cover.jpg"
                     }

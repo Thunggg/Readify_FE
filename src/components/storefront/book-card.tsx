@@ -15,9 +15,8 @@ interface BookCardProps {
   currency?: string;
   soldCount?: number;
 
-  // future fields (BE chưa có)
-  rating?: number; // e.g. 4.5
-  reviews?: number; // e.g. 120
+  rating?: number;
+  reviews?: number; 
 
   badge?: string;
 }

@@ -284,11 +284,11 @@ export function DiscoverContent() {
         </div>
 
         {/* Books Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {/* <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {featuredCollections[activeCollection].books.map((book) => (
-            <BookCard key={book.id} {...book} />
+            <BookCard key={book.id} book={book} />
           ))}
-        </div>
+        </div> */}
 
         <div className="text-center mt-8">
           <Button size="lg" asChild>
