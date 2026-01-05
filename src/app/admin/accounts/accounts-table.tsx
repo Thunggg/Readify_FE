@@ -21,6 +21,7 @@ import UpdateAccountModal from "./components/update-account-modal";
 import { Badge } from "@/components/ui/badge";
 import DetailAccountDrawer from "./components/detail-account-drawer";
 import DeleteAccountModal from "./components/delete-account-modal";
+import SortableHeader from "./components/sort-header";
 
 
 export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }) {
@@ -30,7 +31,6 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
   const [showDetailAccount, setShowDetailAccount] = useState(false); // Đóng mở drawer chi tiết tài khoản
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts); // Danh sách tài khoản trong local
   const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
-
 
   const sexLabel = (sex: number) => {
   if (sex === 1) {
@@ -161,10 +161,16 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Full name</TableHead>
+            <TableHead>
+              <SortableHeader title="Email" field="email" />
+            </TableHead>
+            <TableHead>
+              <SortableHeader title="Full name" field="fullName" />
+            </TableHead>
             <TableHead>Phone</TableHead>
-            <TableHead>Date of Birth</TableHead>
+            <TableHead>
+              <SortableHeader title="Date of Birth" field="dateOfBirth" />
+            </TableHead>
             <TableHead>Sex</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
