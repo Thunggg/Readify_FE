@@ -20,24 +20,21 @@ export const AccountApiRequest = {
     return response;
   },
 
-  getAccountsList: async (
-    accessToken: string,
-    params?: { page?: number; limit?: number; q?: string }
-  ) => {
-    const qs = new URLSearchParams();
-    if (params?.page) qs.set("page", String(params.page));
-    if (params?.limit) qs.set("limit", String(params.limit));
-    if (params?.q) qs.set("q", params.q);
-
-    const url = qs.toString() ? `/accounts?${qs.toString()}` : "/accounts";
-
-    const response = await http.get<ApiPaginatedResponse<AdminAccount>>(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
-      },
-      cache: "no-store",
-    });
+  getAccountsList: async (params?: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    sortBy?: string;
+    order?: "asc" | "desc";
+  }) => {
+    const response = await http.get<ApiPaginatedResponse<AdminAccount>>(
+      "/accounts",
+      {
+        params,
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
     return response;
   },
 

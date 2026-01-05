@@ -2,6 +2,7 @@ import envConfig from "@/configs/config-env";
 
 type CustomOptions = RequestInit & {
   baseUrl?: string | undefined;
+  params?: Record<string, any>;
 };
 
 const ENTITY_ERROR_STATUS = 422;
@@ -13,14 +14,10 @@ interface ErrorDetail {
 }
 
 type EntityErrorPayload = {
-  success: false;
   message: string;
-  data: {
-    code: string;
-    details?: ErrorDetail[];
-  };
+  errorCode: string;
   statusCode: number;
-  timestamp?: string;
+  details?: ErrorDetail[];
 };
 
 export class HttpError extends Error {
@@ -80,9 +77,21 @@ const request = async <Response>(
       ? envConfig.NEXT_PUBLIC_API_ENDPOINT
       : options.baseUrl;
 
-  const fullUrl = url.startsWith("/")
-    ? `${baseUrl}${url}`
-    : `${baseUrl}/${url}`;
+  let fullUrl = url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+
+  // Xử lý params thành query string
+  if (options?.params) {
+    const queryParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, String(value));
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) {
+      fullUrl += `?${queryString}`;
+    }
+  }
 
   const response = await fetch(fullUrl, {
     ...options,

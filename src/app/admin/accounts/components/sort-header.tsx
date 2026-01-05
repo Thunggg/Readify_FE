@@ -7,28 +7,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ArrowUp, ArrowDown, Check, X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { SortField, SortOrder } from "../accounts-table";
 
-type SortField = "email" | "fullName" | "phone" | "dateOfBirth" | "sex" | "status";
-type SortOrder = "asc" | "desc" | null
+
 
 export default function SortableHeader({
   title,
-  field
+  field,
+  onSortChange
 }: {
   title: string;
   field: SortField;
+  onSortChange: (field: SortField, order: SortOrder) => void;
 }) {
-    const [sortField, setSortField] = useState<SortField | null>(null);
-    const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+
     const [isOpen, setIsOpen] = useState(false);
 
     const setSort = (field: SortField, order: SortOrder) => {
         if(order === null){
-            setSortField(null);
-            setSortOrder(null);
+            onSortChange(null, null);
         } else {
-            setSortField(field);
-            setSortOrder(order);
+            onSortChange(field, order);
         }
         setIsOpen(false);
     }

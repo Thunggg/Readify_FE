@@ -71,7 +71,6 @@ export default function CreateAccountModal({
   async function onSubmit(data: CreateAccountFormInput) {
     try {
       const res = await AccountApiRequest.createAccount(data);
-      console.log( ">>>>>>> create account", res);
       if (!res.payload.success) {
         handleErrorApi({ error: res.payload, setError: form.setError, duration: 5000 });
         return;

@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/table"
 import { AdminAccount } from "@/types/account";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { BanIcon, CheckCircleIcon, CircleHelpIcon, CircleMinusIcon, EyeIcon, MailIcon, MarsIcon, MoreHorizontalIcon, Plus, VenusIcon } from "lucide-react";
+import { BanIcon, CheckCircleIcon, CircleHelpIcon, CircleMinusIcon, MailIcon, MarsIcon, MoreHorizontalIcon, Plus, VenusIcon } from "lucide-react";
 import CreateAccountModal from "./components/create-account-modal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import UpdateAccountModal from "./components/update-account-modal";
@@ -22,15 +22,22 @@ import { Badge } from "@/components/ui/badge";
 import DetailAccountDrawer from "./components/detail-account-drawer";
 import DeleteAccountModal from "./components/delete-account-modal";
 import SortableHeader from "./components/sort-header";
+import { AccountApiRequest } from "@/api-request/account";
+import { handleErrorApi } from "@/lib/utils";
 
+export type SortField = "email" | "fullName" | "phone" | "dateOfBirth" | "sex" | "status" | null;
+export type SortOrder = "asc" | "desc" | null
 
-export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }) {
+export default function AccountsTable() {
   const [createOpen, setCreateOpen] = useState(false); // Đóng mở modal tạo tài khoản
   const [showUpdateDialog, setShowUpdateDialog] = useState(false); // Đóng mở modal cập nhật tài khoản
   const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
   const [showDetailAccount, setShowDetailAccount] = useState(false); // Đóng mở drawer chi tiết tài khoản
-  const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>(accounts); // Danh sách tài khoản trong local
+  const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>([]); // Danh sách tài khoản trong local
   const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
+
+  const [sortField, setSortField] = useState<SortField>(null); // Lấy trường cần sort
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc"); // asc hoặc desc
 
   const sexLabel = (sex: number) => {
   if (sex === 1) {
@@ -73,7 +80,6 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
     </Badge>
   );
   };
-
 
   const statusLabel = (status: number) => {
     if(status === 1){
@@ -118,7 +124,36 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
       );
     }
     return "Unknown";
+  };
+
+  const onSortChange = (field: SortField, order: SortOrder) => {
+    setSortField(field);
+    setSortOrder(order);
   }
+
+  useEffect(() => {
+
+    const fetchAccounts = async () => {
+      try{
+        const response = await AccountApiRequest.getAccountsList({
+          limit: 10,
+          page: 1,
+          sortBy: sortField as string,
+          order: sortOrder as "asc" | "desc",
+        });
+
+        if(!response.status || !response.payload.success){
+          handleErrorApi({ error: response.payload.message, setError: () => {}, duration: 5000 });
+          return;
+        }
+
+        setLocalAccounts(response.payload.data.items);
+      } catch (error) {
+        handleErrorApi({ error, setError: () => {}, duration: 5000 });
+      }
+    }
+    fetchAccounts();
+  }, [sortField, sortOrder]) 
 
   return (
     <>
@@ -140,7 +175,11 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
         onOpenChange={setShowUpdateDialog}
         selectedAccount={selectedAccount}
         onUpdateAccount={(data) => {
-          setLocalAccounts(localAccounts.map((account) => account._id === data._id ? data : account));
+          setLocalAccounts(
+            localAccounts.map((account) =>
+              account._id === data._id ? data : account
+            )
+          );
         }}
       />
       <DetailAccountDrawer
@@ -153,7 +192,11 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
         onOpenChange={setShowDeleteDialog}
         selectedAccount={selectedAccount}
         onDeleteAccount={() => {
-          setLocalAccounts(localAccounts.filter((account) => account._id !== selectedAccount?._id));
+          setLocalAccounts(
+            localAccounts.filter(
+              (account) => account._id !== selectedAccount?._id
+            )
+          );
         }}
       />
       <Table>
@@ -162,14 +205,26 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
           <TableRow>
             <TableHead>Avatar</TableHead>
             <TableHead>
-              <SortableHeader title="Email" field="email" />
+              <SortableHeader
+                title="Email"
+                field="email"
+                onSortChange={onSortChange}
+              />
             </TableHead>
             <TableHead>
-              <SortableHeader title="Full name" field="fullName" />
+              <SortableHeader
+                title="Full name"
+                field="fullName"
+                onSortChange={onSortChange}
+              />
             </TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>
-              <SortableHeader title="Date of Birth" field="dateOfBirth" />
+              <SortableHeader
+                title="Date of Birth"
+                field="dateOfBirth"
+                onSortChange={onSortChange}
+              />
             </TableHead>
             <TableHead>Sex</TableHead>
             <TableHead>Status</TableHead>
@@ -191,12 +246,14 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
                 </Avatar>
               </TableCell>
               <TableCell
-              className="cursor-pointer"
-              onClick={() => {
-                setShowDetailAccount(true);
-                setSelectedAccount(account);
-              }}
-              >{account.email}</TableCell>
+                className="cursor-pointer"
+                onClick={() => {
+                  setShowDetailAccount(true);
+                  setSelectedAccount(account);
+                }}
+              >
+                {account.email}
+              </TableCell>
               <TableCell>{`${account.firstName} ${account.lastName}`}</TableCell>
               <TableCell>{account.phone}</TableCell>
               <TableCell>
@@ -219,10 +276,12 @@ export default function AccountsTable({ accounts }: { accounts: AdminAccount[] }
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-40" align="end">
                     <DropdownMenuGroup>
-                      <DropdownMenuItem onSelect={() => {
-                        setShowUpdateDialog(true);
-                        setSelectedAccount(account);
-                      }}>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setShowUpdateDialog(true);
+                          setSelectedAccount(account);
+                        }}
+                      >
                         Edit Account
                       </DropdownMenuItem>
                       <DropdownMenuItem
