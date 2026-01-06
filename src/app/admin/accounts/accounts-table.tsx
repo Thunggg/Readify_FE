@@ -47,6 +47,8 @@ import {
 } from "./components/filter-dropdown";
 import SortableHeader from "./components/sort-header";
 import UpdateAccountModal from "./components/update-account-modal";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import PaginationControls from "./components/pagination-controls";
 
 export type SortField =
   | "email"
@@ -70,11 +72,15 @@ export default function AccountsTable() {
 
   const [sortField, setSortField] = useState<SortField>(null); // Lấy trường cần sort
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc"); // asc hoặc desc
-  const [searchValue, setSearchValue] = useState("");
+  const [searchValue, setSearchValue] = useState(""); // Giá trị tìm kiếm
   const [filters, setLocalsFilters] = useState<FilterState>({
     sex: [],
     status: [],
-  });
+  }); // Giá trị filter
+
+  const [page, setPage] = useState(1); // Trang hiện tại
+  const [limit, setLimit] = useState(10); // Số lượng tài khoản trên mỗi trang
+  const [total, setTotal] = useState(0); // Tổng số lượng tài khoản
 
   const sexLabel = (sex: number) => {
     if (sex === 1) {
@@ -181,8 +187,8 @@ export default function AccountsTable() {
       try {
         const response = await AccountApiRequest.getAccountsList({
           q: searchValue || undefined,
-          limit: 10,
-          page: 1,
+          limit: limit,
+          page: page,
           status: statusValues,
           sex: sexValues,
           sortBy: sortField as string,
@@ -199,12 +205,13 @@ export default function AccountsTable() {
         }
 
         setLocalAccounts(response.payload.data.items);
+        setTotal(response.payload.data.meta?.total || 0);
       } catch (error) {
         handleErrorApi({ error, setError: () => {}, duration: 5000 });
       }
     };
     fetchAccounts();
-  }, [sortField, sortOrder, searchValue, filters]);
+  }, [sortField, sortOrder, searchValue, filters, page, limit]);
 
   return (
     <>
@@ -254,7 +261,6 @@ export default function AccountsTable() {
         onCreateClick={() => setCreateOpen(true)}
       />
       <Table>
-        <TableCaption>A list of your recent invoices.</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Avatar</TableHead>
@@ -353,7 +359,15 @@ export default function AccountsTable() {
             </TableRow>
           ))}
         </TableBody>
-      </Table>{" "}
+      </Table>
+
+      {total > limit && (
+        <PaginationControls
+          currentPage={page}
+          totalPages={Math.ceil(total / limit)}
+          onPageChange={setPage}
+        />
+      )}
     </>
   );
 }
