@@ -1,24 +1,6 @@
-import { cookies } from "next/headers";
-
-import type { AdminAccount } from "@/types/account";
-
 import AccountsTable from "./accounts-table";
-import { AccountApiRequest } from "@/api-request/account";
 
 export default async function AccountsPage() {
-
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value ?? "";
-
-  const res = await AccountApiRequest.getAccountsList(accessToken, { page: 1, limit: 20 });
-
-  let accounts: AdminAccount[] = [];
-
-  if(res.payload.success){
-    accounts = res.payload.data.items;
-  } else {
-    console.error(res.payload.data.message);
-  }
 
   return (
     <div className="py-6 space-y-6">
@@ -29,7 +11,7 @@ export default async function AccountsPage() {
         </p>
       </div>
 
-      <AccountsTable accounts={accounts}/>
+      <AccountsTable />
     </div>
   );
 }
