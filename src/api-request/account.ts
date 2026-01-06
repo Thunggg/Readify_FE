@@ -24,6 +24,8 @@ export const AccountApiRequest = {
     page?: number;
     limit?: number;
     q?: string;
+    status?: number[];
+    sex?: number[];
     sortBy?: string;
     order?: "asc" | "desc";
   }) => {

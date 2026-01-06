@@ -84,7 +84,15 @@ const request = async <Response>(
     const queryParams = new URLSearchParams();
     Object.entries(options.params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        queryParams.append(key, String(value));
+        // Xử lý array: gửi dưới dạng nhiều query params (status=1&status=2)
+        // Backend có thể nhận cả dạng này và comma-separated
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            queryParams.append(key, String(item));
+          });
+        } else {
+          queryParams.append(key, String(value));
+        }
       }
     });
     const queryString = queryParams.toString();

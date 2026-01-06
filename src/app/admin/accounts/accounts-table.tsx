@@ -1,6 +1,16 @@
-'use client'
+"use client";
 
+import { AccountApiRequest } from "@/api-request/account";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -9,24 +19,44 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
+import { handleErrorApi } from "@/lib/utils";
 import { AdminAccount } from "@/types/account";
 import dayjs from "dayjs";
+import {
+  BanIcon,
+  CheckCircleIcon,
+  CircleHelpIcon,
+  CircleMinusIcon,
+  MailIcon,
+  MarsIcon,
+  MoreHorizontalIcon,
+  VenusIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { BanIcon, CheckCircleIcon, CircleHelpIcon, CircleMinusIcon, MailIcon, MarsIcon, MoreHorizontalIcon, Plus, VenusIcon } from "lucide-react";
+import AccountsToolbar from "./components/accounts-toolbar";
 import CreateAccountModal from "./components/create-account-modal";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import UpdateAccountModal from "./components/update-account-modal";
-import { Badge } from "@/components/ui/badge";
-import DetailAccountDrawer from "./components/detail-account-drawer";
 import DeleteAccountModal from "./components/delete-account-modal";
+import DetailAccountDrawer from "./components/detail-account-drawer";
+import {
+  convertSex,
+  convertStatus,
+  FilterState,
+  SexKey,
+  StatusKey,
+} from "./components/filter-dropdown";
 import SortableHeader from "./components/sort-header";
-import { AccountApiRequest } from "@/api-request/account";
-import { handleErrorApi } from "@/lib/utils";
+import UpdateAccountModal from "./components/update-account-modal";
 
-export type SortField = "email" | "fullName" | "phone" | "dateOfBirth" | "sex" | "status" | null;
-export type SortOrder = "asc" | "desc" | null
+export type SortField =
+  | "email"
+  | "fullName"
+  | "phone"
+  | "dateOfBirth"
+  | "sex"
+  | "status"
+  | null;
+export type SortOrder = "asc" | "desc" | null;
 
 export default function AccountsTable() {
   const [createOpen, setCreateOpen] = useState(false); // Đóng mở modal tạo tài khoản
@@ -34,55 +64,59 @@ export default function AccountsTable() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
   const [showDetailAccount, setShowDetailAccount] = useState(false); // Đóng mở drawer chi tiết tài khoản
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>([]); // Danh sách tài khoản trong local
-  const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
+  const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(
+    null
+  ); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
 
   const [sortField, setSortField] = useState<SortField>(null); // Lấy trường cần sort
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc"); // asc hoặc desc
+  const [searchValue, setSearchValue] = useState("");
+  const [filters, setLocalsFilters] = useState<FilterState>({
+    sex: [],
+    status: [],
+  });
 
   const sexLabel = (sex: number) => {
-  if (sex === 1) {
-    return (
-      <Badge
-        className="
+    if (sex === 1) {
+      return (
+        <Badge
+          className="
           border-none
           bg-blue-600/10 text-blue-600
           dark:bg-blue-400/10 dark:text-blue-400
         "
-      >
-        <MarsIcon className="size-3" />
-        Male
-      </Badge>
-    );
-  }
+        >
+          <MarsIcon className="size-3" />
+          Male
+        </Badge>
+      );
+    }
 
-  if (sex === 2) {
-    return (
-      <Badge
-        className="
+    if (sex === 2) {
+      return (
+        <Badge
+          className="
           border-none
           bg-rose-600/10 text-rose-600
           dark:bg-rose-400/10 dark:text-rose-400
         "
-      >
-        <VenusIcon className="size-3" />
-        Female
+        >
+          <VenusIcon className="size-3" />
+          Female
+        </Badge>
+      );
+    }
+
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        <CircleHelpIcon className="size-3" />
+        Unknown
       </Badge>
     );
-  }
-
-  return (
-    <Badge
-      variant="outline"
-      className="text-muted-foreground"
-    >
-      <CircleHelpIcon className="size-3" />
-      Unknown
-    </Badge>
-  );
   };
 
   const statusLabel = (status: number) => {
-    if(status === 1){
+    if (status === 1) {
       return (
         <>
           <Badge className="border-none bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 focus-visible:outline-none dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5">
@@ -91,9 +125,8 @@ export default function AccountsTable() {
           </Badge>
         </>
       );
-      
     }
-    if(status === 0){
+    if (status === 0) {
       return (
         <>
           <Badge className="border-none bg-red-600/10 text-red-600 focus-visible:ring-red-600/20 focus-visible:outline-none dark:bg-red-400/10 dark:text-red-400 dark:focus-visible:ring-red-400/40 [a&]:hover:bg-red-600/5 dark:[a&]:hover:bg-red-400/5">
@@ -102,8 +135,8 @@ export default function AccountsTable() {
           </Badge>
         </>
       );
-    };
-    if(status === -1){
+    }
+    if (status === -1) {
       return (
         <>
           <Badge variant="destructive">
@@ -113,7 +146,7 @@ export default function AccountsTable() {
         </>
       );
     }
-    if(status === 2){
+    if (status === 2) {
       return (
         <>
           <Badge className="border-none bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 focus-visible:outline-none dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5">
@@ -129,21 +162,39 @@ export default function AccountsTable() {
   const onSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);
     setSortOrder(order);
-  }
+  };
 
   useEffect(() => {
-
     const fetchAccounts = async () => {
-      try{
+      // Convert status keys to values
+      const statusValues =
+        filters.status.length > 0
+          ? filters.status.map((key) => convertStatus(key as StatusKey))
+          : undefined;
+
+      // Convert sex keys to values
+      const sexValues =
+        filters.sex.length > 0
+          ? filters.sex.map((key) => convertSex(key as SexKey))
+          : undefined;
+
+      try {
         const response = await AccountApiRequest.getAccountsList({
+          q: searchValue || undefined,
           limit: 10,
           page: 1,
+          status: statusValues,
+          sex: sexValues,
           sortBy: sortField as string,
           order: sortOrder as "asc" | "desc",
         });
 
-        if(!response.status || !response.payload.success){
-          handleErrorApi({ error: response.payload.message, setError: () => {}, duration: 5000 });
+        if (!response.status || !response.payload.success) {
+          handleErrorApi({
+            error: response.payload.message,
+            setError: () => {},
+            duration: 5000,
+          });
           return;
         }
 
@@ -151,16 +202,12 @@ export default function AccountsTable() {
       } catch (error) {
         handleErrorApi({ error, setError: () => {}, duration: 5000 });
       }
-    }
+    };
     fetchAccounts();
-  }, [sortField, sortOrder]) 
+  }, [sortField, sortOrder, searchValue, filters]);
 
   return (
     <>
-      <Button onClick={() => setCreateOpen(true)}>
-        <Plus className="mr-2 h-4 w-4" />
-        Create account
-      </Button>
       <CreateAccountModal
         open={createOpen}
         onOpenChange={setCreateOpen}
@@ -198,6 +245,13 @@ export default function AccountsTable() {
             )
           );
         }}
+      />
+      <AccountsToolbar
+        searchValue={searchValue}
+        setSearchValue={setSearchValue}
+        filters={filters}
+        setLocalsFilters={setLocalsFilters}
+        onCreateClick={() => setCreateOpen(true)}
       />
       <Table>
         <TableCaption>A list of your recent invoices.</TableCaption>
