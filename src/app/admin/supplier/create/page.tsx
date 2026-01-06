@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ArrowLeft, Save, AlertCircle, Truck } from "lucide-react";
+import { ArrowLeft, Save, Truck, TriangleAlert } from "lucide-react";
 
 export default function CreateSupplierPage() {
   const router = useRouter();
@@ -61,13 +61,12 @@ export default function CreateSupplierPage() {
       const newId = json.data?._id || json._id;
       
       if (newId) {
-        router.push(`/warehousestaff/supplier/${newId}`);
+        router.push(`/admin/supplier/${newId}`);
       } else {
-        router.push("/warehousestaff/supplier");
+        router.push("/admin/supplier");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      setError(e.message ?? "Create error");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Create error");
     } finally {
       setLoading(false);
     }
@@ -90,10 +89,12 @@ export default function CreateSupplierPage() {
       </div>
 
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Create failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       )}
 

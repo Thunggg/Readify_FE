@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  AlertCircle,
+  TriangleAlert,
   Download,
   Upload,
   Package,
@@ -68,9 +68,8 @@ export default function StockListView() {
         const stockItems = Array.isArray(data) ? data : [];
         setItems(stockItems);
         setFilteredItems(stockItems);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        setError(e.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Fetch error");
       } finally {
         setLoading(false);
       }
@@ -118,10 +117,12 @@ export default function StockListView() {
   if (error)
     return (
       <div className="py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Load failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -205,7 +206,7 @@ export default function StockListView() {
         </div>
         <div className="flex items-center gap-3">
           <Button asChild>
-            <Link href="/warehousestaff/stock/import">
+            <Link href="/admin/stock/import">
               <Upload className="mr-2 h-4 w-4" />
               Import stock
             </Link>
@@ -220,25 +221,19 @@ export default function StockListView() {
       </div>
 
       {/* Search and Filter Card */}
-      {/* <Card>
+      <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search stock items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search stock items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardContent>
-      </Card> */}
+      </Card>
 
       {/* Stock Table */}
       <Card>
@@ -305,7 +300,7 @@ export default function StockListView() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/warehousestaff/stock/${it._id}`}>
+                        <Link href={`/admin/stock/${it._id}`}>
                           <Eye className="mr-2 h-4 w-4" />
                           View Details
                         </Link>

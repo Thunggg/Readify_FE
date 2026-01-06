@@ -24,6 +24,7 @@ import {
   Loader2,
   RotateCcw,
   List,
+  TriangleAlert,
 } from "lucide-react";
 
 type ImportError = {
@@ -101,9 +102,8 @@ export default function ImportStockView() {
       } else {
         setResult(data);
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      setError(e.message ?? "Upload error");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Upload error");
     } finally {
       setUploading(false);
     }
@@ -119,7 +119,7 @@ export default function ImportStockView() {
     <div className="py-6 space-y-6">
       <div>
         <Button variant="ghost" size="sm" asChild className="mb-4">
-          <Link href="/warehousestaff/stock/viewlist">
+          <Link href="/admin/stock/viewlist">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Quay lại danh sách
           </Link>
@@ -246,10 +246,12 @@ export default function ImportStockView() {
 
       {/* Error Display */}
       {error && (
-        <Alert variant="destructive">
-          <XCircle className="h-4 w-4" />
-          <AlertTitle>Lỗi</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Upload failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       )}
 
@@ -333,8 +335,11 @@ export default function ImportStockView() {
               <CardContent>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {result.errors.map((err, idx) => (
-                    <Alert key={idx} variant="destructive">
-                      <XCircle className="h-4 w-4" />
+                    <Alert
+                      key={idx}
+                      className="bg-destructive/10 text-destructive border-none"
+                    >
+                      <TriangleAlert className="h-4 w-4" />
                       <AlertTitle className="text-sm">
                         Dòng {err.row}
                         {err.isbn && (
@@ -343,7 +348,7 @@ export default function ImportStockView() {
                           </Badge>
                         )}
                       </AlertTitle>
-                      <AlertDescription className="text-sm">
+                      <AlertDescription className="text-sm text-destructive/80">
                         {err.message}
                       </AlertDescription>
                     </Alert>
@@ -356,7 +361,7 @@ export default function ImportStockView() {
           {/* Action Buttons */}
           <div className="flex gap-3">
             <Button asChild size="lg">
-              <Link href="/warehousestaff/stock/viewlist">
+              <Link href="/admin/stock/viewlist">
                 <List className="mr-2 h-4 w-4" />
                 Xem danh sách stock
               </Link>

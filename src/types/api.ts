@@ -18,7 +18,6 @@ export type ApiErrorDetail = {
 
 export type ApiErrorData = {
   code: string;
-  message: string;
   details?: ApiErrorDetail[];
 };
 
@@ -26,5 +25,20 @@ export type ApiErrorResponse = ApiBaseResponse<ApiErrorData> & {
   success: false;
 };
 
-// Convenient union for API responses
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+};
+
+export type PaginatedData<T> = {
+  items: T[];
+  meta?: PaginationMeta;
+};
+
+export type ApiPaginatedResponse<T> = ApiResponse<PaginatedData<T>>;

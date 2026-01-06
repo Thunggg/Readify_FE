@@ -55,22 +55,14 @@ const LoginForm = () => {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     if (isLoading) return;
     try {
-      setIsLoading(true);
+
       const response = await authApiRequest.login(
         values.email,
         values.password
       );
 
       if (!response.payload.success) {
-        toast.error(response.payload.data.message, {
-          style: {
-            "--normal-bg": "light-dark(var(--color-red-600), var(--color-red-400))",
-            "--normal-text": "var(--color-white)",
-            "--normal-border": "light-dark(var(--color-red-600), var(--color-red-400))",
-          } as React.CSSProperties,
-          duration: 5000,
-        });
-        return;
+        return handleErrorApi({ error: response.payload, setError: form.setError, duration: 5000 });
       }
 
       const accessToken = response.payload.data.accessToken;
@@ -91,7 +83,7 @@ const LoginForm = () => {
 
       // Redirect dựa vào role
       if (role === 3) {
-        router.push("/warehousestaff/income");
+        router.push("/admin/income");
       } else if (role === 2) {
         router.push("/seller");
       } else if (role === 1) {

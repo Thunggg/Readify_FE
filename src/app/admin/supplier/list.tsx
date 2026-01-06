@@ -33,17 +33,16 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  AlertCircle,
   Plus,
   Search,
   Truck,
   Phone,
-  Mail,
   Edit,
   Eye,
   RotateCcw,
   Trash2,
   MoreHorizontal,
+  TriangleAlert,
 } from "lucide-react";
 
 type Supplier = {
@@ -104,9 +103,8 @@ export default function SupplierListView() {
         setSuppliers(supplierData);
         setFilteredSuppliers(supplierData);
         setCurrentPage(1); // Reset to first page when changing view mode
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (e: any) {
-        setError(e.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Fetch error");
       } finally {
         setLoading(false);
       }
@@ -149,9 +147,10 @@ export default function SupplierListView() {
       // Refresh list
       setSuppliers((prev) => prev?.filter((s) => s._id !== id) || null);
       setFilteredSuppliers((prev) => prev?.filter((s) => s._id !== id) || null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      alert(`Restore error: ${e.message}`);
+    } catch (e: unknown) {
+      alert(
+        `Restore error: ${e instanceof Error ? e.message : "Unknown restore error"}`
+      );
     } finally {
       setRestoring(null);
     }
@@ -189,9 +188,8 @@ export default function SupplierListView() {
       // Refresh list
       setSuppliers((prev) => prev?.filter((s) => s._id !== id) || null);
       setFilteredSuppliers((prev) => prev?.filter((s) => s._id !== id) || null);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (e: any) {
-      alert(`Delete error: ${e.message}`);
+    } catch (e: unknown) {
+      alert(`Delete error: ${e instanceof Error ? e.message : "Unknown delete error"}`);
     } finally {
       setDeleting(null);
     }
@@ -217,10 +215,12 @@ export default function SupplierListView() {
   if (error)
     return (
       <div className="py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert className="bg-destructive/10 text-destructive border-none">
+          <TriangleAlert className="h-4 w-4" />
+          <AlertTitle>Load failed</AlertTitle>
+          <AlertDescription className="text-destructive/80">
+            {error}
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -234,7 +234,7 @@ export default function SupplierListView() {
             <p className="text-muted-foreground">Manage supplier information</p>
           </div>
           <Button asChild>
-            <Link href="/warehousestaff/supplier/create">
+            <Link href="/admin/supplier/create">
               <Plus className="mr-2 h-4 w-4" />
               Add supplier
             </Link>
@@ -332,7 +332,7 @@ export default function SupplierListView() {
         </div>
         {viewMode === "active" && (
           <Button asChild>
-            <Link href="/warehousestaff/supplier/create">
+            <Link href="/admin/supplier/create">
               <Plus className="mr-2 h-4 w-4" />
               Add supplier
             </Link>
@@ -450,7 +450,7 @@ export default function SupplierListView() {
                             <>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={`/warehousestaff/supplier/${supplier._id}`}
+                                  href={`/admin/supplier/${supplier._id}`}
                                   className="flex items-center gap-2"
                                 >
                                   <Eye className="h-4 w-4" />
@@ -459,7 +459,7 @@ export default function SupplierListView() {
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={`/warehousestaff/supplier/edit/${supplier._id}`}
+                                  href={`/admin/supplier/edit/${supplier._id}`}
                                   className="flex items-center gap-2"
                                 >
                                   <Edit className="h-4 w-4" />

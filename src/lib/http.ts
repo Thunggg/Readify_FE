@@ -2,6 +2,7 @@ import envConfig from "@/configs/config-env";
 
 type CustomOptions = RequestInit & {
   baseUrl?: string | undefined;
+  params?: Record<string, any>;
 };
 
 const ENTITY_ERROR_STATUS = 422;
@@ -76,9 +77,29 @@ const request = async <Response>(
       ? envConfig.NEXT_PUBLIC_API_ENDPOINT
       : options.baseUrl;
 
-  const fullUrl = url.startsWith("/")
-    ? `${baseUrl}${url}`
-    : `${baseUrl}/${url}`;
+  let fullUrl = url.startsWith("/") ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+
+  // Xử lý params thành query string
+  if (options?.params) {
+    const queryParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        // Xử lý array: gửi dưới dạng nhiều query params (status=1&status=2)
+        // Backend có thể nhận cả dạng này và comma-separated
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            queryParams.append(key, String(item));
+          });
+        } else {
+          queryParams.append(key, String(value));
+        }
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) {
+      fullUrl += `?${queryString}`;
+    }
+  }
 
   const response = await fetch(fullUrl, {
     ...options,

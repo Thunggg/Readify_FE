@@ -41,7 +41,7 @@ const sidebarGroups = [
     items: [
       {
         title: "Account Management",
-        href: "/admin/account",
+        href: "/admin/accounts",
         icon: Users,
         badge: null,
       },
