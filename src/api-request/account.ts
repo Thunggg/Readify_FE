@@ -7,7 +7,7 @@ import type {
 } from "@/validation/api-schemas";
 
 export const AccountApiRequest = {
-  getMe: async (accessToken: string) => {
+  getMe: async (accessToken?: string) => {
     const response = await http.get<ApiResponse<{ email: string }>>(
       "/accounts/me",
       {
@@ -15,6 +15,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
           ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
         },
+        credentials: "include",
       }
     );
     return response;

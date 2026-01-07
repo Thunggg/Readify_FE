@@ -89,7 +89,7 @@ const LoginForm = () => {
       } else if (role === 1) {
         router.push("/admin/income");
       } else {
-        router.push("/me");
+        router.push("/");
       }
     } catch (error) {
       handleErrorApi({ error, setError: form.setError, duration: 5000 });

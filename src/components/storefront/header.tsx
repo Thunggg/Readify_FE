@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BookApiRequest } from "@/api-request/book";
 import type { BookSuggestion } from "@/types/book";
+import { authApiRequest } from "@/api-request/auth";
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,6 +64,15 @@ export function Header() {
       controller.abort();
     };
   }, [searchQuery]);
+
+  const handleLogout = async () => {
+    await authApiRequest.logoutFromNextClientToServer();
+    router.push("/login");
+  };
+
+  const handleProfile = async () => {
+    router.push("/profile");
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,11 +197,11 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/profile" className="cursor-pointer">
+              <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
+                <div className="cursor-pointer flex items-center gap-2">
                   <User className="mr-2 h-4 w-4" />
-                  Account
-                </Link>
+                  Account Profile
+                </div>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/profile?tab=orders" className="cursor-pointer">
@@ -200,7 +210,7 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                 Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>

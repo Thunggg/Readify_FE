@@ -2,6 +2,7 @@
 import React from "react";
 import AdminSidebar from "./layouts/sidebar";
 import { Topbar } from "./layouts/topbar";
+import CurrentUserProvider from "@/contexts/user-context";
 
 export default function AdminLayout({
   children,
@@ -9,17 +10,19 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <AdminSidebar />
+    <CurrentUserProvider>
+      <div className="relative flex h-screen overflow-hidden bg-background">
+        {/* Sidebar */}
+        <AdminSidebar />
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <Topbar />
-        <main className="p-8 max-w-[calc(100vw-18rem)] mx-auto">
-          <div className="min-h-[calc(100vh-8rem)]">{children}</div>
-        </main>
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <Topbar />
+          <main className="p-8 max-w-[calc(100vw-18rem)] mx-auto">
+            <div className="min-h-[calc(100vh-8rem)]">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </CurrentUserProvider>
   );
 }
