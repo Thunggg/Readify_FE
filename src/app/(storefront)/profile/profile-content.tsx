@@ -27,19 +27,19 @@ export function ProfileContent() {
           className="space-y-6"
         >
           <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-            <TabsTrigger value="info" className="gap-2">
+            <TabsTrigger value="info" className="gap-2 cursor-pointer">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Thông tin</span>
             </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-2">
+            <TabsTrigger value="orders" className="gap-2 cursor-pointer">
               <Package className="h-4 w-4" />
               <span className="hidden sm:inline">Đơn hàng</span>
             </TabsTrigger>
-            <TabsTrigger value="addresses" className="gap-2">
+            <TabsTrigger value="addresses" className="gap-2 cursor-pointer">
               <MapPin className="h-4 w-4" />
               <span className="hidden sm:inline">Địa chỉ</span>
             </TabsTrigger>
-            <TabsTrigger value="password" className="gap-2">
+            <TabsTrigger value="password" className="gap-2 cursor-pointer">
               <Lock className="h-4 w-4" />
               <span className="hidden sm:inline">Mật khẩu</span>
             </TabsTrigger>
