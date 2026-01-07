@@ -2,7 +2,7 @@
 
 import { AccountApiRequest } from "@/api-request/account";
 import { AdminAccount } from "@/types/account";
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface CurrentUserContextType {
   currentUser: AdminAccount | null;
@@ -46,3 +46,15 @@ export default function CurrentUserProvider ({children}: {children: React.ReactN
         </CurrentUserContext.Provider>
     )
 }
+
+export const useCurrentUser = () => {
+    const currentUserContext = useContext(CurrentUserContext);
+
+    if (!currentUserContext) {
+        throw new Error(
+            "useCurrentUser must be used within <CurrentUserContext.Provider>"
+        );
+    }
+
+    return currentUserContext;   
+};
