@@ -18,7 +18,6 @@ export type ApiErrorDetail = {
 
 export type ApiErrorData = {
   code: string;
-  message: string;
   details?: ApiErrorDetail[];
 };
 

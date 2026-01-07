@@ -14,7 +14,7 @@ export default async function MeProfile() {
       <h1>
         {response.payload.success
           ? response.payload.data.email
-          : response.payload.data.message}
+          : response.payload.message}
       </h1>
     </div>
   );

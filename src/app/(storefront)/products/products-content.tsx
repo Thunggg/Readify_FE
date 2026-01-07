@@ -286,9 +286,9 @@ export function ProductsContent() {
                   : "flex flex-col gap-4"
               }
             >
-              {sortedBooks.map((book) => (
+              {/* {sortedBooks.map((book) => (
                 <BookCard key={book.id} {...book} />
-              ))}
+              ))} */}
             </div>
           )}
         </div>

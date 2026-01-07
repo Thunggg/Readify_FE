@@ -30,3 +30,17 @@ export type CreateAccountModel = {
   status: number; // 1 active, 0 inactive, -1 banned, 2 not active email
   sex: number; // 1 male, 2 female
 };
+
+export type UpdateAccountModel = {
+  _id: string;
+  email?: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: string;
+  dateOfBirth?: string;
+  role?: number;
+  status?: number;
+  sex?: number;
+};
