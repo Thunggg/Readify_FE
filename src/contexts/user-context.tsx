@@ -7,7 +7,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 interface CurrentUserContextType {
   currentUser: AdminAccount | null;
   loading: boolean;
-  setCurrentUser: (user: AdminAccount) => void;
+  setCurrentUser: (user: AdminAccount | null) => void;
 }
 
 const CurrentUserContext = createContext<CurrentUserContextType | null>(null);
@@ -35,10 +35,8 @@ export default function CurrentUserProvider ({children}: {children: React.ReactN
     };
 
      useEffect(() => {
-    refreshUser();
-  }, []);
-
-
+       refreshUser();
+     }, []);
 
     return (
         <CurrentUserContext.Provider value={{currentUser, setCurrentUser, loading}}>

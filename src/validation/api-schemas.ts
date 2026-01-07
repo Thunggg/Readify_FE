@@ -17,6 +17,7 @@ export const createAccountApiSchema = z.object({
 
 export type CreateAccountApiRequest = z.infer<typeof createAccountApiSchema>;
 
+// Không cho phép gửi lên password là "" để không cập nhật password
 export const updateAccountApiSchema = z.object({
   email: z.string().email("Invalid email format").min(5).max(255),
   password: z
@@ -27,10 +28,30 @@ export const updateAccountApiSchema = z.object({
   firstName: z.string().min(1, "First name can not be empty").max(100),
   lastName: z.string().min(1, "Last name can not be empty").max(100),
   dateOfBirth: z.string().min(1, "Date of birth can not be empty"),
-  phone: z.string().min(1, "Phone can not be empty").max(20),
+  phone: z
+    .string()
+    .min(1, "Phone can not be empty")
+    .max(20)
+    .regex(/^0[0-9]{9}$/, "Invalid phone number"),
   address: z.string().min(1, "Address can not be empty").max(255),
   status: z.number().int("Status must be a number"),
   sex: z.number().int("Sex must be a number"),
 });
 
 export type UpdateAccountApiRequest = z.infer<typeof updateAccountApiSchema>;
+
+export const editProfileApiSchema = z.object({
+  firstName: z.string().min(1, "First name can not be empty").max(100),
+  lastName: z.string().min(1, "Last name can not be empty").max(100),
+  dateOfBirth: z.string().min(1, "Date of birth can not be empty"),
+  phone: z
+    .string()
+    .min(1, "Phone can not be empty")
+    .max(20)
+    .regex(/^0[0-9]{9}$/, "Invalid phone number"),
+  address: z.string().min(1, "Address can not be empty").max(255),
+  sex: z.number().int("Sex must be a number"),
+  bio: z.string().max(500, "Bio must be less than 500 characters long"),
+});
+
+export type EditProfileApiRequest = z.infer<typeof editProfileApiSchema>;

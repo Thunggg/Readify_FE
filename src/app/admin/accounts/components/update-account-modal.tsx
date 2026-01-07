@@ -77,10 +77,10 @@ export default function UpdateAccountModal({
     },
   });
 
-    useEffect(() => {
-  if (!open) return;
+  useEffect(() => {
+    if (!open) return;
 
-  if (selectedAccount) {
+    if (selectedAccount) {
       form.reset(
         {
           email: selectedAccount.email ?? "",
