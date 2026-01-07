@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { AccountApiRequest } from "@/api-request/account";
 import { handleErrorApi } from "@/lib/utils";
 import { toast } from "sonner";
+import { ProfilePersonalInfoSkeleton } from "./skeletons/profile-personal-info-skeleton";
 
 export default function ProfilePersonalInfo() {
 
@@ -91,7 +92,7 @@ export default function ProfilePersonalInfo() {
   }, [setError]);
 
   if (loading) {
-    return <div>đang tải thông tin người dùng...</div>;
+    return <ProfilePersonalInfoSkeleton />;
   }
   
   if (!currentUser) {
