@@ -1,6 +1,7 @@
 export type AdminAccount = {
   _id?: string;
   id?: string;
+  bio?: string;
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string | Date;
