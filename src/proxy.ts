@@ -3,8 +3,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const privateRoutes = ["/me"];
-const authRoutes = ["/login", "/register"];
+const privateRoutes = [""];
+const authRoutes = [""];
 
 export function proxy(request: NextRequest) {
   const token = request.headers
@@ -27,5 +27,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/register", "/me"],
+  matcher: [],
 };

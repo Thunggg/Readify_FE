@@ -5,6 +5,7 @@ import type {
   CreateAccountApiRequest,
   UpdateAccountApiRequest,
 } from "@/validation/api-schemas";
+import { EditProfileFormInput } from "@/validation/form-schemas";
 
 export const AccountApiRequest = {
   getMe: async (accessToken?: string) => {
@@ -72,6 +73,20 @@ export const AccountApiRequest = {
   deleteAccount: async (id: string) => {
     const response = await http.delete<ApiResponse<AdminAccount>>(
       `/accounts/delete/${id}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    return response;
+  },
+
+  editProfile: async (data: EditProfileFormInput) => {
+    const response = await http.patch<ApiResponse<EditProfileFormInput>>(
+      "/accounts/me",
+      data,
       {
         headers: {
           "Content-Type": "application/json",

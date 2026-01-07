@@ -52,7 +52,7 @@ export class EntityError extends HttpError {
 }
 
 const request = async <Response>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
   url: string,
   options: CustomOptions | undefined
 ) => {
@@ -158,6 +158,12 @@ const http = {
     body: any,
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("DELETE", url, { ...options, body }),
+
+  patch: <Response>(
+    url: string,
+    body: any,
+    options?: Omit<CustomOptions, "body"> | undefined
+  ) => request<Response>("PATCH", url, { ...options, body }),
 };
 
 export default http;
