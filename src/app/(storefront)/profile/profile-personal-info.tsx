@@ -12,16 +12,20 @@ import { useCurrentUser } from "@/contexts/user-context";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { EditProfileFormInput, editProfileFormSchema } from "@/validation/form-schemas";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { AccountApiRequest } from "@/api-request/account";
 import { handleErrorApi } from "@/lib/utils";
 import { toast } from "sonner";
 import { ProfilePersonalInfoSkeleton } from "./skeletons/profile-personal-info-skeleton";
+import { AvatarDemo } from "./avatar";
+import { MediaApiRequest } from "@/api-request/media";
 
 export default function ProfilePersonalInfo() {
-
   const { currentUser, loading } = useCurrentUser();
+
+const [file, setFile] = useState<File | null>(null);
+
   const didInit = useRef(false);
   const {
     register,
@@ -50,7 +54,7 @@ export default function ProfilePersonalInfo() {
     if (isDirty) return;
     // nếu form đã được reset, không reset form
     if (didInit.current) return;
-
+    
     reset({
       firstName: currentUser.firstName ?? "",
       lastName: currentUser.lastName ?? "",
@@ -67,29 +71,48 @@ export default function ProfilePersonalInfo() {
 
   const onSubmit = useCallback<SubmitHandler<EditProfileFormInput>>(async (data) => {
     try {
-      console.log("📦 API data:", data);
-      const response = await AccountApiRequest.editProfile(data);
-      if (response.status !== 200) {
-        handleErrorApi({
-          error: response.payload,
-          setError: setError,
-          duration: 5000,
+      if(file) {
+        const [profileRes, mediaRes] = await Promise.all([
+          AccountApiRequest.editProfile(data),
+          MediaApiRequest.uploadAvatar(file ?? new File([], "avatar.jpg")),
+        ]);
+
+        if(!profileRes.payload.success) {
+          handleErrorApi({ error: profileRes.payload, setError: setError, duration: 5000 });
+          return;
+        }
+        if(!mediaRes.payload.success) {
+          handleErrorApi({ error: mediaRes.payload, setError: setError, duration: 5000 });
+          return;
+        }
+
+        toast.success("Cập nhật thông tin thành công", {
+          style: {
+            "--normal-bg": "var(--color-green-600)",
+            "--normal-text": "var(--color-white)",
+            "--normal-border": "var(--color-green-600)",
+          } as React.CSSProperties,
         });
-        return;
+      } else{
+        const profileRes = await AccountApiRequest.editProfile(data);
+
+        if(!profileRes.payload.success) {
+          handleErrorApi({ error: profileRes.payload, setError: setError, duration: 5000 });
+          return;
+        }
+
+        toast.success("Cập nhật thông tin thành công", {
+          style: {
+            "--normal-bg": "var(--color-green-600)",
+            "--normal-text": "var(--color-white)",
+            "--normal-border": "var(--color-green-600)",
+          } as React.CSSProperties,
+        });
       }
-      toast.success(response.payload.message, {
-        style: {
-          "--normal-bg":
-            "light-dark(var(--color-green-600), var(--color-green-400))",
-          "--normal-text": "var(--color-white)",
-          "--normal-border":
-            "light-dark(var(--color-green-600), var(--color-green-400))",
-        } as React.CSSProperties,
-      });
     } catch (error) {
       handleErrorApi({ error, setError: setError, duration: 5000 });
     }
-  }, [setError]);
+  }, [setError, file]);
 
   if (loading) {
     return <ProfilePersonalInfoSkeleton />;
@@ -110,22 +133,10 @@ export default function ProfilePersonalInfo() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <div className="relative h-24 w-24 rounded-full bg-muted overflow-hidden">
-              <Image
-                src="/diverse-user-avatars.png"
-                alt="Avatar"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="space-y-2">
-              <Button variant="outline" size="sm">
-                Thay đổi ảnh
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                JPG, PNG. Tối đa 2MB
-              </p>
-            </div>
+            <AvatarDemo
+              src={currentUser.avatarUrl ?? "https://i.pinimg.com/736x/32/f0/11/32f0110217403ff57f98847cb7094db4.jpg"}
+              setFile={setFile}
+            />
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -196,10 +207,13 @@ export default function ProfilePersonalInfo() {
                 name="sex"
                 rules={{ required: true }}
                 render={({ field }) => (
-                  <Select
+                  <Select 
                     value={String(field.value)}
-                    onValueChange={(v) => field.onChange(Number(v))}
-                  >
+                    onValueChange={(value) => {
+                      if(!value) return;
+                      field.onChange(Number(value));
+                    }}
+                    >
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn giới tính" />
                     </SelectTrigger>
@@ -227,8 +241,8 @@ export default function ProfilePersonalInfo() {
           <div className="flex justify-end gap-3">
             {isSubmitting ? (
               <>
-                <Spinner />
                 <Button className="cursor-pointer" type="submit" disabled>
+                  <Spinner />
                   Đang lưu...
                 </Button>
               </>
