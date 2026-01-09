@@ -4,7 +4,7 @@ import { authApiRequest } from "@/api-request/auth";
 import { HttpError } from "@/lib/http";
 import { cookies } from "next/headers";
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const cookieStore = await cookies();
 
@@ -29,8 +29,8 @@ export async function POST(request: Request) {
 
     return Response.json(
       {
-        message: result.payload.data.message,
-        status: result.payload.data.status,
+        message: result?.payload?.data?.message,
+        status: result?.payload?.data?.status,
       },
       { status: 200 }
     );

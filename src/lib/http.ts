@@ -1,3 +1,4 @@
+import { authApiRequest } from "@/api-request/auth";
 import envConfig from "@/configs/config-env";
 
 type CustomOptions = RequestInit & {
@@ -50,6 +51,7 @@ export class EntityError extends HttpError {
     this.status = status;
   }
 }
+let clientLogoutRequest: Promise<any> | null = null;
 
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
@@ -126,6 +128,30 @@ const request = async <Response>(
           payload: EntityErrorPayload;
         }
       );
+    } else if (response.status === 401) {
+      // Nếu token hết hạn thì tự động logout
+      // check ở server
+      if (!clientLogoutRequest) {
+        if (typeof window === "undefined") {
+          clientLogoutRequest = fetch("/api/auth/logout", {
+            method: "POST",
+            body: JSON.stringify({ force: true }),
+            headers: {
+              ...baseHeaders,
+              "Content-Type": "application/json",
+            },
+          });
+
+          await clientLogoutRequest;
+          console.log("logout success");
+          return;
+        } else {
+          clientLogoutRequest = authApiRequest.logoutFromNextClientToServer();
+          await clientLogoutRequest;
+          location.href = "/login";
+          return;
+        }
+      }
     } else {
       // lỗi server
       throw new HttpError(response.status, response.statusText, payload);

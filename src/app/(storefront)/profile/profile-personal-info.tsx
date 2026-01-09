@@ -77,12 +77,12 @@ const [file, setFile] = useState<File | null>(null);
           MediaApiRequest.uploadAvatar(file ?? new File([], "avatar.jpg")),
         ]);
 
-        if(!profileRes.payload.success) {
-          handleErrorApi({ error: profileRes.payload, setError: setError, duration: 5000 });
+        if(!profileRes?.payload.success) {
+          handleErrorApi({ error: profileRes?.payload, setError: setError, duration: 5000 });
           return;
         }
-        if(!mediaRes.payload.success) {
-          handleErrorApi({ error: mediaRes.payload, setError: setError, duration: 5000 });
+        if(!mediaRes?.payload.success) {
+          handleErrorApi({ error: mediaRes?.payload, setError: setError, duration: 5000 });
           return;
         }
 
@@ -96,8 +96,8 @@ const [file, setFile] = useState<File | null>(null);
       } else{
         const profileRes = await AccountApiRequest.editProfile(data);
 
-        if(!profileRes.payload.success) {
-          handleErrorApi({ error: profileRes.payload, setError: setError, duration: 5000 });
+        if(!profileRes?.payload.success) {
+          handleErrorApi({ error: profileRes?.payload, setError: setError, duration: 5000 });
           return;
         }
 

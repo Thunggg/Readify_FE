@@ -62,11 +62,18 @@ const LoginForm = () => {
         values.password
       );
 
-      if (!response.payload.success) {
-        return handleErrorApi({ error: response.payload, setError: form.setError, duration: 5000 });
+      if (!response?.payload?.success) {
+        return handleErrorApi({ error: response?.payload, setError: form.setError, duration: 5000 });
       }
 
-      const accessToken = response.payload.data.accessToken;
+      const accessToken = response?.payload?.data?.accessToken;
+
+      // set access token vào cookie của next server
+       await fetch("/api/auth", {
+        method: "POST",
+        body: JSON.stringify({ accessToken }),
+      });
+
 
       // Decode JWT token để lấy role (không cần verify vì đã tin backend)
       const tokenPayload = JSON.parse(atob(accessToken.split(".")[1]));

@@ -150,8 +150,9 @@ export const authApiRequest = {
   },
 
   logoutFromNextClientToServer: async () => {
-    http.post("/api/auth/logout", null, {
+    const response = await http.post("/api/auth/logout", null, {
       baseUrl: "",
     });
+    return response;
   },
 };
