@@ -52,7 +52,7 @@ export class EntityError extends HttpError {
 }
 
 const request = async <Response>(
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   url: string,
   options: CustomOptions | undefined
 ) => {
@@ -109,6 +109,7 @@ const request = async <Response>(
     } as HeadersInit,
     body,
     method,
+    credentials: "include", // Include cookies for authentication
   });
 
   const payload: Response = await response.json();
@@ -153,9 +154,15 @@ const http = {
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("PUT", url, { ...options, body }),
 
-  delete: <Response>(
+  patch: <Response>(
     url: string,
     body: any,
+    options?: Omit<CustomOptions, "body"> | undefined
+  ) => request<Response>("PATCH", url, { ...options, body }),
+
+  delete: <Response>(
+    url: string,
+    body?: any,
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("DELETE", url, { ...options, body }),
 };

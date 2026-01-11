@@ -8,6 +8,7 @@ import { Search, ShoppingCart, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { WishlistIcon } from "@/components/shared/wishlist-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -163,6 +164,9 @@ export function Header() {
 
           {/* Theme toggle */}
           <ThemeToggle />
+
+          {/* Wishlist */}
+          <WishlistIcon />
 
           {/* Cart */}
           <Button variant="ghost" size="icon" className="relative" asChild>
