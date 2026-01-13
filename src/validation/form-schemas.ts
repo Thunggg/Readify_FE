@@ -3,6 +3,8 @@ import { z } from "zod";
 const ROLE_VALUES = [0, 1, 2, 3] as const;
 
 export const createAccountFormSchema = z.object({
+  email: z.string().email("Invalid email format").min(5).max(255),
+
   password: z
     .string()
     .min(1, "Password can not be empty")
