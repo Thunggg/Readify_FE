@@ -46,7 +46,8 @@ export function Header() {
           ""
         );
 
-        const data = res.payload.data.items;
+        const data = res.payload.data;
+
         if (Array.isArray(data)) {
           setSuggestions(data);
         } else {

@@ -35,7 +35,7 @@ export const registerSchema = z
   .object({
     firstName: z.string().trim().min(1, "First name is required").max(100, "Max 100 characters"),
     lastName: z.string().trim().min(1, "Last name is required").max(100, "Max 100 characters"),
-    phone: z.string().trim().min(1, "Phone is required").max(30, "Max 30 characters"),
+    phone: z.string().trim().min(1, "Phone is required").max(30, "Max 30 characters").regex(/^0[0-9]{9}$/, "Invalid phone number"),
     address: z.string().trim().min(1, "Address is required").max(500, "Max 500 characters"),
     dateOfBirth: z
       .string()
