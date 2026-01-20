@@ -274,6 +274,8 @@ export default function AccountsTable() {
                 title="Email"
                 field="email"
                 onSortChange={onSortChange}
+                currentField={sortField}
+                currentOrder={sortOrder}
               />
             </TableHead>
             <TableHead>
@@ -281,6 +283,8 @@ export default function AccountsTable() {
                 title="Full name"
                 field="fullName"
                 onSortChange={onSortChange}
+                currentField={sortField}
+                currentOrder={sortOrder}
               />
             </TableHead>
             <TableHead>Phone</TableHead>
@@ -289,6 +293,8 @@ export default function AccountsTable() {
                 title="Date of Birth"
                 field="dateOfBirth"
                 onSortChange={onSortChange}
+                currentField={sortField}
+                currentOrder={sortOrder}
               />
             </TableHead>
             <TableHead>Sex</TableHead>
