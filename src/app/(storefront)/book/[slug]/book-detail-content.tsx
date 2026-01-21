@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BookCard } from "@/components/storefront/book-card";
 import {
   Star,
@@ -87,7 +88,99 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
   };
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+    return (
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Skeleton */}
+        <div className="mb-6 flex items-center gap-2">
+          <Skeleton className="h-4 w-12" />
+          <span>/</span>
+          <Skeleton className="h-4 w-20" />
+          <span>/</span>
+          <Skeleton className="h-4 w-24" />
+        </div>
+
+        {/* Product Detail Skeleton */}
+        <div className="mb-12 grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+          {/* Image Section */}
+          <div className="lg:col-span-2">
+            <Skeleton className="aspect-[3/4] w-full rounded-lg" />
+            <div className="mt-4 grid grid-cols-4 gap-2">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
+              ))}
+            </div>
+          </div>
+
+          {/* Info Section */}
+          <div className="space-y-6 lg:col-span-3">
+            <div>
+              <Skeleton className="mb-3 h-6 w-24" />
+              <Skeleton className="mb-2 h-10 w-3/4" />
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="mt-2 h-6 w-1/3" />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-24" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+
+            <Card className="bg-muted/50">
+              <CardContent className="p-6">
+                <Skeleton className="mb-2 h-12 w-48" />
+                <Skeleton className="h-4 w-32" />
+              </CardContent>
+            </Card>
+
+            <Skeleton className="h-6 w-24" />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-10 w-32" />
+              </div>
+              <div className="flex gap-3">
+                <Skeleton className="h-12 flex-1" />
+                <Skeleton className="h-12 w-12" />
+                <Skeleton className="h-12 w-12" />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} className="h-20 rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs Skeleton */}
+        <Card className="mb-12">
+          <CardContent className="p-6">
+            <Skeleton className="mb-6 h-10 w-96" />
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Related Products Skeleton */}
+        <div>
+          <Skeleton className="mb-6 h-8 w-48" />
+          <div className="grid gap-4 md:gap-6 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="aspect-[3/4] w-full rounded-lg" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!book) {
@@ -199,7 +292,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
               <p className="text-lg text-muted-foreground">
                 Author:{" "}
                 <span className="font-medium text-foreground">
-                  {book.authors.join(", ")}
+                  {book.authors.map(a => typeof a === 'string' ? a : a.name).join(", ")}
                 </span>
               </p>
             )}
@@ -405,7 +498,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                   <div className="flex justify-between border-b py-3">
                     <span className="text-muted-foreground">Author(s)</span>
                     <span className="font-medium">
-                      {book.authors.join(", ")}
+                      {book.authors.map(a => typeof a === 'string' ? a : a.name).join(", ")}
                     </span>
                   </div>
                 )}
