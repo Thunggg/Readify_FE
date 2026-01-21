@@ -1,214 +1,247 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { BookCard } from "@/components/storefront/book-card"
 import { ProductFilters } from "./product-filters"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SlidersHorizontal, LayoutGrid, List } from "lucide-react"
+import { SlidersHorizontal } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Skeleton } from "@/components/ui/skeleton"
+import { BookApiRequest } from "@/api-request/book"
+import { PublicBook, SearchPublicBooksParams } from "@/types/book"
+import { PaginationMeta } from "@/types/api"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
-const books = [
-  {
-    id: 1,
-    title: "Nhà Giả Kim",
-    author: "Paulo Coelho",
-    price: "120.000đ",
-    originalPrice: "150.000đ",
-    rating: 4.8,
-    reviews: 2500,
-    imageUrl: "/alchemist-book-cover.png",
-    badge: "-20%",
-    category: "Văn học",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 2,
-    title: "Đắc Nhân Tâm",
-    author: "Dale Carnegie",
-    price: "85.000đ",
-    originalPrice: "105.000đ",
-    rating: 4.9,
-    reviews: 5000,
-    imageUrl: "/how-to-win-friends-book.jpg",
-    badge: "Bestseller",
-    category: "Kỹ năng sống",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 3,
-    title: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-    author: "Rosie Nguyễn",
-    price: "90.000đ",
-    rating: 4.7,
-    reviews: 3000,
-    imageUrl: "/youth-motivation-book.jpg",
-    category: "Kỹ năng sống",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 4,
-    title: "Cây Cam Ngọt Của Tôi",
-    author: "José Mauro",
-    price: "105.000đ",
-    rating: 4.9,
-    reviews: 4000,
-    imageUrl: "/my-sweet-orange-tree-book.jpg",
-    category: "Văn học",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 5,
-    title: "Thay Đổi Tí Hon",
-    author: "James Clear",
-    price: "160.000đ",
-    rating: 4.8,
-    reviews: 8000,
-    imageUrl: "/atomic-habits-book.png",
-    category: "Kỹ năng sống",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 6,
-    title: "Sapiens: Lược Sử Loài Người",
-    author: "Yuval Noah Harari",
-    price: "195.000đ",
-    originalPrice: "220.000đ",
-    rating: 4.9,
-    reviews: 6000,
-    imageUrl: "/sapiens-book-cover.png",
-    category: "Lịch sử",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 7,
-    title: "Nghệ Thuật Bán Hàng",
-    author: "Brian Tracy",
-    price: "125.000đ",
-    rating: 4.6,
-    reviews: 2000,
-    imageUrl: "/sales-book.jpg",
-    category: "Kinh doanh",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 8,
-    title: "Tâm Lý Học Đám Đông",
-    author: "Gustave Le Bon",
-    price: "98.000đ",
-    rating: 4.7,
-    reviews: 3500,
-    imageUrl: "/psychology-of-crowds-book.jpg",
-    category: "Tâm lý",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 9,
-    title: "Người Thầy Cuối Cùng",
-    author: "Mitch Albom",
-    price: "78.000đ",
-    rating: 4.8,
-    reviews: 2800,
-    imageUrl: "/tuesdays-with-morrie-book.jpg",
-    category: "Văn học",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 10,
-    title: "Chiến Tranh Tiền Tệ",
-    author: "Song Hongbing",
-    price: "145.000đ",
-    rating: 4.5,
-    reviews: 1800,
-    imageUrl: "/currency-wars-book.jpg",
-    category: "Kinh tế",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 11,
-    title: "Tư Duy Nhanh Và Chậm",
-    author: "Daniel Kahneman",
-    price: "175.000đ",
-    rating: 4.9,
-    reviews: 5500,
-    imageUrl: "/thinking-fast-and-slow-book.jpg",
-    category: "Tâm lý",
-    language: "Tiếng Việt",
-  },
-  {
-    id: 12,
-    title: "Cafe Cùng Tony",
-    author: "Tony Buổi Sáng",
-    price: "88.000đ",
-    rating: 4.6,
-    reviews: 3200,
-    imageUrl: "/cafe-book-vietnamese.jpg",
-    category: "Kỹ năng sống",
-    language: "Tiếng Việt",
-  },
-]
+const ITEMS_PER_PAGE = 12
+
+type SortOption = SearchPublicBooksParams["sort"]
 
 export function ProductsContent() {
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
-  const [sortBy, setSortBy] = useState("popular")
-  const [filteredBooks, setFilteredBooks] = useState(books)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // State
+  const [books, setBooks] = useState<PublicBook[]>([])
+  const [meta, setMeta] = useState<PaginationMeta | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // Get params from URL
+  const currentPage = Number(searchParams.get("page")) || 1
+  const currentSort = (searchParams.get("sort") as SortOption) || "newest"
+  const currentSearch = searchParams.get("q") || ""
+  const currentCategoryId = searchParams.get("categoryId") || ""
+  const currentMinPrice = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined
+  const currentMaxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined
+  const currentInStock = searchParams.get("inStock") === "true" ? true : undefined
 
-  const handleFilterChange = (filters: any) => {
-    let filtered = [...books]
+  // Update URL params
+  const updateParams = useCallback((newParams: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString())
+    
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value === undefined || value === "" || value === "0") {
+        params.delete(key)
+      } else {
+        params.set(key, value)
+      }
+    })
+    
+    router.push(`/products?${params.toString()}`, { scroll: false })
+  }, [router, searchParams])
 
-    // Filter by category
-    if (filters.categories.length > 0) {
-      filtered = filtered.filter((book) => filters.categories.includes(book.category))
+  // Fetch books
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setIsLoading(true)
+      try {
+        const params: SearchPublicBooksParams = {
+          page: currentPage,
+          limit: ITEMS_PER_PAGE,
+          sort: currentSort,
+        }
+        
+        if (currentSearch) params.q = currentSearch
+        if (currentCategoryId) params.categoryId = currentCategoryId
+        if (currentMinPrice) params.minPrice = currentMinPrice
+        if (currentMaxPrice) params.maxPrice = currentMaxPrice
+        if (currentInStock) params.inStock = currentInStock
+
+        const res = await BookApiRequest.getBooks(params)
+        
+        if (res && res.payload.success) {
+          setBooks(res.payload.data.items)
+          setMeta(res.payload.data.meta || null)
+        }
+      } catch (error) {
+        console.error("Failed to fetch books:", error)
+        setBooks([])
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    // Filter by price range
-    if (filters.priceRange.min > 0 || filters.priceRange.max < 500000) {
-      filtered = filtered.filter((book) => {
-        const price = Number.parseInt(book.price.replace(/\D/g, ""))
-        return price >= filters.priceRange.min && price <= filters.priceRange.max
-      })
-    }
+    fetchBooks()
+  }, [currentPage, currentSort, currentSearch, currentCategoryId, currentMinPrice, currentMaxPrice, currentInStock])
 
-    // Filter by rating
-    if (filters.minRating > 0) {
-      filtered = filtered.filter((book) => book.rating >= filters.minRating)
-    }
-
-    // Filter by language
-    if (filters.languages.length > 0) {
-      filtered = filtered.filter((book) => filters.languages.includes(book.language))
-    }
-
-    setFilteredBooks(filtered)
+  // Handlers
+  const handleSortChange = (value: string) => {
+    updateParams({ sort: value, page: "1" })
   }
 
-  const sortedBooks = [...filteredBooks].sort((a, b) => {
-    switch (sortBy) {
-      case "price-asc":
-        return Number.parseInt(a.price.replace(/\D/g, "")) - Number.parseInt(b.price.replace(/\D/g, ""))
-      case "price-desc":
-        return Number.parseInt(b.price.replace(/\D/g, "")) - Number.parseInt(a.price.replace(/\D/g, ""))
-      case "rating":
-        return b.rating - a.rating
-      case "name":
-        return a.title.localeCompare(b.title)
-      default:
-        return 0
+  const handlePageChange = (page: number) => {
+    updateParams({ page: page.toString() })
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleFilterChange = (filters: {
+    categoryId?: string
+    minPrice?: number
+    maxPrice?: number
+    inStock?: boolean
+  }) => {
+    updateParams({
+      categoryId: filters.categoryId,
+      minPrice: filters.minPrice?.toString(),
+      maxPrice: filters.maxPrice?.toString(),
+      inStock: filters.inStock ? "true" : undefined,
+      page: "1",
+    })
+  }
+
+  // Pagination component
+  const renderPagination = () => {
+    if (!meta || meta.totalPages === undefined || meta.totalPages <= 1) return null
+
+    const totalPages = meta.totalPages
+    const pages: (number | "ellipsis")[] = []
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      pages.push(1)
+      if (currentPage > 3) pages.push("ellipsis")
+      
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+      
+      if (currentPage < totalPages - 2) pages.push("ellipsis")
+      pages.push(totalPages)
     }
-  })
+
+    return (
+      <Pagination className="mt-8">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage > 1) handlePageChange(currentPage - 1)
+              }}
+              className={currentPage <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+          
+          {pages.map((page, index) => (
+            <PaginationItem key={index}>
+              {page === "ellipsis" ? (
+                <PaginationEllipsis />
+              ) : (
+                <PaginationLink
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handlePageChange(page)
+                  }}
+                  isActive={currentPage === page}
+                >
+                  {page}
+                </PaginationLink>
+              )}
+            </PaginationItem>
+          ))}
+          
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                if (currentPage < totalPages) handlePageChange(currentPage + 1)
+              }}
+              className={currentPage >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    )
+  }
+
+  // Skeleton loading
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+      {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
+        <div key={index} className="space-y-3">
+          <Skeleton className="w-full aspect-[2/3] rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  // Empty state
+  const renderEmptyState = () => (
+    <div className="text-center py-16">
+      <h3 className="text-lg font-semibold mb-2">No products found</h3>
+      <p className="text-muted-foreground mb-4">
+        No products match your current filters.
+        <br />Try adjusting or clearing your filters.
+      </p>
+      <Button variant="outline" onClick={() => router.push("/products")}>
+        Clear filters
+      </Button>
+    </div>
+  )
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Tất cả sản phẩm</h1>
-        <p className="text-muted-foreground">Khám phá toàn bộ bộ sưu tập sách của chúng tôi</p>
+        <h1 className="text-3xl font-bold mb-2">All Products</h1>
+        <p className="text-muted-foreground">Explore our complete book collection</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Desktop Filters - Sidebar */}
         <aside className="hidden lg:block w-64 shrink-0">
-          <ProductFilters onFilterChange={handleFilterChange} />
+          <ProductFilters 
+            onFilterChange={handleFilterChange}
+            initialFilters={{
+              categoryId: currentCategoryId,
+              minPrice: currentMinPrice,
+              maxPrice: currentMaxPrice,
+              inStock: currentInStock,
+            }}
+          />
         </aside>
 
         {/* Main Content */}
@@ -225,72 +258,63 @@ export function ProductsContent() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80 overflow-y-auto">
                   <div className="py-4">
-                    <h2 className="text-lg font-semibold mb-4">Bộ lọc</h2>
-                    <ProductFilters onFilterChange={handleFilterChange} />
+                    <h2 className="text-lg font-semibold mb-4">Filters</h2>
+                    <ProductFilters 
+                      onFilterChange={handleFilterChange}
+                      initialFilters={{
+                        categoryId: currentCategoryId,
+                        minPrice: currentMinPrice,
+                        maxPrice: currentMaxPrice,
+                        inStock: currentInStock,
+                      }}
+                    />
                   </div>
                 </SheetContent>
               </Sheet>
 
               <p className="text-sm text-muted-foreground">
-                Hiển thị <span className="font-semibold text-foreground">{sortedBooks.length}</span> sản phẩm
+                {meta ? (
+                  <>
+                    Showing <span className="font-semibold text-foreground">{books.length}</span> of {meta.total} products
+                  </>
+                ) : (
+                  "Loading..."
+                )}
               </p>
             </div>
 
             <div className="flex items-center gap-4 w-full sm:w-auto">
               {/* Sort Select */}
-              <Select value={sortBy} onValueChange={setSortBy}>
+              <Select value={currentSort} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Sắp xếp" />
+                  <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="popular">Phổ biến nhất</SelectItem>
-                  <SelectItem value="rating">Đánh giá cao</SelectItem>
-                  <SelectItem value="price-asc">Giá thấp đến cao</SelectItem>
-                  <SelectItem value="price-desc">Giá cao đến thấp</SelectItem>
-                  <SelectItem value="name">Tên A-Z</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="best_selling">Best Selling</SelectItem>
+                  <SelectItem value="rating_desc">Highest Rated</SelectItem>
+                  <SelectItem value="price_asc">Price: Low to High</SelectItem>
+                  <SelectItem value="price_desc">Price: High to Low</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* View Mode Toggle */}
-              <div className="hidden sm:flex items-center gap-1 border rounded-lg p-1">
-                <Button
-                  variant={viewMode === "grid" ? "secondary" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("grid")}
-                  className="h-8 w-8"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "secondary" : "ghost"}
-                  size="icon"
-                  onClick={() => setViewMode("list")}
-                  className="h-8 w-8"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </div>
 
-          {/* Products Grid/List */}
-          {sortedBooks.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Không tìm thấy sản phẩm nào phù hợp với bộ lọc của bạn</p>
-            </div>
+          {/* Products Grid */}
+          {isLoading ? (
+            renderSkeleton()
+          ) : books.length === 0 ? (
+            renderEmptyState()
           ) : (
-            <div
-              className={
-                viewMode === "grid"
-                  ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6"
-                  : "flex flex-col gap-4"
-              }
-            >
-              {/* {sortedBooks.map((book) => (
-                <BookCard key={book.id} {...book} />
-              ))} */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+              {books.map((book) => (
+                <BookCard key={book._id} {...book} />
+              ))}
             </div>
           )}
+
+          {/* Pagination */}
+          {!isLoading && books.length > 0 && renderPagination()}
         </div>
       </div>
     </div>

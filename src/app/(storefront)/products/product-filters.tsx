@@ -1,88 +1,102 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Slider } from "@/components/ui/slider"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
-import { Star } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
+import { CategoryApiRequest, type Category } from "@/api-request/category"
 
 interface FilterState {
-  categories: string[]
-  priceRange: { min: number; max: number }
-  minRating: number
-  languages: string[]
+  categoryId?: string
+  minPrice?: number
+  maxPrice?: number
+  inStock?: boolean
 }
 
 interface ProductFiltersProps {
   onFilterChange: (filters: FilterState) => void
+  initialFilters?: FilterState
 }
 
-export function ProductFilters({ onFilterChange }: ProductFiltersProps) {
+export function ProductFilters({ onFilterChange, initialFilters }: ProductFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
-    categories: [],
-    priceRange: { min: 0, max: 500000 },
-    minRating: 0,
-    languages: [],
+    categoryId: initialFilters?.categoryId || "",
+    minPrice: initialFilters?.minPrice,
+    maxPrice: initialFilters?.maxPrice,
+    inStock: initialFilters?.inStock || false,
   })
+  
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
+  const [minPriceInput, setMinPriceInput] = useState(initialFilters?.minPrice?.toString() || "")
+  const [maxPriceInput, setMaxPriceInput] = useState(initialFilters?.maxPrice?.toString() || "")
 
-  const categories = [
-    { id: "van-hoc", label: "Văn học", count: 156 },
-    { id: "ky-nang-song", label: "Kỹ năng sống", count: 234 },
-    { id: "kinh-doanh", label: "Kinh doanh", count: 89 },
-    { id: "tam-ly", label: "Tâm lý", count: 127 },
-    { id: "lich-su", label: "Lịch sử", count: 78 },
-    { id: "kinh-te", label: "Kinh tế", count: 65 },
-  ]
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await CategoryApiRequest.getCategories({ status: 1 })
+        if (res && res.payload.success) {
+          setCategories(res.payload.data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error)
+      } finally {
+        setIsLoadingCategories(false)
+      }
+    }
+    fetchCategories()
+  }, [])
 
-  const languages = [
-    { id: "tieng-viet", label: "Tiếng Việt", count: 450 },
-    { id: "english", label: "English", count: 189 },
-    { id: "song-ngu", label: "Song ngữ", count: 67 },
-  ]
+  // Sync with URL params
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters({
+        categoryId: initialFilters.categoryId || "",
+        minPrice: initialFilters.minPrice,
+        maxPrice: initialFilters.maxPrice,
+        inStock: initialFilters.inStock || false,
+      })
+      setMinPriceInput(initialFilters.minPrice?.toString() || "")
+      setMaxPriceInput(initialFilters.maxPrice?.toString() || "")
+    }
+  }, [initialFilters])
 
-  const handleCategoryChange = (categoryLabel: string, checked: boolean) => {
-    const newCategories = checked
-      ? [...filters.categories, categoryLabel]
-      : filters.categories.filter((c) => c !== categoryLabel)
-
-    const newFilters = { ...filters, categories: newCategories }
+  const handleCategoryChange = (categoryId: string, checked: boolean) => {
+    const newCategoryId = checked ? categoryId : ""
+    const newFilters = { ...filters, categoryId: newCategoryId }
     setFilters(newFilters)
     onFilterChange(newFilters)
   }
 
-  const handlePriceChange = (value: number[]) => {
-    const newFilters = { ...filters, priceRange: { min: value[0], max: value[1] } }
+  const handlePriceApply = () => {
+    const minPrice = minPriceInput ? Number(minPriceInput) : undefined
+    const maxPrice = maxPriceInput ? Number(maxPriceInput) : undefined
+    
+    const newFilters = { ...filters, minPrice, maxPrice }
     setFilters(newFilters)
     onFilterChange(newFilters)
   }
 
-  const handleRatingChange = (value: string) => {
-    const newFilters = { ...filters, minRating: Number.parseFloat(value) }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
-  }
-
-  const handleLanguageChange = (languageLabel: string, checked: boolean) => {
-    const newLanguages = checked
-      ? [...filters.languages, languageLabel]
-      : filters.languages.filter((l) => l !== languageLabel)
-
-    const newFilters = { ...filters, languages: newLanguages }
+  const handleInStockChange = (checked: boolean) => {
+    const newFilters = { ...filters, inStock: checked }
     setFilters(newFilters)
     onFilterChange(newFilters)
   }
 
   const handleReset = () => {
-    const resetFilters = {
-      categories: [],
-      priceRange: { min: 0, max: 500000 },
-      minRating: 0,
-      languages: [],
+    const resetFilters: FilterState = {
+      categoryId: "",
+      minPrice: undefined,
+      maxPrice: undefined,
+      inStock: false,
     }
     setFilters(resetFilters)
+    setMinPriceInput("")
+    setMaxPriceInput("")
     onFilterChange(resetFilters)
   }
 
@@ -90,9 +104,9 @@ export function ProductFilters({ onFilterChange }: ProductFiltersProps) {
     <div className="space-y-6">
       {/* Reset Button */}
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Bộ lọc</h3>
+        <h3 className="font-semibold">Filters</h3>
         <Button variant="ghost" size="sm" onClick={handleReset}>
-          Đặt lại
+          Reset
         </Button>
       </div>
 
@@ -100,24 +114,34 @@ export function ProductFilters({ onFilterChange }: ProductFiltersProps) {
 
       {/* Category Filter */}
       <div className="space-y-3">
-        <h4 className="font-medium text-sm">Thể loại</h4>
-        <div className="space-y-2">
-          {categories.map((category) => (
-            <div key={category.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={category.id}
-                checked={filters.categories.includes(category.label)}
-                onCheckedChange={(checked) => handleCategoryChange(category.label, checked as boolean)}
-              />
-              <Label
-                htmlFor={category.id}
-                className="text-sm font-normal cursor-pointer flex-1 flex items-center justify-between"
-              >
-                <span>{category.label}</span>
-                <span className="text-muted-foreground text-xs">({category.count})</span>
-              </Label>
-            </div>
-          ))}
+        <h4 className="font-medium text-sm">Category</h4>
+        <div className="space-y-2 max-h-60 overflow-y-auto">
+          {isLoadingCategories ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="flex items-center space-x-2">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            ))
+          ) : categories.length > 0 ? (
+            categories.map((category) => (
+              <div key={category._id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={category._id}
+                  checked={filters.categoryId === category._id}
+                  onCheckedChange={(checked) => handleCategoryChange(category._id, checked as boolean)}
+                />
+                <Label
+                  htmlFor={category._id}
+                  className="text-sm font-normal cursor-pointer flex-1"
+                >
+                  {category.name}
+                </Label>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No categories</p>
+          )}
         </div>
       </div>
 
@@ -125,76 +149,56 @@ export function ProductFilters({ onFilterChange }: ProductFiltersProps) {
 
       {/* Price Range Filter */}
       <div className="space-y-4">
-        <h4 className="font-medium text-sm">Khoảng giá</h4>
-        <div className="px-2">
-          <Slider
-            min={0}
-            max={500000}
-            step={10000}
-            value={[filters.priceRange.min, filters.priceRange.max]}
-            onValueChange={handlePriceChange}
-            className="w-full"
-          />
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{filters.priceRange.min.toLocaleString("vi-VN")}đ</span>
-          <span className="text-muted-foreground">{filters.priceRange.max.toLocaleString("vi-VN")}đ</span>
-        </div>
-      </div>
-
-      <Separator />
-
-      {/* Rating Filter */}
-      <div className="space-y-3">
-        <h4 className="font-medium text-sm">Đánh giá</h4>
-        <RadioGroup value={filters.minRating.toString()} onValueChange={handleRatingChange}>
-          {[5, 4, 3, 2, 1].map((rating) => (
-            <div key={rating} className="flex items-center space-x-2">
-              <RadioGroupItem value={rating.toString()} id={`rating-${rating}`} />
-              <Label htmlFor={`rating-${rating}`} className="flex items-center gap-1 cursor-pointer">
-                <div className="flex items-center">
-                  {Array.from({ length: rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  ))}
-                  {Array.from({ length: 5 - rating }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-muted-foreground/30" />
-                  ))}
-                </div>
-                <span className="text-sm">trở lên</span>
-              </Label>
-            </div>
-          ))}
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="0" id="rating-all" />
-            <Label htmlFor="rating-all" className="text-sm cursor-pointer">
-              Tất cả
-            </Label>
+        <h4 className="font-medium text-sm">Price Range</h4>
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <Label htmlFor="min-price" className="text-xs text-muted-foreground">From</Label>
+            <Input
+              id="min-price"
+              type="number"
+              min={0}
+              placeholder="0"
+              value={minPriceInput}
+              onChange={(e) => setMinPriceInput(e.target.value)}
+              className="h-9 text-sm"
+            />
           </div>
-        </RadioGroup>
+          <div className="flex-1">
+            <Label htmlFor="max-price" className="text-xs text-muted-foreground">To</Label>
+            <Input
+              id="max-price"
+              type="number"
+              min={0}
+              placeholder="No limit"
+              value={maxPriceInput}
+              onChange={(e) => setMaxPriceInput(e.target.value)}
+              className="h-9 text-sm"
+            />
+          </div>
+        </div>
+        <Button 
+          onClick={handlePriceApply} 
+          className="w-full"
+          variant="outline"
+        >
+          Apply
+        </Button>
       </div>
 
       <Separator />
 
-      {/* Language Filter */}
+      {/* In Stock Filter */}
       <div className="space-y-3">
-        <h4 className="font-medium text-sm">Ngôn ngữ</h4>
-        <div className="space-y-2">
-          {languages.map((language) => (
-            <div key={language.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={language.id}
-                checked={filters.languages.includes(language.label)}
-                onCheckedChange={(checked) => handleLanguageChange(language.label, checked as boolean)}
-              />
-              <Label
-                htmlFor={language.id}
-                className="text-sm font-normal cursor-pointer flex-1 flex items-center justify-between"
-              >
-                <span>{language.label}</span>
-                <span className="text-muted-foreground text-xs">({language.count})</span>
-              </Label>
-            </div>
-          ))}
+        <h4 className="font-medium text-sm">Status</h4>
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="in-stock"
+            checked={filters.inStock}
+            onCheckedChange={(checked) => handleInStockChange(checked as boolean)}
+          />
+          <Label htmlFor="in-stock" className="text-sm font-normal cursor-pointer">
+            In Stock
+          </Label>
         </div>
       </div>
     </div>

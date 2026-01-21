@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BookApiRequest } from "@/api-request/book";
 import type { BookSuggestion } from "@/types/book";
 import { authApiRequest } from "@/api-request/auth";
@@ -29,6 +29,16 @@ export function Header() {
   const [loadingSuggest, setLoadingSuggest] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  // Sync search query from URL when on products page
+  useEffect(() => {
+    if (pathname === "/products") {
+      const urlSearch = searchParams.get("q") || "";
+      setSearchQuery(urlSearch);
+    }
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -77,8 +87,9 @@ export function Header() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSuggestions([]);
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+      router.push(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
       router.push("/products");
     }
@@ -113,7 +124,7 @@ export function Header() {
           </div>
 
           {/* Suggestions */}
-          {suggestions.length > 0 && (
+          {/* {suggestions.length > 0 && (
             <div className="absolute z-50 mt-2 w-full rounded-md border bg-background shadow-lg">
               <ul className="divide-y">
                 {suggestions.map((item) => (
@@ -134,7 +145,7 @@ export function Header() {
                 ))}
               </ul>
             </div>
-          )}
+          )} */}
 
           {/* Empty state */}
           {searchQuery && !loadingSuggest && suggestions.length === 0 && (
