@@ -199,7 +199,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
               <p className="text-lg text-muted-foreground">
                 Author:{" "}
                 <span className="font-medium text-foreground">
-                  {book.authors.join(", ")}
+                  {book.authors.map((a) => a.name).join(", ")}
                 </span>
               </p>
             )}
@@ -405,7 +405,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                   <div className="flex justify-between border-b py-3">
                     <span className="text-muted-foreground">Author(s)</span>
                     <span className="font-medium">
-                      {book.authors.join(", ")}
+                      {book.authors.map((a) => a.name).join(", ")}
                     </span>
                   </div>
                 )}

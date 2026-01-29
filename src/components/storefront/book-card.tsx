@@ -9,7 +9,11 @@ interface BookCardProps {
   _id: string;
   slug: string;
   title: string;
-  authors: string[];
+  authors: {
+    _id: string;
+    name: string;
+    slug: string;
+  }[];
   thumbnailUrl?: string;
 
   basePrice: number;
@@ -70,7 +74,9 @@ export function BookCard({
         </Link>
 
         <p className="text-sm text-muted-foreground truncate">
-          {Array.isArray(authors) ? authors.join(", ") : "Đang cập nhật"}
+          {Array.isArray(authors) && authors.length > 0
+            ? authors.map((a) => a.name).join(", ")
+            : "Đang cập nhật"}
         </p>
 
         {rating !== undefined && reviews !== undefined && (

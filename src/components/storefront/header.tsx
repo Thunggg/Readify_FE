@@ -140,7 +140,7 @@ export function Header() {
                   >
                     <p className="text-sm font-medium">{item.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.authors?.join(", ")}
+                      {item.authors?.map((a) => a.name).join(", ")}
                     </p>
                   </li>
                 ))}
