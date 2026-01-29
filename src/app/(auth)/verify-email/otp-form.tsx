@@ -41,7 +41,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const verifyingRef = useRef(false)
 
   const canResend = !isResending && resendCooldown === 0 && !isLoading
-  
+
   useEffect(() => {
     if (resendCooldown <= 0) return
     const intervalId = window.setInterval(() => {
@@ -64,11 +64,11 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
         flow === "forgot-password"
           ? await authApiRequest.verifyForgotPasswordOtp({ otp: code.toString() })
           : await authApiRequest.verifyRegisterOtp({
-              otp: code.toString(),
-            })
+            otp: code.toString(),
+          })
 
-      if (response.payload.success) {
-        toast.success("OTP verified successfully", {
+      if (response?.payload.success) {
+        toast.success(response?.payload.message ?? "An unexpected error occurred", {
           style: {
             "--normal-bg":
               "light-dark(var(--color-green-600), var(--color-green-400))",
@@ -81,7 +81,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
         router.push(flow === "forgot-password" ? "/reset-password" : "/login")
       } else {
         handleErrorApi({
-          error: new Error(response.payload.message),
+          error: new Error(response?.payload.message ?? "An unexpected error occurred"),
           duration: 5000,
         })
         setOtp("");
@@ -96,15 +96,15 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
 
   useEffect(() => {
-    if(isLoading) return
-    if(otp.length !== 6) return
+    if (isLoading) return
+    if (otp.length !== 6) return
     if (verifyingRef.current) return
-    
+
     verifyingRef.current = true
     verifyOtp(otp).finally(() => {
       verifyingRef.current = false
     })
-    
+
   }, [otp, isLoading, verifyOtp])
 
 
@@ -131,9 +131,9 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
       setIsResending(false)
     }
   }
-  
+
   return (
-    <Card  className={`relative ${props.className ?? ""}`} {...props}>
+    <Card className={`relative ${props.className ?? ""}`} {...props}>
 
       {isLoading && (
         <div className="absolute inset-0 z-100 grid place-items-center rounded-xl bg-background/10 backdrop-blur-[3px]">
@@ -158,15 +158,15 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
             <Field>
               <FieldLabel htmlFor="otp">Verification code</FieldLabel>
               <InputOTP pattern={REGEXP_ONLY_DIGITS} maxLength={6} id="otp" value={otp} required onChange={setOtp}
-              onKeyDown={(e) => {
-                if (!isLoading) return
+                onKeyDown={(e) => {
+                  if (!isLoading) return
 
-                e.preventDefault()
-              }}
+                  e.preventDefault()
+                }}
               >
                 <InputOTPGroup className="gap-2.5 *:data-[slot=input-otp-slot]:rounded-md *:data-[slot=input-otp-slot]:border">
                   <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />  
+                  <InputOTPSlot index={1} />
                   <InputOTPSlot index={2} />
                   <InputOTPSlot index={3} />
                   <InputOTPSlot index={4} />
