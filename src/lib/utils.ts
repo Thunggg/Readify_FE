@@ -13,7 +13,7 @@ type ErrorDetail = { field: string; message: string };
 function getDetails(error: any): ErrorDetail[] | undefined {
   // 1) Error được wrap bởi EntityError (custom FE error), ưu tiên lấy details từ payload
   if (error instanceof EntityError) {
-    const detail = error?.payload?.data?.details;
+    const detail = error?.payload?.details;
     if (Array.isArray(detail)) {
       return detail as ErrorDetail[];
     }

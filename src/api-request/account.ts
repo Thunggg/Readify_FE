@@ -5,7 +5,10 @@ import type {
   CreateAccountApiRequest,
   UpdateAccountApiRequest,
 } from "@/validation/api-schemas";
-import { EditProfileFormInput } from "@/validation/form-schemas";
+import {
+  EditProfileFormInput,
+  ResetPasswordFormInput,
+} from "@/validation/form-schemas";
 
 export const AccountApiRequest = {
   getMe: async (accessToken?: string) => {
@@ -96,4 +99,30 @@ export const AccountApiRequest = {
     );
     return response;
   },
+
+  resetPassword: async (data: ResetPasswordFormInput) => {
+    const response = await http.patch<ApiResponse<ResetPasswordFormInput>>(
+      "/accounts/me/change-password",
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    return response;
+  },
+
+  refreshToken: async () => {
+    const response = await http.post<ApiResponse<{ accessToken: string }>>("/api/auth/refresh-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    return response;
+  }
+
 };

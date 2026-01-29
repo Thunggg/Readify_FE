@@ -55,3 +55,20 @@ export const editProfileApiSchema = z.object({
 });
 
 export type EditProfileApiRequest = z.infer<typeof editProfileApiSchema>;
+
+export const resetPasswordApiSchema = z.object({
+  currentPassword: z
+    .string()
+    .min(8, "Current password must be at least 8 characters long")
+    .max(255),
+  newPassword: z
+    .string()
+    .min(8, "New password must be at least 8 characters long")
+    .max(255),
+  confirmPassword: z
+    .string()
+    .min(8, "Confirm password must be at least 8 characters long")
+    .max(255),
+});
+
+export type ResetPasswordApiRequest = z.infer<typeof resetPasswordApiSchema>;

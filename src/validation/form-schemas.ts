@@ -3,6 +3,8 @@ import { z } from "zod";
 const ROLE_VALUES = [0, 1, 2, 3] as const;
 
 export const createAccountFormSchema = z.object({
+  email: z.string().email("Invalid email format").min(5).max(255),
+
   password: z
     .string()
     .min(1, "Password can not be empty")
@@ -101,3 +103,25 @@ export const editProfileFormSchema = z.object({
 });
 
 export type EditProfileFormInput = z.infer<typeof editProfileFormSchema>;
+
+export const resetPasswordFormSchema = z
+  .object({
+    currentPassword: z
+      .string()
+      .min(8, "Current password must be at least 8 characters long")
+      .max(255),
+    newPassword: z
+      .string()
+      .min(8, "New password must be at least 8 characters long")
+      .max(255),
+    confirmPassword: z
+      .string()
+      .min(8, "Confirm password must be at least 8 characters long")
+      .max(255),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordFormInput = z.infer<typeof resetPasswordFormSchema>;
