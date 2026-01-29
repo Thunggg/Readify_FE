@@ -175,21 +175,34 @@ export default function AccountsTable() {
     setSortOrder(order);
   };
 
+  // useEffect để fetch danh sách tài khoản khi các tham số thay đổi
+  // Dependency array bao gồm các state ảnh hưởng đến việc fetch: sortField, sortOrder, searchValue, filters, page, limit
   useEffect(() => {
+    // Hàm async để fetch dữ liệu tài khoản từ API
     const fetchAccounts = async () => {
-      // Convert status keys to values
+      // Chuyển đổi các key trạng thái thành giá trị số tương ứng
+      // Nếu filters.status có phần tử, map từng key thành giá trị qua convertStatus
+      // Nếu không có filter, để undefined
       const statusValues =
         filters.status.length > 0
           ? filters.status.map((key) => convertStatus(key as StatusKey))
           : undefined;
 
-      // Convert role keys to values
+      // Tương tự cho role: chuyển đổi key thành giá trị qua convertRole
       const roleValues =
         filters.role.length > 0
           ? filters.role.map((key) => convertRole(key as RoleKey))
           : undefined;
 
       try {
+        // Gọi API để lấy danh sách staff với các tham số:
+        // q: từ khóa tìm kiếm (hoặc undefined nếu không có)
+        // limit: số lượng item mỗi trang
+        // page: trang hiện tại
+        // status: mảng giá trị trạng thái (hoặc undefined)
+        // role: mảng giá trị vai trò (hoặc undefined)
+        // sortBy: trường sắp xếp (ép kiểu string)
+        // order: thứ tự sắp xếp (asc hoặc desc)
         const response = await StaffApiRequest.getStaffList({
           q: searchValue || undefined,
           limit: limit,
@@ -200,21 +213,27 @@ export default function AccountsTable() {
           order: sortOrder as "asc" | "desc",
         });
 
+        // Kiểm tra response: nếu không có status hoặc payload không success
         if (!response?.status || !response.payload.success) {
+          // Xử lý lỗi API: hiển thị thông báo lỗi trong 5 giây
           handleErrorApi({
             error: response?.payload.message,
-            setError: () => {},
+            setError: () => {}, // Không set error state cụ thể
             duration: 5000,
           });
-          return;
+          return; // Dừng thực hiện
         }
 
+        // Nếu thành công, cập nhật state local với danh sách tài khoản
         setLocalAccounts(response.payload.data.items);
+        // Cập nhật tổng số tài khoản từ meta data
         setTotal(response.payload.data.meta?.total || 0);
       } catch (error) {
+        // Xử lý lỗi ngoại lệ (network, etc.): hiển thị thông báo lỗi trong 5 giây
         handleErrorApi({ error, setError: () => {}, duration: 5000 });
       }
     };
+    // Gọi hàm fetchAccounts ngay lập tức
     fetchAccounts();
   }, [sortField, sortOrder, searchValue, filters, page, limit]);
 
