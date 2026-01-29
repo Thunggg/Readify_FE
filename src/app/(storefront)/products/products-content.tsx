@@ -10,139 +10,163 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
 const books = [
   {
-    id: 1,
+    _id: "1",
+    slug: "nha-gia-kim",
     title: "Nhà Giả Kim",
-    author: "Paulo Coelho",
-    price: "120.000đ",
-    originalPrice: "150.000đ",
+    authors: ["Paulo Coelho"],
+    basePrice: 120000,
+    originalPrice: 150000,
+    currency: "VND",
     rating: 4.8,
     reviews: 2500,
-    imageUrl: "/alchemist-book-cover.png",
+    thumbnailUrl: "/alchemist-book-cover.png",
     badge: "-20%",
     category: "Văn học",
     language: "Tiếng Việt",
   },
   {
-    id: 2,
+    _id: "2",
+    slug: "dac-nhan-tam",
     title: "Đắc Nhân Tâm",
-    author: "Dale Carnegie",
-    price: "85.000đ",
-    originalPrice: "105.000đ",
+    authors: ["Dale Carnegie"],
+    basePrice: 85000,
+    originalPrice: 105000,
+    currency: "VND",
     rating: 4.9,
     reviews: 5000,
-    imageUrl: "/how-to-win-friends-book.jpg",
+    thumbnailUrl: "/how-to-win-friends-book.jpg",
     badge: "Bestseller",
     category: "Kỹ năng sống",
     language: "Tiếng Việt",
   },
   {
-    id: 3,
+    _id: "3",
+    slug: "tuoi-tre-dang-gia-bao-nhieu",
     title: "Tuổi Trẻ Đáng Giá Bao Nhiêu",
-    author: "Rosie Nguyễn",
-    price: "90.000đ",
+    authors: ["Rosie Nguyễn"],
+    basePrice: 90000,
+    currency: "VND",
     rating: 4.7,
     reviews: 3000,
-    imageUrl: "/youth-motivation-book.jpg",
+    thumbnailUrl: "/youth-motivation-book.jpg",
     category: "Kỹ năng sống",
     language: "Tiếng Việt",
   },
   {
-    id: 4,
+    _id: "4",
+    slug: "cay-cam-ngot-cua-toi",
     title: "Cây Cam Ngọt Của Tôi",
-    author: "José Mauro",
-    price: "105.000đ",
+    authors: ["José Mauro"],
+    basePrice: 105000,
+    currency: "VND",
     rating: 4.9,
     reviews: 4000,
-    imageUrl: "/my-sweet-orange-tree-book.jpg",
+    thumbnailUrl: "/my-sweet-orange-tree-book.jpg",
     category: "Văn học",
     language: "Tiếng Việt",
   },
   {
-    id: 5,
+    _id: "5",
+    slug: "thay-doi-ti-hon",
     title: "Thay Đổi Tí Hon",
-    author: "James Clear",
-    price: "160.000đ",
+    authors: ["James Clear"],
+    basePrice: 160000,
+    currency: "VND",
     rating: 4.8,
     reviews: 8000,
-    imageUrl: "/atomic-habits-book.png",
+    thumbnailUrl: "/atomic-habits-book.png",
     category: "Kỹ năng sống",
     language: "Tiếng Việt",
   },
   {
-    id: 6,
+    _id: "6",
+    slug: "sapiens-luoc-su-loai-nguoi",
     title: "Sapiens: Lược Sử Loài Người",
-    author: "Yuval Noah Harari",
-    price: "195.000đ",
-    originalPrice: "220.000đ",
+    authors: ["Yuval Noah Harari"],
+    basePrice: 195000,
+    originalPrice: 220000,
+    currency: "VND",
     rating: 4.9,
     reviews: 6000,
-    imageUrl: "/sapiens-book-cover.png",
+    thumbnailUrl: "/sapiens-book-cover.png",
     category: "Lịch sử",
     language: "Tiếng Việt",
   },
   {
-    id: 7,
+    _id: "7",
+    slug: "nghe-thuat-ban-hang",
     title: "Nghệ Thuật Bán Hàng",
-    author: "Brian Tracy",
-    price: "125.000đ",
+    authors: ["Brian Tracy"],
+    basePrice: 125000,
+    currency: "VND",
     rating: 4.6,
     reviews: 2000,
-    imageUrl: "/sales-book.jpg",
+    thumbnailUrl: "/sales-book.jpg",
     category: "Kinh doanh",
     language: "Tiếng Việt",
   },
   {
-    id: 8,
+    _id: "8",
+    slug: "tam-ly-hoc-dam-dong",
     title: "Tâm Lý Học Đám Đông",
-    author: "Gustave Le Bon",
-    price: "98.000đ",
+    authors: ["Gustave Le Bon"],
+    basePrice: 98000,
+    currency: "VND",
     rating: 4.7,
     reviews: 3500,
-    imageUrl: "/psychology-of-crowds-book.jpg",
+    thumbnailUrl: "/psychology-of-crowds-book.jpg",
     category: "Tâm lý",
     language: "Tiếng Việt",
   },
   {
-    id: 9,
+    _id: "9",
+    slug: "nguoi-thay-cuoi-cung",
     title: "Người Thầy Cuối Cùng",
-    author: "Mitch Albom",
-    price: "78.000đ",
+    authors: ["Mitch Albom"],
+    basePrice: 78000,
+    currency: "VND",
     rating: 4.8,
     reviews: 2800,
-    imageUrl: "/tuesdays-with-morrie-book.jpg",
+    thumbnailUrl: "/tuesdays-with-morrie-book.jpg",
     category: "Văn học",
     language: "Tiếng Việt",
   },
   {
-    id: 10,
+    _id: "10",
+    slug: "chien-tranh-tien-te",
     title: "Chiến Tranh Tiền Tệ",
-    author: "Song Hongbing",
-    price: "145.000đ",
+    authors: ["Song Hongbing"],
+    basePrice: 145000,
+    currency: "VND",
     rating: 4.5,
     reviews: 1800,
-    imageUrl: "/currency-wars-book.jpg",
+    thumbnailUrl: "/currency-wars-book.jpg",
     category: "Kinh tế",
     language: "Tiếng Việt",
   },
   {
-    id: 11,
+    _id: "11",
+    slug: "tu-duy-nhanh-va-cham",
     title: "Tư Duy Nhanh Và Chậm",
-    author: "Daniel Kahneman",
-    price: "175.000đ",
+    authors: ["Daniel Kahneman"],
+    basePrice: 175000,
+    currency: "VND",
     rating: 4.9,
     reviews: 5500,
-    imageUrl: "/thinking-fast-and-slow-book.jpg",
+    thumbnailUrl: "/thinking-fast-and-slow-book.jpg",
     category: "Tâm lý",
     language: "Tiếng Việt",
   },
   {
-    id: 12,
+    _id: "12",
+    slug: "cafe-cung-tony",
     title: "Cafe Cùng Tony",
-    author: "Tony Buổi Sáng",
-    price: "88.000đ",
+    authors: ["Tony Buổi Sáng"],
+    basePrice: 88000,
+    currency: "VND",
     rating: 4.6,
     reviews: 3200,
-    imageUrl: "/cafe-book-vietnamese.jpg",
+    thumbnailUrl: "/cafe-book-vietnamese.jpg",
     category: "Kỹ năng sống",
     language: "Tiếng Việt",
   },
@@ -164,14 +188,14 @@ export function ProductsContent() {
     // Filter by price range
     if (filters.priceRange.min > 0 || filters.priceRange.max < 500000) {
       filtered = filtered.filter((book) => {
-        const price = Number.parseInt(book.price.replace(/\D/g, ""))
+        const price = book.basePrice
         return price >= filters.priceRange.min && price <= filters.priceRange.max
       })
     }
 
     // Filter by rating
     if (filters.minRating > 0) {
-      filtered = filtered.filter((book) => book.rating >= filters.minRating)
+      filtered = filtered.filter((book) => (book.rating || 0) >= filters.minRating)
     }
 
     // Filter by language
@@ -185,11 +209,11 @@ export function ProductsContent() {
   const sortedBooks = [...filteredBooks].sort((a, b) => {
     switch (sortBy) {
       case "price-asc":
-        return Number.parseInt(a.price.replace(/\D/g, "")) - Number.parseInt(b.price.replace(/\D/g, ""))
+        return a.basePrice - b.basePrice
       case "price-desc":
-        return Number.parseInt(b.price.replace(/\D/g, "")) - Number.parseInt(a.price.replace(/\D/g, ""))
+        return b.basePrice - a.basePrice
       case "rating":
-        return b.rating - a.rating
+        return (b.rating || 0) - (a.rating || 0)
       case "name":
         return a.title.localeCompare(b.title)
       default:
@@ -287,7 +311,7 @@ export function ProductsContent() {
               }
             >
               {sortedBooks.map((book) => (
-                <BookCard key={book.id} {...book} />
+                <BookCard key={book._id} {...book} />
               ))}
             </div>
           )}

@@ -58,7 +58,11 @@ let refreshTokenPromise: Promise<any> | null = null;
 
 
 const request = async <Response>(
+<<<<<<< HEAD
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+=======
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
+>>>>>>> 96c1c3cd9e74de49fdebf574b8921f87b976113c
   url: string,
   options: CustomOptions | undefined
 ) => {
@@ -115,6 +119,7 @@ const request = async <Response>(
     } as HeadersInit,
     body,
     method,
+    credentials: "include", // Include cookies for authentication
   });
 
   const payload: Response = await response.json();
@@ -212,9 +217,15 @@ const http = {
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("PUT", url, { ...options, body }),
 
-  delete: <Response>(
+  patch: <Response>(
     url: string,
     body: any,
+    options?: Omit<CustomOptions, "body"> | undefined
+  ) => request<Response>("PATCH", url, { ...options, body }),
+
+  delete: <Response>(
+    url: string,
+    body?: any,
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("DELETE", url, { ...options, body }),
 
