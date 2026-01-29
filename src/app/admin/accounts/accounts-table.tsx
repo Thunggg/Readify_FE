@@ -195,9 +195,9 @@ export default function AccountsTable() {
           order: sortOrder as "asc" | "desc",
         });
 
-        if (!response.status || !response.payload.success) {
+        if (!response?.status || !response?.payload.success) {
           handleErrorApi({
-            error: response.payload.message,
+            error: response?.payload.message,
             setError: () => {},
             duration: 5000,
           });
