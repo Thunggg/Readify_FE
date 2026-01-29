@@ -148,11 +148,11 @@ export function Header() {
           )} */}
 
           {/* Empty state */}
-          {searchQuery && !loadingSuggest && suggestions.length === 0 && (
+          {/* {searchQuery && !loadingSuggest && suggestions.length === 0 && (
             <div className="absolute z-50 mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
               No results found
             </div>
-          )}
+          )} */}
         </form>
 
         {/* Navigation */}

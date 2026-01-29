@@ -461,7 +461,6 @@ export default function UpdateAccountModal({
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">Admin</SelectItem>
                         <SelectItem value="2">Seller</SelectItem>
                         <SelectItem value="3">Warehouse</SelectItem>
                       </SelectContent>

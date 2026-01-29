@@ -76,7 +76,7 @@ export default function AccountsTable() {
   ); // Tài khoản được chọn để cập nhật hoặc xem chi tiết
 
   const [sortField, setSortField] = useState<SortField>(null); // Lấy trường cần sort
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc"); // asc hoặc desc
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc"); // asc hoặc desc
   const [searchValue, setSearchValue] = useState(""); // Giá trị tìm kiếm
   const [filters, setLocalsFilters] = useState<FilterState>({
     status: [],
