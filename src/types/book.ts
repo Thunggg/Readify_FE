@@ -53,6 +53,7 @@ export type SearchPublicBooksParams = {
   limit?: number;
 
   q?: string;
+  sex?: number;
   categoryId?: string;
 
   minPrice?: number;

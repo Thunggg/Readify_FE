@@ -47,7 +47,7 @@ const sidebarGroups = [
       },
       {
         title: "Book Management",
-        href: "/admin/book",
+        href: "/admin/books",
         icon: Book,
         badge: null,
       },
