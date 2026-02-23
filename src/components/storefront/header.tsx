@@ -162,10 +162,10 @@ export function Header() {
             <Link href="/">Home</Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link href="/discover">Discover</Link>
+            <Link href="/products">Products</Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link href="/products">Products</Link>
+            <Link href="/blog">Blog</Link>
           </Button>
           <Button variant="ghost" asChild>
             <Link href="/about">About Us</Link>
