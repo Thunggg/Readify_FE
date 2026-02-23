@@ -195,12 +195,6 @@ const http = {
     body?: any,
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("DELETE", url, { ...options, body }),
-
-  patch: <Response>(
-    url: string,
-    body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
-  ) => request<Response>("PATCH", url, { ...options, body }),
 };
 
 export default http;
