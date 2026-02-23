@@ -10,7 +10,11 @@ export type PublicBook = {
     url: string;
   }[];
 
-  authors: string[];
+  authors: {
+    _id: string;
+    name: string;
+    slug: string;
+  }[];
 
   categoryIds: {
     _id: string;
@@ -53,6 +57,7 @@ export type SearchPublicBooksParams = {
   limit?: number;
 
   q?: string;
+  sex?: number;
   categoryId?: string;
 
   minPrice?: number;
@@ -78,7 +83,11 @@ export type BookSuggestion = {
   _id: string;
   title: string;
   slug: string;
-  authors: string[];
+  authors: {
+    _id: string;
+    name: string;
+    slug: string;
+  }[];
   thumbnailUrl: string;
 };
 

@@ -18,11 +18,8 @@ const withCookie = (accessToken?: string) => ({
 const safe = (v?: string | null) => (typeof v === "string" ? v.trim() : "");
 
 export const BookApiRequest = {
-  /* =====================================================
-   * PUBLIC (guest + logged-in)
-   * ===================================================== */
+  // PUBLIC (guest + logged-in)
 
-  /** Get public books list */
   getBooks(params?: SearchPublicBooksParams, accessToken?: string) {
     return http.get<ApiPaginatedResponse<PublicBook>>(BASE_PUBLIC, {
       params,
@@ -84,9 +81,7 @@ export const BookApiRequest = {
     );
   },
 
-  /* =====================================================
-   * ADMIN (login required)
-   * ===================================================== */
+  // ADMIN (login required)
 
   adminGetBooks(accessToken: string, params?: Record<string, any>) {
     return http.get<ApiPaginatedResponse<any>>(BASE_ADMIN, {

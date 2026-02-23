@@ -113,4 +113,16 @@ export const AccountApiRequest = {
     );
     return response;
   },
+
+  refreshToken: async () => {
+    const response = await http.post<ApiResponse<{ accessToken: string }>>("/api/auth/refresh-token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+    return response;
+  }
+
 };

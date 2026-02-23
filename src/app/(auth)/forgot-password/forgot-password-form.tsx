@@ -49,9 +49,9 @@ const ForgotPasswordForm = () => {
     try {
       setIsLoading(true)
 
-      await authApiRequest.forgotPassword({ email: values.email })
+      const res = await authApiRequest.forgotPassword({ email: values.email })
 
-      toast.success("If an account exists for this email, we’ll send password reset instructions.", {
+      toast.success(res?.payload.message ?? "An unexpected error occurred", {
         style: {
           "--normal-bg": "light-dark(var(--color-green-600), var(--color-green-400))",
           "--normal-text": "var(--color-white)",
