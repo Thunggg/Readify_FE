@@ -21,6 +21,8 @@ import {
   Plus,
 } from "lucide-react";
 import { BookApiRequest } from "@/api-request/book";
+import { CartApiRequest } from "@/api-request/cart";
+import { WishlistApiRequest } from "@/api-request/wishlist";
 import { PublicBook, PublicBookDetail } from "@/types/book";
 interface BookDetailContentProps {
   bookSlug: string;
@@ -33,6 +35,8 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
   const [book, setBook] = useState<PublicBookDetail | null>(null);
   const [relatedBooks, setRelatedBooks] = useState<PublicBook[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingCart, setLoadingCart] = useState(false);
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
 
   useEffect(() => {
     if (!bookSlug) return;
@@ -45,7 +49,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
         const [bookRes, relatedRes] = await Promise.all([
           BookApiRequest.getBySlug(bookSlug),
-          BookApiRequest.getRelatedBySlug(bookSlug,4),
+          BookApiRequest.getRelatedBySlug(bookSlug, 4),
         ]);
 
         if (!mounted) return;
@@ -59,7 +63,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
         // related books
         if (relatedRes.status >= 200 && relatedRes.status < 300) {
-          setRelatedBooks(relatedRes.payload.data as PublicBook[] ?? []);
+          setRelatedBooks((relatedRes.payload.data as PublicBook[]) ?? []);
         } else {
           setRelatedBooks([]);
         }
@@ -80,10 +84,90 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
     };
   }, [bookSlug]);
 
+  // Check if book is in wishlist when book loads
+  useEffect(() => {
+    if (!book?._id) return;
+
+    const checkWishlist = async () => {
+      try {
+        const res = await WishlistApiRequest.checkBookInWishlist(book._id);
+        if (res.status >= 200 && res.status < 300) {
+          setIsFavorite(res.payload.data?.isInWishlist ?? false);
+        }
+      } catch (err) {
+        console.error("Check wishlist failed", err);
+      }
+    };
+
+    checkWishlist();
+  }, [book?._id]);
+
   console.log("Book detail data:", relatedBooks);
 
   const handleQuantityChange = (delta: number) => {
     setQuantity(Math.max(1, quantity + delta));
+  };
+
+  const handleAddToCart = async () => {
+    if (!book?._id) {
+      console.error("Book ID not found");
+      return;
+    }
+
+    try {
+      setLoadingCart(true);
+      console.log("Adding to cart:", { bookId: book._id, quantity });
+      
+      const res = await CartApiRequest.addToCart({
+        bookId: book._id,
+        quantity: quantity,
+      });
+
+      console.log("Add to cart response:", res);
+      
+      if (res.status >= 200 && res.status < 300) {
+        alert(`Successfully added ${quantity} book(s) to cart!`);
+        setQuantity(1); // Reset quantity after adding
+      } else {
+        alert("Failed to add to cart. Please try again.");
+      }
+    } catch (err) {
+      console.error("Add to cart failed", err);
+      alert("Error adding to cart. Please try again.");
+    } finally {
+      setLoadingCart(false);
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    if (!book?._id) return;
+
+    try {
+      setLoadingWishlist(true);
+
+      if (isFavorite) {
+        // Remove from wishlist
+        const res = await WishlistApiRequest.removeFromWishlist(book._id);
+        if (res.status >= 200 && res.status < 300) {
+          setIsFavorite(false);
+          alert("Removed from wishlist");
+        }
+      } else {
+        // Add to wishlist
+        const res = await WishlistApiRequest.addToWishlist({
+          bookId: book._id,
+        });
+        if (res.status >= 200 && res.status < 300) {
+          setIsFavorite(true);
+          alert("Added to wishlist");
+        }
+      }
+    } catch (err) {
+      console.error("Toggle wishlist failed", err);
+      alert("Error updating wishlist. Please try again.");
+    } finally {
+      setLoadingWishlist(false);
+    }
   };
 
   if (loading) {
@@ -306,14 +390,20 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" className="flex-1" disabled={!book.isInStock}>
+              <Button
+                size="lg"
+                className="flex-1"
+                disabled={loadingCart}
+                onClick={handleAddToCart}
+              >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to cart
+                {loadingCart ? "Adding..." : "Add to cart"}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => setIsFavorite(!isFavorite)}
+                onClick={handleToggleWishlist}
+                disabled={loadingWishlist}
               >
                 <Heart
                   className={`h-5 w-5 ${
@@ -421,9 +511,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                       Publication Date
                     </span>
                     <span className="font-medium">
-                      {new Date(book.publishDate).toLocaleDateString(
-                        "vi-VN"
-                      )}
+                      {new Date(book.publishDate).toLocaleDateString("vi-VN")}
                     </span>
                   </div>
                 )}
