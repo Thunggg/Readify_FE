@@ -58,11 +58,7 @@ let refreshTokenPromise: Promise<any> | null = null;
 
 
 const request = async <Response>(
-<<<<<<< HEAD
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
-=======
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
->>>>>>> 96c1c3cd9e74de49fdebf574b8921f87b976113c
   url: string,
   options: CustomOptions | undefined
 ) => {
@@ -228,12 +224,6 @@ const http = {
     body?: any,
     options?: Omit<CustomOptions, "body"> | undefined
   ) => request<Response>("DELETE", url, { ...options, body }),
-
-  patch: <Response>(
-    url: string,
-    body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
-  ) => request<Response>("PATCH", url, { ...options, body }),
 };
 
 export default http;

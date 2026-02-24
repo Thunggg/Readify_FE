@@ -1,6 +1,7 @@
 import http from "@/lib/http";
 import type { ApiPaginatedResponse, ApiResponse } from "@/types/api";
 import type { AdminAccount } from "@/types/account";
+import type { AccountSession } from "@/types/session";
 import type {
   CreateAccountApiRequest,
   UpdateAccountApiRequest,
@@ -12,7 +13,9 @@ import {
 
 export const AccountApiRequest = {
   getMe: async (accessToken?: string) => {
-    const response = await http.get<ApiResponse<{ email: string }>>(
+    const response = await http.get<
+      ApiResponse<{ email: string; name?: string; role?: number }>
+    >(
       "/accounts/me",
       {
         headers: {
@@ -20,6 +23,17 @@ export const AccountApiRequest = {
           ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
         },
         credentials: "include",
+      }
+    );
+    return response;
+  },
+
+  getSessions: async () => {
+    const response = await http.get<ApiResponse<AccountSession[]>>(
+      "/accounts/sessions",
+      {
+        credentials: "include",
+        cache: "no-store",
       }
     );
     return response;
