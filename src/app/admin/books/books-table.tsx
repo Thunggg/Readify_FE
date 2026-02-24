@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Card } from "@/components/ui/card"
-import { MoreHorizontal, Pencil, Trash2, Eye, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import {
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Eye,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw,
+  Loader2,
+} from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   AlertDialog,
@@ -27,141 +38,95 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import Link from "next/link"
+import { BookApiRequest } from "@/api-request/book"
+import { CategoryApiRequest, type Category } from "@/api-request/category"
+import type { AdminBook, SearchAdminBooksParams } from "@/types/book"
+import type { PaginationMeta } from "@/types/api"
+import { useDebounce } from "@/hooks/use-debounce"
+import { handleErrorApi } from "@/lib/utils"
 
-// Mock data for books
-const mockBooks = [
-  {
-    id: "1",
-    title: "Clean Code",
-    author: "Robert C. Martin",
-    category: "Programming",
-    price: 450000,
-    stock: 25,
-    status: "published" as const,
-    publishedAt: "2024-01-15",
-    isPreOrder: false,
-    preOrderReleaseDate: null,
-  },
-  {
-    id: "2",
-    title: "The Pragmatic Programmer",
-    author: "David Thomas, Andrew Hunt",
-    category: "Programming",
-    price: 520000,
-    stock: 15,
-    status: "published" as const,
-    publishedAt: "2024-02-20",
-    isPreOrder: false,
-    preOrderReleaseDate: null,
-  },
-  {
-    id: "3",
-    title: "Design Patterns",
-    author: "Gang of Four",
-    category: "Software Design",
-    price: 680000,
-    stock: 8,
-    status: "published" as const,
-    publishedAt: "2024-01-10",
-    isPreOrder: false,
-    preOrderReleaseDate: null,
-  },
-  {
-    id: "4",
-    title: "JavaScript: The Good Parts",
-    author: "Douglas Crockford",
-    category: "Web Development",
-    price: 380000,
-    stock: 0,
-    status: "draft" as const,
-    publishedAt: null,
-    isPreOrder: false,
-    preOrderReleaseDate: null,
-  },
-  {
-    id: "5",
-    title: "Refactoring",
-    author: "Martin Fowler",
-    category: "Programming",
-    price: 590000,
-    stock: 12,
-    status: "published" as const,
-    publishedAt: "2024-03-05",
-    isPreOrder: false,
-    preOrderReleaseDate: null,
-  },
-  {
-    id: "6",
-    title: "Advanced React Patterns 2025",
-    author: "Kent C. Dodds",
-    category: "Web Development",
-    price: 650000,
-    stock: 0,
-    status: "published" as const,
-    publishedAt: "2024-12-20",
-    isPreOrder: true,
-    preOrderReleaseDate: "2025-02-15",
-  },
-]
+const BookStatusMap: Record<number, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
+  0: { label: "Ngừng bán", variant: "destructive" },
+  1: { label: "Đang bán", variant: "default" },
+  2: { label: "Ẩn", variant: "outline" },
+  3: { label: "Bản nháp", variant: "secondary" },
+  4: { label: "Hết hàng", variant: "destructive" },
+}
 
-type SortField = "title" | "author" | "price" | "stock" | "publishedAt"
+type SortField = "title" | "basePrice" | "soldCount" | "createdAt"
 type SortOrder = "asc" | "desc"
 
 export function BooksTable() {
+  const [books, setBooks] = useState<AdminBook[]>([])
+  const [meta, setMeta] = useState<PaginationMeta | null>(null)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+
   const [searchQuery, setSearchQuery] = useState("")
+  const debouncedSearch = useDebounce(searchQuery, 500)
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
-  const [sortField, setSortField] = useState<SortField>("publishedAt")
+  const [sortField, setSortField] = useState<SortField>("createdAt")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
   const [deleteBookId, setDeleteBookId] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
-  const filteredBooks = mockBooks.filter((book) => {
-    const matchesSearch =
-      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || book.status === statusFilter
-    const matchesCategory = categoryFilter === "all" || book.category === categoryFilter
-    return matchesSearch && matchesStatus && matchesCategory
-  })
+  const itemsPerPage = 10
 
-  const sortedBooks = [...filteredBooks].sort((a, b) => {
-    let aValue: any
-    let bValue: any
+  const fetchBooks = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params: SearchAdminBooksParams = {
+        page: currentPage,
+        limit: itemsPerPage,
+        sortBy: sortField,
+        order: sortOrder,
+      }
 
-    switch (sortField) {
-      case "title":
-        aValue = a.title.toLowerCase()
-        bValue = b.title.toLowerCase()
-        break
-      case "author":
-        aValue = a.author.toLowerCase()
-        bValue = b.author.toLowerCase()
-        break
-      case "price":
-        aValue = a.price
-        bValue = b.price
-        break
-      case "stock":
-        aValue = a.stock
-        bValue = b.stock
-        break
-      case "publishedAt":
-        aValue = a.publishedAt || ""
-        bValue = b.publishedAt || ""
-        break
-      default:
-        return 0
+      if (debouncedSearch) params.q = debouncedSearch
+      if (statusFilter !== "all") params.status = Number(statusFilter)
+      if (categoryFilter !== "all") params.categoryId = categoryFilter
+
+      const res = await BookApiRequest.adminGetBooks("", params)
+      const payload = res.payload
+
+      if (payload.success) {
+        setBooks((payload.data?.items as AdminBook[]) ?? [])
+        setMeta(payload.data?.meta ?? null)
+      }
+    } catch (error) {
+      handleErrorApi({ error })
+    } finally {
+      setLoading(false)
     }
+  }, [currentPage, itemsPerPage, sortField, sortOrder, debouncedSearch, statusFilter, categoryFilter])
 
-    if (aValue < bValue) return sortOrder === "asc" ? -1 : 1
-    if (aValue > bValue) return sortOrder === "asc" ? 1 : -1
-    return 0
-  })
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await CategoryApiRequest.getCategories({ limit: 50 })
+      const payload = res.payload
+      if (payload.success) {
+        const data = payload.data as any
+        setCategories(data.items ?? data ?? [])
+      }
+    } catch {
+      // ignore
+    }
+  }, [])
 
-  const totalPages = Math.ceil(sortedBooks.length / itemsPerPage)
-  const paginatedBooks = sortedBooks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  useEffect(() => {
+    fetchBooks()
+  }, [fetchBooks])
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearch, statusFilter, categoryFilter])
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -170,17 +135,46 @@ export function BooksTable() {
       setSortField(field)
       setSortOrder("asc")
     }
+    setCurrentPage(1)
   }
 
-  const handleDelete = (id: string) => {
-    console.log("[v0] Deleting book:", id)
-    setDeleteBookId(null)
+  const handleDelete = async (id: string) => {
+    setActionLoading(true)
+    try {
+      await BookApiRequest.adminDelete("", id)
+      setDeleteBookId(null)
+      fetchBooks()
+    } catch (error) {
+      handleErrorApi({ error })
+    } finally {
+      setActionLoading(false)
+    }
   }
+
+  const handleRestore = async (id: string) => {
+    setActionLoading(true)
+    try {
+      await BookApiRequest.adminRestore("", id)
+      fetchBooks()
+    } catch (error) {
+      handleErrorApi({ error })
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const totalPages = meta?.totalPages ?? 1
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="ml-1 size-3" />
     return sortOrder === "asc" ? <ArrowUp className="ml-1 size-3" /> : <ArrowDown className="ml-1 size-3" />
   }
+
+  const formatPrice = (price: number, currency?: string) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: currency || "VND",
+    }).format(price)
 
   return (
     <div className="space-y-4">
@@ -189,7 +183,7 @@ export function BooksTable() {
           <div className="relative flex-1 md:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm theo tên sách hoặc tác giả..."
+              placeholder="Tìm kiếm theo tên sách, ISBN..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -202,8 +196,10 @@ export function BooksTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="published">Đã xuất bản</SelectItem>
-                <SelectItem value="draft">Bản nháp</SelectItem>
+                <SelectItem value="1">Đang bán</SelectItem>
+                <SelectItem value="3">Bản nháp</SelectItem>
+                <SelectItem value="0">Ngừng bán</SelectItem>
+                <SelectItem value="2">Ẩn</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -212,9 +208,11 @@ export function BooksTable() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả danh mục</SelectItem>
-                <SelectItem value="Programming">Programming</SelectItem>
-                <SelectItem value="Web Development">Web Development</SelectItem>
-                <SelectItem value="Software Design">Software Design</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -225,29 +223,24 @@ export function BooksTable() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[80px]">Ảnh</TableHead>
               <TableHead>
                 <Button variant="ghost" onClick={() => handleSort("title")} className="h-8 px-2">
                   Tên sách
                   <SortIcon field="title" />
                 </Button>
               </TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => handleSort("author")} className="h-8 px-2">
-                  Tác giả
-                  <SortIcon field="author" />
-                </Button>
-              </TableHead>
               <TableHead>Danh mục</TableHead>
               <TableHead className="text-right">
-                <Button variant="ghost" onClick={() => handleSort("price")} className="h-8 px-2">
+                <Button variant="ghost" onClick={() => handleSort("basePrice")} className="h-8 px-2">
                   Giá
-                  <SortIcon field="price" />
+                  <SortIcon field="basePrice" />
                 </Button>
               </TableHead>
               <TableHead className="text-center">
-                <Button variant="ghost" onClick={() => handleSort("stock")} className="h-8 px-2">
-                  Kho
-                  <SortIcon field="stock" />
+                <Button variant="ghost" onClick={() => handleSort("soldCount")} className="h-8 px-2">
+                  Đã bán
+                  <SortIcon field="soldCount" />
                 </Button>
               </TableHead>
               <TableHead>Trạng thái</TableHead>
@@ -255,54 +248,73 @@ export function BooksTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedBooks.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-24 text-center">
+                  <Loader2 className="mx-auto size-6 animate-spin" />
+                </TableCell>
+              </TableRow>
+            ) : books.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
                   Không tìm thấy sách nào
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedBooks.map((book) => (
-                <TableRow key={book.id}>
-                  <TableCell className="font-medium">
-                    {book.title}
-                    {book.isPreOrder && (
-                      <Badge variant="secondary" className="ml-2 text-xs">
-                        Đặt trước
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{book.author}</TableCell>
-                  <TableCell>{book.category}</TableCell>
-                  <TableCell className="text-right">
-                    {new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(book.price)}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {book.isPreOrder ? (
-                      <span className="text-sm text-muted-foreground">
-                        {book.preOrderReleaseDate
-                          ? new Date(book.preOrderReleaseDate).toLocaleDateString("vi-VN", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "TBA"}
-                      </span>
+              books.map((book) => (
+                <TableRow key={book._id} className={book.isDeleted ? "opacity-50" : ""}>
+                  <TableCell>
+                    {book.thumbnailUrl ? (
+                      <img
+                        src={book.thumbnailUrl}
+                        alt={book.title}
+                        className="size-12 rounded border object-cover"
+                      />
                     ) : (
-                      <Badge variant={book.stock === 0 ? "destructive" : "secondary"}>{book.stock}</Badge>
+                      <div className="flex size-12 items-center justify-center rounded border bg-muted text-xs text-muted-foreground">
+                        N/A
+                      </div>
                     )}
+                  </TableCell>
+                  <TableCell className="max-w-[250px]">
+                    <div className="font-medium truncate">{book.title}</div>
+                    <div className="text-xs text-muted-foreground truncate">{book.slug}</div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={book.status === "published" ? "default" : "outline"}>
-                      {book.status === "published" ? "Đã xuất bản" : "Bản nháp"}
-                    </Badge>
+                    {book.categoryIds && book.categoryIds.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {book.categoryIds.slice(0, 2).map((cat) => (
+                          <Badge key={typeof cat === "object" ? cat._id : cat} variant="outline" className="text-xs">
+                            {typeof cat === "object" ? cat.name : cat}
+                          </Badge>
+                        ))}
+                        {book.categoryIds.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{book.categoryIds.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">{formatPrice(book.basePrice, book.currency)}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="secondary">{book.soldCount ?? 0}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {book.isDeleted ? (
+                      <Badge variant="destructive">Đã xóa</Badge>
+                    ) : (
+                      <Badge variant={BookStatusMap[book.status ?? 1]?.variant ?? "secondary"}>
+                        {BookStatusMap[book.status ?? 1]?.label ?? "N/A"}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" disabled={actionLoading}>
                           <MoreHorizontal className="size-4" />
                           <span className="sr-only">Menu</span>
                         </Button>
@@ -311,28 +323,42 @@ export function BooksTable() {
                         <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/books/${book.id}`}>
+                          <Link href={`/admin/books/${book._id}`}>
                             <Eye className="mr-2 size-4" />
                             Xem chi tiết
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/books/${book.id}/edit`}>
-                            <Pencil className="mr-2 size-4" />
-                            Chỉnh sửa
-                          </Link>
-                        </DropdownMenuItem>
+                        {!book.isDeleted && (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/books/${book._id}/edit`}>
+                              <Pencil className="mr-2 size-4" />
+                              Chỉnh sửa
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onSelect={(e) => {
-                            e.preventDefault()
-                            setDeleteBookId(book.id)
-                          }}
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          Xóa
-                        </DropdownMenuItem>
+                        {book.isDeleted ? (
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              handleRestore(book._id)
+                            }}
+                          >
+                            <RotateCcw className="mr-2 size-4" />
+                            Khôi phục
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onSelect={(e) => {
+                              e.preventDefault()
+                              setDeleteBookId(book._id)
+                            }}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Xóa
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -345,36 +371,50 @@ export function BooksTable() {
 
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Hiển thị {paginatedBooks.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} -{" "}
-          {Math.min(currentPage * itemsPerPage, sortedBooks.length)} trên {sortedBooks.length} sách
+          {meta
+            ? `Hiển thị ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, meta.total)} trên ${meta.total} sách`
+            : ""}
         </p>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
+            disabled={currentPage === 1 || loading}
           >
             Trước
           </Button>
           <div className="flex items-center gap-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(page)}
-                className="size-8 p-0"
-              >
-                {page}
-              </Button>
-            ))}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              let page: number
+              if (totalPages <= 5) {
+                page = i + 1
+              } else if (currentPage <= 3) {
+                page = i + 1
+              } else if (currentPage >= totalPages - 2) {
+                page = totalPages - 4 + i
+              } else {
+                page = currentPage - 2 + i
+              }
+              return (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCurrentPage(page)}
+                  className="size-8 p-0"
+                  disabled={loading}
+                >
+                  {page}
+                </Button>
+              )
+            })}
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
+            disabled={currentPage === totalPages || loading}
           >
             Sau
           </Button>
@@ -386,13 +426,17 @@ export function BooksTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa sách</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa sách này? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa sách này? Sách sẽ được đánh dấu đã xóa và có thể khôi phục sau.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deleteBookId && handleDelete(deleteBookId)} className="bg-destructive">
-              Xóa
+            <AlertDialogCancel disabled={actionLoading}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteBookId && handleDelete(deleteBookId)}
+              className="bg-destructive"
+              disabled={actionLoading}
+            >
+              {actionLoading ? "Đang xóa..." : "Xóa"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
