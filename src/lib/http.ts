@@ -56,14 +56,14 @@ let clientLogoutRequest: Promise<any> | null = null;
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   url: string,
-  options: CustomOptions | undefined
+  options: CustomOptions | undefined,
 ) => {
   const body =
     options?.body instanceof FormData
       ? options.body
       : options?.body
-      ? JSON.stringify(options.body)
-      : undefined;
+        ? JSON.stringify(options.body)
+        : undefined;
   const baseHeaders =
     options?.body instanceof FormData
       ? {}
@@ -127,7 +127,7 @@ const request = async <Response>(
         data as {
           status: number;
           payload: EntityErrorPayload;
-        }
+        },
       );
     } else if (response.status === 401) {
       // Nếu token hết hạn thì tự động logout
@@ -144,7 +144,6 @@ const request = async <Response>(
           });
 
           await clientLogoutRequest;
-          console.log("logout success");
           return;
         } else {
           clientLogoutRequest = authApiRequest.logoutFromNextClientToServer();
@@ -165,31 +164,31 @@ const request = async <Response>(
 const http = {
   get: <Response>(
     url: string,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("GET", url, options),
 
   post: <Response>(
     url: string,
     body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("POST", url, { ...options, body }),
 
   put: <Response>(
     url: string,
     body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("PUT", url, { ...options, body }),
 
   patch: <Response>(
     url: string,
     body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("PATCH", url, { ...options, body }),
 
   delete: <Response>(
     url: string,
     body?: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("DELETE", url, { ...options, body }),
 };
 
