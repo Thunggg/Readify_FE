@@ -45,3 +45,13 @@ export type Ticket = {
   updatedAt: string;
   __v?: number;
 };
+
+export const TicketSortBy = {
+  CREATED_AT: "createdAt",
+  LAST_MESSAGE_AT: "lastMessageAt",
+  SUBJECT: "subject",
+  EMAIL: "email",
+} as const;
+
+export type TicketSortByValue =
+  (typeof TicketSortBy)[keyof typeof TicketSortBy];

@@ -1,7 +1,7 @@
 "use client";
 
 import dayjs from "dayjs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { TicketApiRequest } from "@/api-request/ticket";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { handleErrorApi } from "@/lib/utils";
-import type { Ticket, TicketStatusValue } from "@/types/ticket";
+import type { PaginationMeta } from "@/types/api";
+import type { Ticket, TicketSortByValue, TicketStatusValue } from "@/types/ticket";
 
 import PaginationControls from "../accounts/components/pagination-controls";
 import TicketDetailDrawer from "./components/ticket-detail-drawer";
@@ -33,14 +34,21 @@ const statusClass: Record<TicketStatusValue, string> = {
   CLOSED: "border-none bg-muted text-muted-foreground",
 };
 
-function asTime(value?: string) {
-  if (!value) return 0;
-  const t = new Date(value).getTime();
-  return Number.isFinite(t) ? t : 0;
+function useDebouncedValue<T>(value: T, delayMs: number) {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(t);
+  }, [value, delayMs]);
+
+  return debounced;
 }
 
 export default function TicketsTable() {
-  const [allTickets, setAllTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [searchValue, setSearchValue] = useState("");
   const [statusFilters, setStatusFilters] = useState<TicketStatusValue[]>([]);
@@ -54,73 +62,67 @@ export default function TicketsTable() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchTickets = async () => {
+  const debouncedSearchValue = useDebouncedValue(searchValue.trim(), 300);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTickets = async () => {
       try {
-        const response = await TicketApiRequest.getAllTickets();
+        setIsLoading(true);
+        const response = await TicketApiRequest.getAllTickets(
+          {
+            search: debouncedSearchValue || undefined,
+            statusFilter: statusFilters.length ? statusFilters : undefined,
+            sortBy: sortField ?? undefined,
+            order: sortOrder ?? undefined,
+            page,
+            limit,
+          } satisfies {
+            search?: string;
+            statusFilter?: TicketStatusValue[];
+            sortBy?: TicketSortByValue;
+            order?: "asc" | "desc";
+            page?: number;
+            limit?: number;
+          },
+        );
 
         if (!response?.payload?.success) {
-  handleErrorApi({
-    error: "Failed to fetch tickets",
-    duration: 5000,
-  });
-  return;
-}
+          handleErrorApi({
+            error: "Failed to fetch tickets",
+            duration: 5000,
+          });
+          return;
+        }
 
-        setAllTickets(response.payload?.data?.items ?? []); 
+        const items = response.payload?.data?.items ?? [];
+        const nextMeta = response.payload?.data?.meta;
+        if (cancelled) return;
 
+        setTickets(items);
+        setMeta(nextMeta);
       } catch (error) {
+        if (cancelled) return;
         handleErrorApi({ error, duration: 5000 });
+        setTickets([]);
+        setMeta(undefined);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     fetchTickets();
-  }, []);
 
-  const filteredTickets = useMemo(() => {
-    const q = searchValue.trim().toLowerCase();
-    return allTickets.filter((t) => {
-      const matchesSearch =
-        !q ||
-        t._id.toLowerCase().includes(q) ||
-        t.customerId?.email.toLowerCase().includes(q) ||
-        t.subject.toLowerCase().includes(q);
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearchValue, statusFilters, sortField, sortOrder, page, limit]);
 
-      const matchesStatus =
-        statusFilters.length === 0 || statusFilters.includes(t.status);
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [allTickets, searchValue, statusFilters]);
-
-  const sortedTickets = useMemo(() => {
-    if (!sortField || !sortOrder) return filteredTickets;
-    const dir = sortOrder === "asc" ? 1 : -1;
-
-    const copy = [...filteredTickets];
-    copy.sort((a, b) => {
-      const av =
-        sortField === "createdAt"
-          ? asTime(a.createdAt)
-          : asTime(a.lastMessageAt);
-      const bv =
-        sortField === "createdAt"
-          ? asTime(b.createdAt)
-          : asTime(b.lastMessageAt);
-      return (av - bv) * dir;
-    });
-    return copy;
-  }, [filteredTickets, sortField, sortOrder]);
-
-  const total = sortedTickets.length;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const effectivePage = Math.min(page, totalPages);
-
-  const paginatedTickets = useMemo(() => {
-    const start = (effectivePage - 1) * limit;
-    return sortedTickets.slice(start, start + limit);
-  }, [sortedTickets, effectivePage, limit]);
+  const totalPages =
+    meta?.totalPages ??
+    (meta?.total ? Math.max(1, Math.ceil(meta.total / (meta.limit ?? limit))) : 1);
+  const currentPage = meta?.page ?? page;
 
   const onSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);
@@ -136,7 +138,7 @@ export default function TicketsTable() {
         ticket={selectedTicket}
         onTicketUpdated={(nextTicket) => {
           setSelectedTicket(nextTicket);
-          setAllTickets((prev) =>
+          setTickets((prev: Ticket[]) =>
             prev.map((t) => (t._id === nextTicket._id ? nextTicket : t)),
           );
         }}
@@ -190,7 +192,13 @@ export default function TicketsTable() {
         </TableHeader>
 
         <TableBody>
-          {paginatedTickets.length === 0 ? (
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={7} className="py-10 text-center">
+                <div className="text-sm text-muted-foreground">Loading...</div>
+              </TableCell>
+            </TableRow>
+          ) : tickets.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="py-10 text-center">
                 <div className="text-sm text-muted-foreground">
@@ -199,7 +207,7 @@ export default function TicketsTable() {
               </TableCell>
             </TableRow>
           ) : (
-            paginatedTickets.map((t) => {
+            tickets.map((t) => {
               const lastMsg = t.messages?.[t.messages.length - 1];
               return (
                 <TableRow
@@ -247,10 +255,10 @@ export default function TicketsTable() {
         </TableBody>
       </Table>
 
-      {total > limit && (
+      {totalPages > 1 && (
         <div className="mt-4">
           <PaginationControls
-            currentPage={effectivePage}
+            currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={(next) =>
               setPage(Math.min(Math.max(1, next), totalPages))
