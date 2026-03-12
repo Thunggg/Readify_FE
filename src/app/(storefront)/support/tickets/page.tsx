@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LifeBuoy, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { TicketListTable, type TicketRow } from "./components/ticket-list-table";
+import { TicketListTable } from "./components/ticket-list-table";
 
 export default function MyTicketsPage() {
   return (
@@ -16,8 +16,7 @@ export default function MyTicketsPage() {
             </div>
             <h1 className="mt-2 text-3xl font-bold text-balance">My Tickets</h1>
             <p className="text-muted-foreground mt-2 max-w-2xl">
-              Danh sách toàn bộ yêu cầu hỗ trợ bạn đã gửi. Đây là giao diện mẫu,
-              chưa có gọi API thật.
+              Danh sách toàn bộ yêu cầu hỗ trợ bạn đã gửi.
             </p>
           </div>
 

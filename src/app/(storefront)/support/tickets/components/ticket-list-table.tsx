@@ -23,16 +23,10 @@ import TicketsToolbar from "./tickets-toolbar";
 import { Ticket, TicketSortByValue, TicketStatusValue } from "@/types/ticket";
 import { TicketApiRequest } from "@/api-request/ticket";
 import { handleErrorApi } from "@/lib/utils";
+import type { PaginationMeta } from "@/types/api";
+import PaginationControls from "@/app/admin/accounts/components/pagination-controls";
 
 dayjs.extend(relativeTime);
-
-export type TicketRow = {
-  _id: string;
-  subject: string;
-  status: TicketStatus;
-  lastMessageAt?: string | Date | null;
-  createdAt?: string | Date | null;
-};
 
 export function TicketListTable() {
   // UI-only states (do not apply to data)
@@ -43,55 +37,97 @@ export function TicketListTable() {
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [meta, setMeta] = useState<PaginationMeta | undefined>(undefined);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(3);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const onSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);
     setSortOrder(order);
+    setPage(1);
   };
 
-  useEffect(() => {
-    const fetchTickets = async () => {
-      const response = await TicketApiRequest.getMyTickets({
-        search: searchValue || undefined,
-        statusFilter: statusFilters.length ? statusFilters : undefined,
-        sortBy: sortField ?? undefined,
-        order: sortOrder ?? undefined,
-        page: 1,
-        limit: 10,
-      } satisfies {
-        search?: string;
-        statusFilter?: TicketStatusValue[];
-        sortBy?: TicketSortByValue;
-        order?: "asc" | "desc";
-        page?: number;
-        limit?: number;
-      });
 
-      if (!response?.payload?.success) {
-        handleErrorApi({
-          error: "Failed to fetch tickets",
-          duration: 5000,
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTickets = async () => {
+      try {
+        setIsLoading(true);
+        const response = await TicketApiRequest.getMyTickets({
+          search: searchValue || undefined,
+          statusFilter: statusFilters.length ? statusFilters : undefined,
+          sortBy: sortField ?? undefined,
+          order: sortOrder ?? undefined,
+          page,
+          limit,
+        } satisfies {
+          search?: string;
+          statusFilter?: TicketStatusValue[];
+          sortBy?: TicketSortByValue;
+          order?: "asc" | "desc";
+          page?: number;
+          limit?: number;
         });
-        return;
+
+        if (cancelled) return;
+
+        if (!response?.payload?.success) {
+          handleErrorApi({
+            error: "Failed to fetch tickets",
+            duration: 5000,
+          });
+          setTickets([]);
+          setMeta(undefined);
+          return;
+        }
+
+        const items = response.payload?.data?.items ?? [];
+        const nextMeta = response.payload?.data?.meta;
+        if (cancelled) return;
+
+        setTickets(items);
+        setMeta(nextMeta);
+        setTotalPages(nextMeta?.totalPages ?? 1);
+        setCurrentPage(nextMeta?.page ?? 1);
+      } catch (error) {
+        if (cancelled) return;
+        handleErrorApi({ error, duration: 5000 });
+        setTickets([]);
+        setMeta(undefined);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      setTickets(response.payload?.data?.items ?? []);
-      setIsLoading(false);
     };
     fetchTickets();
-  }, [searchValue, statusFilters, sortField, sortOrder]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchValue, statusFilters, sortField, sortOrder, page, limit]);
+
 
   return (
     <>
       <TicketsToolbar
         searchValue={searchValue}
-        setSearchValue={setSearchValue}
+        setSearchValue={(v) => {
+          setSearchValue(v);
+          setPage(1);
+        }}
         statusFilters={statusFilters}
-        setStatusFilters={setStatusFilters}
+        setStatusFilters={(next) => {
+          setStatusFilters(next);
+          setPage(1);
+        }}
         onClearFilters={() => {
           setSearchValue("");
           setStatusFilters([]);
           setSortField(null);
           setSortOrder(null);
+          setPage(1);
         }}
       />
 
@@ -178,6 +214,16 @@ export function TicketListTable() {
       </Table>
     </div>
       )}
+
+      {totalPages > 1 ? (
+        <div className="mt-4">
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(next) => setPage(next)}
+          />
+        </div>
+      ) : null}
     </>
   );
 }
