@@ -17,7 +17,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { handleErrorApi } from "@/lib/utils";
 import { type Ticket } from "@/types/ticket";
-import { Loader2 } from "lucide-react";
+import { Loader2, Star } from "lucide-react";
 
 export default function TicketDetailDrawer({
   open,
@@ -180,11 +180,26 @@ export default function TicketDetailDrawer({
             <div className="text-sm">
               <div className="text-muted-foreground">CSAT</div>
               <div className="mt-2 rounded-md border p-3 space-y-1">
-                <div>
-                  <span className="text-muted-foreground">Rating:</span>{" "}
-                  <span className="font-medium">
-                    {ticket.csat.rating ?? "-"}
-                  </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Rating</span>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: 5 }).map((_, idx) => {
+                      const value = idx + 1;
+                      const active = value <= (ticket.csat?.rating ?? 0);
+                      return (
+                        <Star
+                          key={value}
+                          className={
+                            active ? "size-4 text-amber-500" : "size-4 text-muted-foreground"
+                          }
+                          fill={active ? "currentColor" : "none"}
+                        />
+                      );
+                    })}
+                    <span className="ml-2 font-medium">
+                      {ticket.csat.rating ? `${ticket.csat.rating}/5` : "-"}
+                    </span>
+                  </div>
                 </div>
                 {ticket.csat.comment ? (
                   <div className="whitespace-pre-wrap">{ticket.csat.comment}</div>

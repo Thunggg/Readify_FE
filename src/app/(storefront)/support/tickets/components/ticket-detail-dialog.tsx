@@ -1,8 +1,8 @@
 "use client";
 
 import dayjs from "dayjs";
-import { useEffect, useMemo, useState } from "react";
-import { Loader2, MessageSquareText, SendHorizonal } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Loader2, MessageSquareText, SendHorizonal, Star } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,10 @@ export default function TicketDetailDialog({
     () => Boolean(ticket?._id) && replyMessage.trim().length > 0 && !isSending,
     [ticket?._id, replyMessage, isSending],
   );
+
+  const csatRating = ticket?.csat?.rating ?? 0;
+  const csatComment = ticket?.csat?.comment;
+  const csatSubmittedAt = ticket?.csat?.submittedAt;
   
   const onSendReply = async () => {
     try {
@@ -194,6 +198,47 @@ export default function TicketDetailDialog({
                   </div>
                 </div>
               </div>
+
+              {ticket?.csat ? (
+                <div className="rounded-lg border bg-background p-4">
+                  <div className="text-sm font-medium">CSAT</div>
+                  <div className="mt-3 space-y-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-muted-foreground">Rating</span>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, idx) => {
+                          const value = idx + 1;
+                          const active = value <= csatRating;
+                          return (
+                            <Star
+                              key={value}
+                              className={cn(
+                                "size-4",
+                                active ? "text-amber-500" : "text-muted-foreground",
+                              )}
+                              fill={active ? "currentColor" : "none"}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {csatComment ? (
+                      <div>
+                        <div className="text-muted-foreground mb-1">Comment</div>
+                        <div className="whitespace-pre-wrap">{csatComment}</div>
+                      </div>
+                    ) : null}
+
+                    {csatSubmittedAt ? (
+                      <div className="text-xs text-muted-foreground">
+                        Submitted{" "}
+                        {dayjs(csatSubmittedAt).format("DD/MM/YYYY HH:mm")}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="rounded-lg border bg-background p-4">
                 <div className="text-sm font-medium">Tips</div>
