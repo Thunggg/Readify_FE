@@ -53,7 +53,7 @@ export default function TicketsTable() {
   const [searchValue, setSearchValue] = useState("");
   const [statusFilters, setStatusFilters] = useState<TicketStatusValue[]>([]);
 
-  const [sortField, setSortField] = useState<SortField>("lastMessageAt");
+  const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
   const [page, setPage] = useState(1);
