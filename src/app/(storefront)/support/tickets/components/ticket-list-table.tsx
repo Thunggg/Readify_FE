@@ -156,7 +156,9 @@ export function TicketListTable() {
         open={detailOpen}
         onOpenChange={(open) => {
           setDetailOpen(open);
-          if (!open) setSelectedTicket(null);
+          if (!open){
+             setSelectedTicket(null)
+          };
         }}
         ticket={selectedTicket}
         setSelectedTicket={setSelectedTicket}

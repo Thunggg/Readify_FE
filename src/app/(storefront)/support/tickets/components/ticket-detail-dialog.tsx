@@ -67,6 +67,7 @@ export default function TicketDetailDialog({
       handleErrorApi({ error, duration: 5000 });
     } finally {
       setIsSending(false);
+      setReplyMessage("");
     }
   };
 
