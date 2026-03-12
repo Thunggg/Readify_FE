@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Eye } from "lucide-react";
@@ -23,8 +22,8 @@ import TicketsToolbar from "./tickets-toolbar";
 import { Ticket, TicketSortByValue, TicketStatusValue } from "@/types/ticket";
 import { TicketApiRequest } from "@/api-request/ticket";
 import { handleErrorApi } from "@/lib/utils";
-import type { PaginationMeta } from "@/types/api";
 import PaginationControls from "@/app/admin/accounts/components/pagination-controls";
+import TicketDetailDialog from "./ticket-detail-dialog";
 
 dayjs.extend(relativeTime);
 
@@ -37,11 +36,12 @@ export function TicketListTable() {
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [meta, setMeta] = useState<PaginationMeta | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [limit] = useState(3);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
   const onSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);
@@ -80,7 +80,6 @@ export function TicketListTable() {
             duration: 5000,
           });
           setTickets([]);
-          setMeta(undefined);
           return;
         }
 
@@ -89,14 +88,12 @@ export function TicketListTable() {
         if (cancelled) return;
 
         setTickets(items);
-        setMeta(nextMeta);
         setTotalPages(nextMeta?.totalPages ?? 1);
         setCurrentPage(nextMeta?.page ?? 1);
       } catch (error) {
         if (cancelled) return;
         handleErrorApi({ error, duration: 5000 });
         setTickets([]);
-        setMeta(undefined);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -111,6 +108,16 @@ export function TicketListTable() {
 
   return (
     <>
+      <TicketDetailDialog
+        open={detailOpen}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+          if (!open) setSelectedTicket(null);
+        }}
+        ticket={selectedTicket}
+        setSelectedTicket={setSelectedTicket}
+      />
+
       <TicketsToolbar
         searchValue={searchValue}
         setSearchValue={(v) => {
@@ -201,11 +208,17 @@ export function TicketListTable() {
                   : "-"}
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="sm" asChild className="gap-1.5">
-                  <Link href={`/support/tickets/${ticket._id}`}>
-                    <Eye className="w-4 h-4" />
-                    <span className="hidden sm:inline">View</span>
-                  </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    setSelectedTicket(ticket);
+                    setDetailOpen(true);
+                  }}
+                >
+                  <Eye className="w-4 h-4" />
+                  <span className="hidden sm:inline">View</span>
                 </Button>
               </TableCell>
             </TableRow>

@@ -66,4 +66,18 @@ export const TicketApiRequest = {
     });
     return response;
   },
+
+  customerReplyToTicket: async (
+    ticketId: string,
+    body: { message: string },
+  ) => {
+    const response = await http.post<ApiResponse<Ticket>>(
+      `/tickets/${ticketId}/reply`,
+      body,
+      {
+        credentials: "include",
+      },
+    );
+    return response;
+  },
 };
