@@ -15,16 +15,13 @@ export const AccountApiRequest = {
   getMe: async (accessToken?: string) => {
     const response = await http.get<
       ApiResponse<{ email: string; name?: string; role?: number }>
-    >(
-      "/accounts/me",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
-        },
-        credentials: "include",
-      }
-    );
+    >("/accounts/me", {
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
+      },
+      credentials: "include",
+    });
     return response;
   },
 
@@ -34,7 +31,7 @@ export const AccountApiRequest = {
       {
         credentials: "include",
         cache: "no-store",
-      }
+      },
     );
     return response;
   },
@@ -54,7 +51,7 @@ export const AccountApiRequest = {
         params,
         credentials: "include",
         cache: "no-store",
-      }
+      },
     );
     return response;
   },
@@ -68,7 +65,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -82,7 +79,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -95,7 +92,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -109,7 +106,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -123,20 +120,22 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
 
   refreshToken: async () => {
-    const response = await http.post<ApiResponse<{ accessToken: string }>>("/api/auth/refresh-token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await http.post<ApiResponse<{ accessToken: string }>>(
+      "/api/auth/refresh-token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
       },
-      credentials: "include",
-    });
+    );
     return response;
-  }
-
+  },
 };

@@ -19,6 +19,7 @@ import {
   Book,
   UserCog,
   Bell,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -86,6 +87,12 @@ const sidebarGroups = [
   {
     title: "Others",
     items: [
+      {
+        title: "Tickets",
+        href: "/admin/tickets",
+        icon: LifeBuoy,
+        badge: null,
+      },
       {
         title: "Orders",
         href: "/admin/orders",
