@@ -1,11 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
-import { LifeBuoy, Plus, Search } from "lucide-react";
+import { LifeBuoy, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TicketListTable} from "./components/ticket-list-table";
+import { TicketListTable, type TicketRow } from "./components/ticket-list-table";
 
 export default function MyTicketsPage() {
   return (
@@ -31,37 +28,6 @@ export default function MyTicketsPage() {
             </Link>
           </Button>
         </div>
-
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Tra cứu</CardTitle>
-            <CardDescription>
-              UI filter/search mẫu (chưa có logic).
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1 max-w-xl">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Tìm theo ticket id hoặc subject..."
-                  className="pl-9"
-                />
-              </div>
-
-              <select
-                defaultValue="ALL"
-                className="border-input dark:bg-input/30 h-9 w-full sm:w-52 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="OPEN">Open</option>
-                <option value="WAITING_ADMIN">Waiting admin</option>
-                <option value="WAITING_CUSTOMER">Waiting customer</option>
-                <option value="CLOSED">Closed</option>
-              </select>
-            </div>
-          </CardContent>
-        </Card>
 
         <TicketListTable />
       </div>

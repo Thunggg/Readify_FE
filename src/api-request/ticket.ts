@@ -51,9 +51,18 @@ export const TicketApiRequest = {
     return response;
   },
 
-  getMyTickets: async () => {
+  getMyTickets: async (params?: {
+    search?: string;
+    statusFilter?: TicketStatusValue[];
+    sortBy?: TicketSortByValue;
+    order?: "asc" | "desc";
+    page?: number;
+    limit?: number;
+  }) => {
     const response = await http.get<ApiPaginatedResponse<Ticket>>("/tickets", {
+      cache: "no-store",
       credentials: "include",
+      params,
     });
     return response;
   },
