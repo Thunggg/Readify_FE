@@ -36,4 +36,18 @@ export const TicketApiRequest = {
     );
     return response;
   },
+
+  createTicket: async (subject: string, message: string) => {
+    const response = await http.post<ApiResponse<Ticket>>(
+      "/tickets",
+      {
+        subject,
+        message,
+      },
+      {
+        credentials: "include",
+      },
+    );
+    return response;
+  },
 };

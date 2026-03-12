@@ -55,14 +55,14 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
         if (!mounted) return;
 
         // book detail
-        if (bookRes.status >= 200 && bookRes.status < 300) {
+        if (bookRes && bookRes.status >= 200 && bookRes.status < 300) {
           setBook(bookRes.payload.data as PublicBookDetail);
         } else {
           setBook(null);
         }
 
         // related books
-        if (relatedRes.status >= 200 && relatedRes.status < 300) {
+        if (relatedRes && relatedRes.status >= 200 && relatedRes.status < 300) {
           setRelatedBooks((relatedRes.payload.data as PublicBook[]) ?? []);
         } else {
           setRelatedBooks([]);
@@ -91,8 +91,8 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
     const checkWishlist = async () => {
       try {
         const res = await WishlistApiRequest.checkBookInWishlist(book._id);
-        if (res.status >= 200 && res.status < 300) {
-          setIsFavorite(res.payload.data?.isInWishlist ?? false);
+        if (res?.payload?.success) {
+          setIsFavorite(res.payload.data.isInWishlist ?? false);
         }
       } catch (err) {
         console.error("Check wishlist failed", err);
@@ -101,8 +101,6 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
     checkWishlist();
   }, [book?._id]);
-
-  console.log("Book detail data:", relatedBooks);
 
   const handleQuantityChange = (delta: number) => {
     setQuantity(Math.max(1, quantity + delta));
@@ -125,7 +123,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
       console.log("Add to cart response:", res);
       
-      if (res.status >= 200 && res.status < 300) {
+      if (res && res.status >= 200 && res.status < 300) {
         alert(`Successfully added ${quantity} book(s) to cart!`);
         setQuantity(1); // Reset quantity after adding
       } else {
@@ -148,7 +146,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
       if (isFavorite) {
         // Remove from wishlist
         const res = await WishlistApiRequest.removeFromWishlist(book._id);
-        if (res.status >= 200 && res.status < 300) {
+        if (res && res.status >= 200 && res.status < 300) {
           setIsFavorite(false);
           alert("Removed from wishlist");
         }
@@ -157,7 +155,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
         const res = await WishlistApiRequest.addToWishlist({
           bookId: book._id,
         });
-        if (res.status >= 200 && res.status < 300) {
+        if (res && res.status >= 200 && res.status < 300) {
           setIsFavorite(true);
           alert("Added to wishlist");
         }
