@@ -90,4 +90,18 @@ export const TicketApiRequest = {
     );
     return response;
   },
+
+  rateTicket: async (
+    ticketId: string,
+    body: { rating: number; comment?: string },
+  ) => {
+    const response = await http.patch<ApiResponse<Ticket>>(
+      `/tickets/${ticketId}/rating`,
+      body,
+      {
+        credentials: "include",
+      },
+    );
+    return response;
+  },
 };

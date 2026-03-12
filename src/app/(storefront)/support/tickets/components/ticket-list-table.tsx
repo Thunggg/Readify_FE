@@ -2,7 +2,7 @@
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Eye, X } from "lucide-react";
+import { Eye, Star, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { useEffect, useState } from "react";
-import { TicketStatusBadge, type TicketStatus } from "./ticket-status-badge";
+import { TicketStatus, TicketStatusBadge } from "./ticket-status-badge";
 import SortableHeader, { type SortField, type SortOrder } from "./sort-header";
 import TicketsToolbar from "./tickets-toolbar";
 import { Ticket, TicketSortByValue, TicketStatusValue } from "@/types/ticket";
@@ -24,6 +24,7 @@ import { TicketApiRequest } from "@/api-request/ticket";
 import { handleErrorApi } from "@/lib/utils";
 import PaginationControls from "@/app/admin/accounts/components/pagination-controls";
 import TicketDetailDialog from "./ticket-detail-dialog";
+import TicketRateDialog from "./ticket-rate-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +34,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner";
 
@@ -55,8 +55,12 @@ export function TicketListTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const [isCloseTicket, SetIsCloseTicket] = useState(false);
-  const [closeTicket, SetcloseTicket] = useState<Ticket | null>(null);
+
+  const [isCloseTicket, setIsCloseTicket] = useState(false);
+  const [closeTicket, setCloseTicket] = useState<Ticket | null>(null);
+
+  const [isRateTicket, setIsRateTicket] = useState(false);
+  const [rateTicket, setRateTicket] = useState<Ticket | null>(null);
 
   const onSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);
@@ -85,8 +89,8 @@ export function TicketListTable() {
     } catch (error) {
       handleErrorApi({ error, duration: 5000 });
     } finally {
-      SetIsCloseTicket(false);
-      SetcloseTicket(null);
+      setIsCloseTicket(false);
+      setCloseTicket(null);
     }
   };
 
@@ -158,20 +162,38 @@ export function TicketListTable() {
         setSelectedTicket={setSelectedTicket}
       />
 
-      <AlertDialog open={isCloseTicket} onOpenChange={SetIsCloseTicket}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Close Ticket</AlertDialogTitle>
-          <AlertDialogDescription>
-            Are you sure you want to close this ticket?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => closeTicket && handleCloseTicket(closeTicket._id)}>Close</AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <AlertDialog open={isCloseTicket} onOpenChange={setIsCloseTicket}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close Ticket</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to close this ticket?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => closeTicket && handleCloseTicket(closeTicket._id)}
+            >
+              Close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <TicketRateDialog
+        open={isRateTicket}
+        onOpenChange={(open) => {
+          setIsRateTicket(open);
+          if (!open) setRateTicket(null);
+        }}
+        ticket={rateTicket}
+        onRated={(updatedTicket) => {
+    setTickets((prev) =>
+      prev.map((t) => (t._id === updatedTicket._id ? updatedTicket : t))
+    );
+  }}
+      />
 
       <TicketsToolbar
         searchValue={searchValue}
@@ -210,89 +232,110 @@ export function TicketListTable() {
         </Empty>
       ) : (
         <div className="border rounded-lg overflow-hidden bg-background">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Ticket ID</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="hidden sm:table-cell">
-              <SortableHeader
-                title="Last Message"
-                field="lastMessageAt"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                onSortChange={onSortChange}
-              />
-            </TableHead>
-            <TableHead className="hidden md:table-cell">
-              <SortableHeader
-                title="Created Date"
-                field="createdAt"
-                sortField={sortField}
-                sortOrder={sortOrder}
-                onSortChange={onSortChange}
-              />
-            </TableHead>
-            <TableHead className="text-right">Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tickets.map((ticket) => (
-            <TableRow
-              key={ticket._id}
-              className="hover:bg-muted/50 transition-colors"
-            >
-              <TableCell className="font-mono text-xs font-medium">
-                #{ticket._id}
-              </TableCell>
-              <TableCell className="max-w-xs truncate">
-                {ticket.subject}
-              </TableCell>
-              <TableCell>
-                <TicketStatusBadge status={ticket.status} />
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
-                {ticket.lastMessageAt
-                  ? dayjs(ticket.lastMessageAt).fromNow()
-                  : "-"}
-              </TableCell>
-              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                {ticket.createdAt
-                  ? dayjs(ticket.createdAt).format("DD/MM/YYYY")
-                  : "-"}
-              </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => {
-                    setSelectedTicket(ticket);
-                    setDetailOpen(true);
-                  }}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ticket ID</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  <SortableHeader
+                    title="Last Message"
+                    field="lastMessageAt"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSortChange={onSortChange}
+                  />
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <SortableHeader
+                    title="Created Date"
+                    field="createdAt"
+                    sortField={sortField}
+                    sortOrder={sortOrder}
+                    onSortChange={onSortChange}
+                  />
+                </TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tickets.map((ticket) => (
+                <TableRow
+                  key={ticket._id}
+                  className="hover:bg-muted/50 transition-colors"
                 >
-                  <Eye className="w-4 h-4" />
-                  <span className="hidden sm:inline">View</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => {
-                    SetIsCloseTicket(true);
-                    SetcloseTicket(ticket);
-                  }}
-                >
-                  <X className="w-4 h-4" />
-                  <span className="hidden sm:inline">Close</span>
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+                  <TableCell className="font-mono text-xs font-medium">
+                    #{ticket._id}
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {ticket.subject}
+                  </TableCell>
+                  <TableCell>
+                    <TicketStatusBadge status={ticket.status} />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-sm text-muted-foreground">
+                    {ticket.lastMessageAt
+                      ? dayjs(ticket.lastMessageAt).fromNow()
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                    {ticket.createdAt
+                      ? dayjs(ticket.createdAt).format("DD/MM/YYYY")
+                      : "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => {
+                        setSelectedTicket(ticket);
+                        setDetailOpen(true);
+                      }}
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">View</span>
+                    </Button>
+                    {ticket.status !== TicketStatus.CLOSED && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => {
+                            setIsCloseTicket(true);
+                            setCloseTicket(ticket);
+                          }}
+                        >
+                          <X className="w-4 h-4" />
+                          <span className="hidden sm:inline">Close</span>
+                        </Button>
+                      </>
+                    )}
+
+                    {(ticket.status === TicketStatus.CLOSED && !ticket.csat)&& (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => {
+                            setIsRateTicket(true);
+                            setRateTicket(ticket);
+                          }}
+                        >
+                          <Star className="w-4 h-4" />
+                          <span className="hidden sm:inline">Rate</span>
+                        </Button>
+                      </>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {totalPages > 1 ? (
