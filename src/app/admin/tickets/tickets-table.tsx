@@ -56,18 +56,19 @@ export default function TicketsTable() {
 
   useEffect(() => {
     const fetchTickets = async () => {
+
       try {
         const response = await TicketApiRequest.getAllTickets();
 
-        if (!response?.status) {
-          handleErrorApi({
-            error: "Failed to fetch tickets",
-            duration: 5000,
-          });
-          return;
-        }
+        if (!response?.payload?.success) {
+  handleErrorApi({
+    error: "Failed to fetch tickets",
+    duration: 5000,
+  });
+  return;
+}
 
-        setAllTickets((response.payload?.data as Ticket[]) ?? []); 
+        setAllTickets(response.payload?.data?.items ?? []); 
 
       } catch (error) {
         handleErrorApi({ error, duration: 5000 });
@@ -191,7 +192,7 @@ export default function TicketsTable() {
         <TableBody>
           {paginatedTickets.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="py-10 text-center">
+              <TableCell colSpan={7} className="py-10 text-center">
                 <div className="text-sm text-muted-foreground">
                   No tickets found.
                 </div>
@@ -217,7 +218,7 @@ export default function TicketsTable() {
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {t.customerId.email}
-                  </TableCell>{" "}
+                  </TableCell>
                   <TableCell className="max-w-[520px]">
                     <div className="font-medium truncate">{t.subject}</div>
                     {lastMsg ? (

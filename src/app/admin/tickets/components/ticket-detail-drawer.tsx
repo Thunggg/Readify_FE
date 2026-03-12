@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/drawer";
 import { Textarea } from "@/components/ui/textarea";
 import { handleErrorApi } from "@/lib/utils";
-import { TicketSenderRole, type Ticket, type TicketMessage } from "@/types/ticket";
+import { type Ticket } from "@/types/ticket";
 import { Loader2 } from "lucide-react";
 
 export default function TicketDetailDrawer({
