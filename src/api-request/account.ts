@@ -138,4 +138,11 @@ export const AccountApiRequest = {
     );
     return response;
   },
+
+  logoutSessions: async (sessionIds: string[]) => {
+    const response = await http.delete<
+      ApiResponse<{ data: null; message: string; status: number }>
+    >("/accounts/sessions/logout", { sessionIds }, { credentials: "include" });
+    return response;
+  },
 };
