@@ -80,4 +80,14 @@ export const TicketApiRequest = {
     );
     return response;
   },
+
+  closeTicket: async (ticketId: string) => {
+    const response = await http.patch<ApiResponse<Ticket>>(
+      `/tickets/${ticketId}/close`,
+      {
+        credentials: "include",
+      },
+    );
+    return response;
+  },
 };

@@ -2,7 +2,7 @@
 
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Eye } from "lucide-react";
+import { Eye, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +24,19 @@ import { TicketApiRequest } from "@/api-request/ticket";
 import { handleErrorApi } from "@/lib/utils";
 import PaginationControls from "@/app/admin/accounts/components/pagination-controls";
 import TicketDetailDialog from "./ticket-detail-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner";
+
 
 dayjs.extend(relativeTime);
 
@@ -42,11 +55,39 @@ export function TicketListTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isCloseTicket, SetIsCloseTicket] = useState(false);
+  const [closeTicket, SetcloseTicket] = useState<Ticket | null>(null);
 
   const onSortChange = (field: SortField, order: SortOrder) => {
     setSortField(field);
     setSortOrder(order);
     setPage(1);
+  };
+
+  const handleCloseTicket = async (ticketId: string) => {
+    try {
+      const response = await TicketApiRequest.closeTicket(ticketId);
+
+      if (!response?.payload?.success) {
+        handleErrorApi({ error: new Error(response?.payload?.message ?? "Failed to close ticket"), duration: 5000 });
+        return;
+      }
+
+      toast.success(response?.payload?.message ?? "Ticket closed successfully", {
+        style: {
+          "--normal-bg": "light-dark(var(--color-green-600), var(--color-green-400))",
+          "--normal-text": "var(--color-white)",
+          "--normal-border": "light-dark(var(--color-green-600), var(--color-green-400))",
+        } as React.CSSProperties,
+      });
+
+      setTickets(tickets.map((ticket) => ticket._id === ticketId ? response?.payload?.data as Ticket : ticket));
+    } catch (error) {
+      handleErrorApi({ error, duration: 5000 });
+    } finally {
+      SetIsCloseTicket(false);
+      SetcloseTicket(null);
+    }
   };
 
 
@@ -105,7 +146,6 @@ export function TicketListTable() {
     };
   }, [searchValue, statusFilters, sortField, sortOrder, page, limit]);
 
-
   return (
     <>
       <TicketDetailDialog
@@ -117,6 +157,21 @@ export function TicketListTable() {
         ticket={selectedTicket}
         setSelectedTicket={setSelectedTicket}
       />
+
+      <AlertDialog open={isCloseTicket} onOpenChange={SetIsCloseTicket}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Close Ticket</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to close this ticket?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => closeTicket && handleCloseTicket(closeTicket._id)}>Close</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
       <TicketsToolbar
         searchValue={searchValue}
@@ -219,6 +274,18 @@ export function TicketListTable() {
                 >
                   <Eye className="w-4 h-4" />
                   <span className="hidden sm:inline">View</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => {
+                    SetIsCloseTicket(true);
+                    SetcloseTicket(ticket);
+                  }}
+                >
+                  <X className="w-4 h-4" />
+                  <span className="hidden sm:inline">Close</span>
                 </Button>
               </TableCell>
             </TableRow>
