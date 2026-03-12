@@ -50,4 +50,11 @@ export const TicketApiRequest = {
     );
     return response;
   },
+
+  getMyTickets: async () => {
+    const response = await http.get<ApiPaginatedResponse<Ticket>>("/tickets", {
+      credentials: "include",
+    });
+    return response;
+  },
 };

@@ -4,7 +4,7 @@ import type React from "react";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart, TicketX, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -26,8 +26,8 @@ import { authApiRequest } from "@/api-request/auth";
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<BookSuggestion[]>([]);
-  const [loadingSuggest, setLoadingSuggest] = useState(false);
+  const [, setSuggestions] = useState<BookSuggestion[]>([]);
+  const [, setLoadingSuggest] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,7 +56,7 @@ export function Header() {
           ""
         );
 
-        const data = res.payload.data;
+        const data = res?.payload.data;
 
         if (Array.isArray(data)) {
           setSuggestions(data);
@@ -223,6 +223,12 @@ export function Header() {
                 <Link href="/profile?tab=orders" className="cursor-pointer">
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   My Orders
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/support/tickets" className="cursor-pointer">
+                  <TicketX className="mr-2 h-4 w-4" />
+                  My Tickets
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

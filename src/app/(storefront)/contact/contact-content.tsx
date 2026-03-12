@@ -94,9 +94,6 @@ export default function NewSupportTicketPage() {
                 Bạn có thể đính kèm hình ảnh/hoá đơn để mô tả vấn đề rõ hơn.
               </p>
             </div>
-            <Badge variant="secondary" className="h-fit">
-              UI mẫu (không có logic)
-            </Badge>
           </div>
         </div>
 
