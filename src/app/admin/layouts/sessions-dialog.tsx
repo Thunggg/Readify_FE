@@ -59,6 +59,11 @@ export function SessionsDialog({ open, onOpenChange }: Props) {
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
 
   // đếm số lượng session hiện tại
+//   const sessions = [
+//   { id: "1", isCurrent: true },
+//   { id: "2", isCurrent: false },
+//   { id: "3", isCurrent: false },
+// ];
   const currentCount = useMemo(
     () => sessions.filter((s) => s.isCurrent).length,
     [sessions]
