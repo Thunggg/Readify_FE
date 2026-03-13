@@ -19,6 +19,7 @@ import {
   Book,
   UserCog,
   Bell,
+  MessageSquare,
   LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,12 @@ const sidebarGroups = [
         href: "/admin/promotion",
         icon: Tag,
         badge: "New",
+      },
+      {
+        title: "Review Management",
+        href: "/admin/reviews",
+        icon: MessageSquare,
+        badge: null,
       },
     ],
   },
