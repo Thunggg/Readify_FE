@@ -4,7 +4,7 @@ import type React from "react";
 
 import Link from "next/link";
 import Image from "next/image";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { RefreshCcw, Search, ShoppingCart, TicketX, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -23,11 +23,13 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BookApiRequest } from "@/api-request/book";
 import type { BookSuggestion } from "@/types/book";
 import { authApiRequest } from "@/api-request/auth";
+import { SessionsDialog } from "@/app/admin/layouts/sessions-dialog";
 
 export function Header() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<BookSuggestion[]>([]);
-  const [loadingSuggest, setLoadingSuggest] = useState(false);
+  const [, setSuggestions] = useState<BookSuggestion[]>([]);
+  const [, setLoadingSuggest] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,7 +58,7 @@ export function Header() {
           ""
         );
 
-        const data = res.payload.data;
+        const data = res?.payload.data;
 
         if (Array.isArray(data)) {
           setSuggestions(data);
@@ -162,10 +164,10 @@ export function Header() {
             <Link href="/">Home</Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link href="/discover">Discover</Link>
+            <Link href="/products">Products</Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link href="/products">Products</Link>
+            <Link href="/blog">Blog</Link>
           </Button>
           <Button variant="ghost" asChild>
             <Link href="/about">About Us</Link>
@@ -225,6 +227,22 @@ export function Header() {
                   My Orders
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/support/tickets" className="cursor-pointer">
+                  <TicketX className="mr-2 h-4 w-4" />
+                  My Tickets
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setSessionsOpen(true);
+                }}
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                My Sessions
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                 Sign out
@@ -233,6 +251,8 @@ export function Header() {
           </DropdownMenu>
         </nav>
       </div>
+
+      <SessionsDialog open={sessionsOpen} onOpenChange={setSessionsOpen} />
     </header>
   );
 }

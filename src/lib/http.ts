@@ -52,18 +52,22 @@ export class EntityError extends HttpError {
   }
 }
 let clientLogoutRequest: Promise<any> | null = null;
+let clientRefreshRequest:
+  | Promise<{ ok: boolean; accessToken?: string }>
+  | null = null;
 
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   url: string,
-  options: CustomOptions | undefined
+  options: CustomOptions | undefined,
 ) => {
+  const isBrowser = typeof window !== "undefined";
   const body =
     options?.body instanceof FormData
       ? options.body
       : options?.body
-      ? JSON.stringify(options.body)
-      : undefined;
+        ? JSON.stringify(options.body)
+        : undefined;
   const baseHeaders =
     options?.body instanceof FormData
       ? {}
@@ -103,22 +107,23 @@ const request = async <Response>(
     }
   }
 
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers: {
-      ...baseHeaders,
-      ...(options?.headers as Record<string, string>),
-    } as HeadersInit,
-    body,
-    method,
-    credentials: "include", // Include cookies for authentication
-  });
-
-  const payload: Response = await response.json();
-  const data = {
-    status: response.status,
-    payload,
+  const doFetch = async () => {
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers: {
+        ...baseHeaders,
+        ...(options?.headers as Record<string, string>),
+      } as HeadersInit,
+      body,
+      method,
+      credentials: "include", // Include cookies for authentication
+    });
+    const payload: Response = await response.json();
+    return { response, payload };
   };
+
+  const { response, payload } = await doFetch();
+  const data = { status: response.status, payload };
 
   if (!response.ok) {
     // lỗi liên quan đến dữ liệu
@@ -127,9 +132,71 @@ const request = async <Response>(
         data as {
           status: number;
           payload: EntityErrorPayload;
-        }
+        },
       );
     } else if (response.status === 401) {
+      // Avoid infinite loop: don't attempt refresh on refresh endpoint itself
+      const isRefreshCall =
+        url === "/api/auth/refresh-token" || url.endsWith("/auth/refresh-token");
+
+      // CLIENT: try refresh-token once, then retry original request
+      if (isBrowser && !isRefreshCall) {
+        try {
+          if (!clientRefreshRequest) {
+            clientRefreshRequest = fetch("/api/auth/refresh-token", {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }).then(async (r) => {
+              if (!r.ok) return { ok: false as const };
+              try {
+                const data = await r.json();
+                const accessToken =
+                  data?.accessToken ||
+                  data?.data?.accessToken ||
+                  data?.payload?.data?.accessToken;
+
+                // Optional: mimic login flow by also syncing via /api/auth
+                if (typeof accessToken === "string" && accessToken.length > 0) {
+                  await fetch("/api/auth", {
+                    method: "POST",
+                    body: JSON.stringify({ accessToken }),
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                  });
+                }
+
+                return { ok: true as const, accessToken };
+              } catch {
+                return { ok: true as const };
+              }
+            });
+          }
+
+          const refreshed = await clientRefreshRequest;
+          clientRefreshRequest = null;
+
+          if (refreshed.ok) {
+            const retry = await doFetch();
+            const retryData = { status: retry.response.status, payload: retry.payload };
+            if (!retry.response.ok) {
+              // still unauthorized (or other error) after refresh
+              throw new HttpError(
+                retry.response.status,
+                retry.response.statusText,
+                retry.payload,
+              );
+            }
+            return retryData;
+          }
+        } catch {
+          clientRefreshRequest = null;
+          // fall through to logout flow below
+        }
+      }
+
       // Nếu token hết hạn thì tự động logout
       // check ở server
       if (!clientLogoutRequest) {
@@ -144,7 +211,6 @@ const request = async <Response>(
           });
 
           await clientLogoutRequest;
-          console.log("logout success");
           return;
         } else {
           clientLogoutRequest = authApiRequest.logoutFromNextClientToServer();
@@ -165,31 +231,31 @@ const request = async <Response>(
 const http = {
   get: <Response>(
     url: string,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("GET", url, options),
 
   post: <Response>(
     url: string,
     body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("POST", url, { ...options, body }),
 
   put: <Response>(
     url: string,
     body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("PUT", url, { ...options, body }),
 
   patch: <Response>(
     url: string,
     body: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("PATCH", url, { ...options, body }),
 
   delete: <Response>(
     url: string,
     body?: any,
-    options?: Omit<CustomOptions, "body"> | undefined
+    options?: Omit<CustomOptions, "body"> | undefined,
   ) => request<Response>("DELETE", url, { ...options, body }),
 };
 

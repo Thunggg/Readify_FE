@@ -122,8 +122,6 @@ export default function FilterDropdown({
   useEffect(() => {
     const setTags = () => {
       if (!filters.sex.length && !filters.status.length) return;
-
-      console.log(filters);
     };
 
     setTags();
