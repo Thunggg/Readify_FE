@@ -22,6 +22,7 @@ import {
   Bell,
   MessageSquare,
   Sparkles,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -106,6 +107,12 @@ const sidebarGroups = [
   {
     title: "Others",
     items: [
+      {
+        title: "Tickets",
+        href: "/admin/tickets",
+        icon: LifeBuoy,
+        badge: null,
+      },
       {
         title: "Orders",
         href: "/admin/orders",

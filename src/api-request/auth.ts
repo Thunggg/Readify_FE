@@ -53,7 +53,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<{ accessToken: string }>>(
       "/auth/login",
       { email, password },
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -61,9 +61,9 @@ export const authApiRequest = {
   register: async (payload: RegisterAccountPayload) => {
     // Backend: returns ApiResponse.success(null, 'OTP sent...', 200)
     const response = await http.post<ApiResponse<null>>(
-      "/accounts/register",
+      "/auth/register",
       payload,
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -73,7 +73,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<null>>(
       "/accounts/otp/resend",
       {},
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -82,7 +82,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<VerifiedAccount | null>>(
       "/accounts/otp/verify",
       payload,
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -91,7 +91,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<null>>(
       "/accounts/forgot-password",
       payload,
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -100,7 +100,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<null>>(
       "/accounts/otp/verify",
       payload,
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -109,7 +109,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<null>>(
       "/accounts/otp/resend",
       {},
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -118,7 +118,7 @@ export const authApiRequest = {
     const response = await http.post<ApiResponse<VerifiedAccount>>(
       "/accounts/reset-password",
       payload,
-      { credentials: "include" }
+      { credentials: "include" },
     );
     return response;
   },
@@ -132,7 +132,7 @@ export const authApiRequest = {
       {
         headers: { "Content-Type": "application/json" },
         baseUrl: "",
-      }
+      },
     );
     return response;
   },

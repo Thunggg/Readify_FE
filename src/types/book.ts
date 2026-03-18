@@ -95,8 +95,80 @@ export type AdminBook = PublicBookDetail & {
   isDeleted?: boolean;
   deletedAt?: string;
 
+  status?: number;
+  soldCount?: number;
+
+  updatedAt?: string;
   createdBy?: string;
   updatedBy?: string;
+
+  stock?: {
+    quantity: number;
+    location: string;
+    price?: number;
+    batch?: string;
+    status: string;
+    lastUpdated?: string;
+  } | null;
+};
+
+// ===== ADMIN SEARCH PARAMS =====
+export type SearchAdminBooksParams = {
+  q?: string;
+  publisherId?: string;
+  categoryId?: string;
+  status?: number;
+  isDeleted?: boolean;
+  sortBy?: "createdAt" | "updatedAt" | "title" | "basePrice" | "soldCount";
+  order?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+};
+
+// ===== CREATE BOOK REQUEST =====
+export type CreateBookRequest = {
+  title: string;
+  slug?: string;
+  subtitle?: string;
+  description?: string;
+  authors?: string[];
+  language?: string;
+  publishDate?: string;
+  pageCount?: number;
+  isbn?: string;
+  publisherId: string;
+  categoryIds: string[];
+  basePrice: number;
+  currency?: string;
+  images?: string[];
+  thumbnailUrl?: string;
+  tags?: string[];
+  initialQuantity?: number;
+  stockLocation?: string;
+};
+
+// ===== UPDATE BOOK REQUEST =====
+export type UpdateBookRequest = {
+  title?: string;
+  slug?: string;
+  subtitle?: string;
+  description?: string;
+  authors?: string[];
+  language?: string;
+  publishDate?: string;
+  pageCount?: number;
+  isbn?: string;
+  publisherId?: string;
+  categoryIds?: string[];
+  basePrice?: number;
+  currency?: string;
+  addImages?: string[];
+  removeImages?: string[];
+  thumbnailUrl?: string;
+  status?: number;
+  tags?: string[];
+  stockQuantity?: number;
+  stockLocation?: string;
 };
 
 export type AdminTrendingBook = {

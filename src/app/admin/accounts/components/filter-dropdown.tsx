@@ -122,7 +122,6 @@ export default function FilterDropdown({
     const setTags = () => {
       if (!filters.sex.length && !filters.status.length) return;
 
-      console.log(filters);
     };
 
     setTags();

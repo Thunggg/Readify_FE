@@ -1,5 +1,5 @@
 "use client";
-import { Bell, Search, LogOut } from "lucide-react";
+import { Bell, Search, LogOut, RefreshCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -26,6 +26,8 @@ import {
   getStockAlertThreshold,
   setStockAlertThreshold,
 } from "@/lib/stock-alert-threshold";
+import { AccountApiRequest } from "@/api-request/account";
+import { SessionsDialog } from "./sessions-dialog";
 
 interface UserInfo {
   email?: string;
@@ -41,18 +43,16 @@ export function Topbar() {
   const [loadingStockAlerts, setLoadingStockAlerts] = useState(true);
   const [alertThreshold, setAlertThreshold] = useState(DEFAULT_STOCK_ALERT_THRESHOLD);
   const [alertThresholdInput, setAlertThresholdInput] = useState(String(DEFAULT_STOCK_ALERT_THRESHOLD));
+  const [sessionsOpen, setSessionsOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
-        const res = await fetch("http://localhost:3000/accounts/me", {
-          credentials: "include",
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.data || data);
-        }
+        const res = await AccountApiRequest.getMe();
+        const payload: any = res?.payload;
+        if (payload?.success === true) setUser(payload.data || null);
+        else if (payload?.success === false) setUser(null);
+        else setUser(payload || null);
       } catch (error) {
         console.error("Failed to fetch user info:", error);
       } finally {
@@ -154,7 +154,8 @@ export function Topbar() {
   };
 
   return (
-    <div className="flex h-16 items-center justify-between border-b px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="flex h-16 items-center justify-between border-b px-6 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <SessionsDialog open={sessionsOpen} onOpenChange={setSessionsOpen} />
       {/* Search */}
       <div className="flex items-center max-w-2xl flex-1">
         <div className="relative w-full max-w-lg">
@@ -323,6 +324,14 @@ export function Topbar() {
               <span className="flex items-center gap-2">💳 Billing</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="my-2" /> */}
+            <DropdownMenuItem
+              onClick={() => setSessionsOpen(true)}
+              className="p-3 cursor-pointer hover:bg-muted rounded-md transition-colors"
+            >
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              <span>Login sessions</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="my-2" />
             <DropdownMenuItem
               onClick={handleLogout}
               className="p-3 cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950 rounded-md transition-colors"
