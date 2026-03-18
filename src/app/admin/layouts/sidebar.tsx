@@ -17,12 +17,13 @@ import {
   ChevronRight,
   Users,
   Book,
+  Library,
   UserCog,
   Bell,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const sidebarGroups = [
@@ -33,6 +34,12 @@ const sidebarGroups = [
         title: "Income Statistic",
         href: "/admin/income",
         icon: DollarSign,
+        badge: null,
+      },
+      {
+        title: "Recommendations",
+        href: "/admin/recommendations",
+        icon: Sparkles,
         badge: null,
       },
     ],
@@ -50,6 +57,12 @@ const sidebarGroups = [
         title: "Book Management",
         href: "/admin/books",
         icon: Book,
+        badge: null,
+      },
+      {
+        title: "Collection Management",
+        href: "/admin/collections",
+        icon: Library,
         badge: null,
       },
       {

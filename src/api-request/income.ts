@@ -6,11 +6,9 @@ import type {
   CategoryStatistics,
   TopSellingBooks,
   RecentOrders,
-  ExportIncome,
   IncomeStatisticsParams,
   TopSellingParams,
   RecentOrdersParams,
-  ExportIncomeParams,
 } from "@/types/income";
 
 export const IncomeApiRequest = {
@@ -69,19 +67,6 @@ export const IncomeApiRequest = {
   getRecentOrders: async (params?: RecentOrdersParams) => {
     const response = await http.get<ApiResponse<RecentOrders>>(
       "/income/recent-orders",
-      {
-        params,
-        credentials: "include",
-        cache: "no-store",
-      }
-    );
-    return response;
-  },
-
-  // Export income data
-  exportIncome: async (params?: ExportIncomeParams) => {
-    const response = await http.get<ApiResponse<ExportIncome>>(
-      "/income/export",
       {
         params,
         credentials: "include",

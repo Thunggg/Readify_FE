@@ -98,3 +98,35 @@ export type AdminBook = PublicBookDetail & {
   createdBy?: string;
   updatedBy?: string;
 };
+
+export type AdminTrendingBook = {
+  _id: string;
+  title: string;
+  slug: string;
+  isbn: string;
+  thumbnailUrl: string;
+  soldCount: number;
+  recentPurchasedQty: number;
+  fiveStarCount: number;
+  avgRating: number;
+  totalReviews: number;
+  publishDate: string | null;
+  internalScore: number;
+  externalScore: number;
+  score: number;
+  trendReasons: string[];
+  externalWeb: {
+    source: string;
+    avgRating: number;
+    ratingsCount: number;
+  } | null;
+};
+
+export type AdminTrendingBooksResponse = {
+  generatedAt: string;
+  sourceSummary: {
+    internal: boolean;
+    web: boolean;
+  };
+  items: AdminTrendingBook[];
+};

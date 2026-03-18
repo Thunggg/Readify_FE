@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -22,8 +24,16 @@ import {
   Tag,
   BookOpen,
   Layers,
+  Edit,
+  Save,
+  X,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import {
+  DEFAULT_STOCK_ALERT_THRESHOLD,
+  getStockAlertThreshold,
+} from "@/lib/stock-alert-threshold";
+import { StockApiRequest } from "@/api-request/stock";
 
 type Book = {
   _id?: string;
@@ -51,6 +61,42 @@ type Stock = {
   book?: Book | null;
 };
 
+type EditStockForm = {
+  quantity: string;
+  location: string;
+  price: string;
+  batch: string;
+  status: string;
+};
+
+const normalizeStockData = (raw: any): Stock => {
+  const book =
+    raw?.bookId && typeof raw.bookId === "object" ? raw.bookId : raw?.book;
+
+  return {
+    ...raw,
+    bookId: typeof raw?.bookId === "string" ? raw.bookId : raw?.bookId?._id,
+    book: book
+      ? {
+          _id: book._id,
+          title: book.title,
+          author: Array.isArray(book.authors)
+            ? book.authors.join(", ")
+            : book.author,
+          isbn: book.isbn,
+          description: book.description,
+          coverUrl: book.thumbnailUrl || book.coverUrl,
+          categories: Array.isArray(book.categoryIds)
+            ? book.categoryIds
+            : book.categories,
+          publishedDate: book.publishDate || book.publishedDate,
+          pages: book.pageCount || book.pages,
+          publisher: book.publisherId || book.publisher,
+        }
+      : null,
+  };
+};
+
 export default function StockDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -59,6 +105,44 @@ export default function StockDetailPage() {
   const [data, setData] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [alertThreshold, setAlertThreshold] = useState(
+    DEFAULT_STOCK_ALERT_THRESHOLD,
+  );
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditStockForm>({
+    quantity: "0",
+    location: "",
+    price: "0",
+    batch: "",
+    status: "available",
+  });
+
+  const fillEditForm = (stock: Stock) => {
+    setEditForm({
+      quantity: String(stock.quantity ?? 0),
+      location: stock.location ?? "",
+      price: String(stock.price ?? 0),
+      batch: stock.batch ?? "",
+      status: stock.status ?? "available",
+    });
+  };
+
+  useEffect(() => {
+    const syncThreshold = () => setAlertThreshold(getStockAlertThreshold());
+    syncThreshold();
+    window.addEventListener("storage", syncThreshold);
+    window.addEventListener("stock-alert-threshold-updated", syncThreshold);
+
+    return () => {
+      window.removeEventListener("storage", syncThreshold);
+      window.removeEventListener(
+        "stock-alert-threshold-updated",
+        syncThreshold,
+      );
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -71,7 +155,9 @@ export default function StockDetailPage() {
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
         const json = await res.json();
         const stockData = json.data || json;
-        setData(stockData);
+        const normalized = normalizeStockData(stockData);
+        setData(normalized);
+        fillEditForm(normalized);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Fetch error");
       } finally {
@@ -165,7 +251,70 @@ export default function StockDetailPage() {
   }
 
   const book = data.book;
-  const isLowStock = data.quantity !== undefined && data.quantity <= 5;
+  const isLowStock =
+    data.quantity !== undefined && data.quantity <= alertThreshold;
+
+  const startEdit = () => {
+    fillEditForm(data);
+    setSaveError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    fillEditForm(data);
+    setSaveError(null);
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    if (!id) return;
+
+    const quantityNum = Number(editForm.quantity);
+    const priceNum = Number(editForm.price);
+
+    if (!Number.isFinite(quantityNum) || quantityNum < 0) {
+      setSaveError("Quantity must be a non-negative number");
+      return;
+    }
+
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
+      setSaveError("Price must be a non-negative number");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setSaveError(null);
+
+      const response = await StockApiRequest.updateStock(id, {
+        quantity: quantityNum,
+        location: editForm.location.trim(),
+        price: priceNum,
+        batch: editForm.batch.trim(),
+        status: editForm.status.trim() || "available",
+      });
+
+      if (!response) {
+        throw new Error("No response from server");
+      }
+
+      const payload = response.payload as any;
+      if (!payload?.success) {
+        throw new Error(payload?.message || "Failed to update stock item");
+      }
+
+      const updatedStock = normalizeStockData(payload.data || payload);
+      setData(updatedStock);
+      fillEditForm(updatedStock);
+      setIsEditing(false);
+    } catch (e: unknown) {
+      setSaveError(
+        e instanceof Error ? e.message : "Failed to update stock item",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="container max-w-7xl py-8 space-y-8">
@@ -191,21 +340,103 @@ export default function StockDetailPage() {
           </div>
         </div>
 
-        {/* <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-red-600 hover:text-red-700"
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
-        </div> */}
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <Button variant="outline" size="sm" onClick={startEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Stock
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" size="sm" onClick={cancelEdit}>
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                <Save className="h-4 w-4 mr-2" />
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+
+      {isEditing && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Edit Stock</CardTitle>
+            <CardDescription>
+              Update quantity, location, price, batch and status.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-quantity">Quantity</Label>
+              <Input
+                id="edit-quantity"
+                type="number"
+                min={0}
+                value={editForm.quantity}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, quantity: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-price">Price</Label>
+              <Input
+                id="edit-price"
+                type="number"
+                min={0}
+                value={editForm.price}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, price: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-location">Location</Label>
+              <Input
+                id="edit-location"
+                value={editForm.location}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, location: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-batch">Batch</Label>
+              <Input
+                id="edit-batch"
+                value={editForm.batch}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, batch: e.target.value }))
+                }
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Input
+                id="edit-status"
+                value={editForm.status}
+                onChange={(e) =>
+                  setEditForm((prev) => ({ ...prev, status: e.target.value }))
+                }
+                placeholder="available"
+              />
+            </div>
+            {saveError && (
+              <div className="md:col-span-2">
+                <Alert className="bg-destructive/10 text-destructive border-none">
+                  <TriangleAlert className="h-4 w-4" />
+                  <AlertTitle>Update failed</AlertTitle>
+                  <AlertDescription>{saveError}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {isLowStock && (
         <Alert className="bg-destructive/10 text-destructive border-none">
@@ -213,7 +444,7 @@ export default function StockDetailPage() {
           <AlertTitle>Low Stock Warning</AlertTitle>
           <AlertDescription className="text-destructive/80">
             This item has only {data.quantity} units remaining. Consider
-            restocking soon.
+            restocking soon. Current threshold is {alertThreshold}.
           </AlertDescription>
         </Alert>
       )}
@@ -372,7 +603,7 @@ export default function StockDetailPage() {
                       </div>
                       <div className="text-base">
                         {new Date(book.publishedDate).toLocaleDateString(
-                          "vi-VN"
+                          "vi-VN",
                         )}
                       </div>
                     </div>

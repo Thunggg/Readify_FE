@@ -6,6 +6,7 @@ import type {
   SearchPublicBooksParams,
   BookSuggestion,
   SearchBookSuggestion,
+  AdminTrendingBooksResponse,
 } from "@/types/book";
 
 const BASE_PUBLIC = "/book";
@@ -124,6 +125,20 @@ export const BookApiRequest = {
       null,
       {
         headers: withCookie(accessToken),
+      }
+    );
+  },
+
+  getTrendingRecommendations(params?: {
+    limit?: number;
+    includeWebData?: boolean;
+  }) {
+    return http.get<ApiResponse<AdminTrendingBooksResponse>>(
+      `${BASE_ADMIN}/recommendations/trending`,
+      {
+        params,
+        credentials: "include",
+        cache: "no-store",
       }
     );
   },

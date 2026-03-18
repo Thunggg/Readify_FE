@@ -2,6 +2,7 @@
 import { Bell, Search, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import {
+  StockApiRequest,
+  type StockAlertsData,
+} from "@/api-request/stock";
+import {
+  DEFAULT_STOCK_ALERT_THRESHOLD,
+  clampStockAlertThreshold,
+  getStockAlertThreshold,
+  setStockAlertThreshold,
+} from "@/lib/stock-alert-threshold";
 
 interface UserInfo {
   email?: string;
@@ -25,6 +37,10 @@ export function Topbar() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stockAlerts, setStockAlerts] = useState<StockAlertsData | null>(null);
+  const [loadingStockAlerts, setLoadingStockAlerts] = useState(true);
+  const [alertThreshold, setAlertThreshold] = useState(DEFAULT_STOCK_ALERT_THRESHOLD);
+  const [alertThresholdInput, setAlertThresholdInput] = useState(String(DEFAULT_STOCK_ALERT_THRESHOLD));
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -46,6 +62,56 @@ export function Topbar() {
 
     fetchUserInfo();
   }, []);
+
+  useEffect(() => {
+    const currentThreshold = getStockAlertThreshold();
+    setAlertThreshold(currentThreshold);
+    setAlertThresholdInput(String(currentThreshold));
+
+    const handleThresholdChanged = () => {
+      const nextThreshold = getStockAlertThreshold();
+      setAlertThreshold(nextThreshold);
+      setAlertThresholdInput(String(nextThreshold));
+    };
+
+    window.addEventListener("storage", handleThresholdChanged);
+    window.addEventListener("stock-alert-threshold-updated", handleThresholdChanged);
+
+    return () => {
+      window.removeEventListener("storage", handleThresholdChanged);
+      window.removeEventListener("stock-alert-threshold-updated", handleThresholdChanged);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchStockAlerts = async () => {
+      try {
+        const response = await StockApiRequest.getStockAlerts(alertThreshold);
+        if (!response) return;
+        if (!isMounted) return;
+        const payload = response.payload;
+        if (payload && payload.success && payload.data) {
+          setStockAlerts(payload.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch stock alerts:", error);
+      } finally {
+        if (isMounted) {
+          setLoadingStockAlerts(false);
+        }
+      }
+    };
+
+    fetchStockAlerts();
+    const intervalId = setInterval(fetchStockAlerts, 60 * 1000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [alertThreshold]);
 
   const handleLogout = async () => {
     try {
@@ -76,6 +142,17 @@ export function Topbar() {
     return "AD";
   };
 
+  const alertItems = stockAlerts?.items ?? [];
+  const hasAlerts = alertItems.length > 0;
+  const hasOutOfStock = (stockAlerts?.outOfStockCount ?? 0) > 0;
+
+  const applyAlertThreshold = () => {
+    const normalized = clampStockAlertThreshold(Number(alertThresholdInput));
+    setStockAlertThreshold(normalized);
+    setAlertThreshold(normalized);
+    setAlertThresholdInput(String(normalized));
+  };
+
   return (
     <div className="flex h-16 items-center justify-between border-b px-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Search */}
@@ -96,17 +173,110 @@ export function Topbar() {
         <ThemeToggle />
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9 hover:bg-muted transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
-            3
-          </span>
-        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-9 w-9 hover:bg-muted transition-colors"
+              aria-label="Stock alerts"
+            >
+              <Bell
+                className={cn(
+                  "h-4 w-4",
+                  hasOutOfStock && "animate-bounce text-red-500"
+                )}
+              />
+              {hasAlerts && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-medium">
+                  {alertItems.length > 99 ? "99+" : alertItems.length}
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[360px] p-0">
+            <div className="px-4 py-3 border-b">
+              <p className="text-sm font-semibold">Stock Alerts</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {loadingStockAlerts
+                  ? "Loading alerts..."
+                  : hasAlerts
+                    ? `${stockAlerts?.outOfStockCount ?? 0} out of stock, ${stockAlerts?.lowStockCount ?? 0} low stock`
+                    : "No low or out-of-stock products"}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  value={alertThresholdInput}
+                  onChange={(e) => setAlertThresholdInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      applyAlertThreshold();
+                    }
+                  }}
+                  className="h-8"
+                />
+                <Button size="sm" variant="secondary" onClick={applyAlertThreshold}>
+                  Set
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Alert threshold: {alertThreshold}
+              </p>
+            </div>
+
+            {loadingStockAlerts ? (
+              <DropdownMenuItem disabled className="py-4">
+                Loading stock alerts...
+              </DropdownMenuItem>
+            ) : !hasAlerts ? (
+              <DropdownMenuItem disabled className="py-4">
+                Inventory levels are healthy.
+              </DropdownMenuItem>
+            ) : (
+              <div className="max-h-80 overflow-y-auto">
+                {alertItems.slice(0, 8).map((item) => (
+                  <DropdownMenuItem key={item.stockId} asChild>
+                    <Link
+                      href={`/admin/stock/${item.stockId}`}
+                      className="flex flex-col items-start gap-1 py-3 cursor-pointer"
+                    >
+                      <div className="flex w-full items-center justify-between gap-3">
+                        <span className="text-sm font-medium line-clamp-1">
+                          {item.book.title}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs font-semibold",
+                            item.level === "OUT_OF_STOCK"
+                              ? "text-red-500"
+                              : "text-amber-600"
+                          )}
+                        >
+                          {item.level === "OUT_OF_STOCK"
+                            ? "Out of stock"
+                            : "Low stock"}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        Qty: {item.quantity} • ISBN: {item.book.isbn || "-"}
+                      </span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </div>
+            )}
+
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin/stock/viewlist" className="justify-center py-3 font-medium">
+                View stock list
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Profile */}
         <DropdownMenu modal={false}>

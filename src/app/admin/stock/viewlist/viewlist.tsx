@@ -34,10 +34,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  DEFAULT_STOCK_ALERT_THRESHOLD,
+  getStockAlertThreshold,
+} from "@/lib/stock-alert-threshold";
 
 type Stock = {
   _id?: string;
-  bookId?: string;
+  bookId?: string | { _id?: string; title?: string; isbn?: string } | null;
   book?: { title?: string; isbn?: string } | null;
   quantity?: number;
   location?: string;
@@ -52,7 +56,22 @@ export default function StockListView() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredItems, setFilteredItems] = useState<Stock[] | null>(null);
+  const [alertThreshold, setAlertThreshold] = useState(
+    DEFAULT_STOCK_ALERT_THRESHOLD
+  );
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const syncThreshold = () => setAlertThreshold(getStockAlertThreshold());
+    syncThreshold();
+    window.addEventListener("storage", syncThreshold);
+    window.addEventListener("stock-alert-threshold-updated", syncThreshold);
+
+    return () => {
+      window.removeEventListener("storage", syncThreshold);
+      window.removeEventListener("stock-alert-threshold-updated", syncThreshold);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,7 +84,26 @@ export default function StockListView() {
         const json = await res.json();
         // Handle ApiResponse wrapper: { success: true, data: [...] }
         const data = json.data || json;
-        const stockItems = Array.isArray(data) ? data : [];
+        const stockItems = Array.isArray(data)
+          ? data.map((item) => {
+              const populatedBook =
+                item.bookId && typeof item.bookId === "object"
+                  ? item.bookId
+                  : item.book;
+
+              return {
+                ...item,
+                bookId:
+                  typeof item.bookId === "string"
+                    ? item.bookId
+                    : populatedBook?._id || "",
+                book: {
+                  title: populatedBook?.title || "",
+                  isbn: populatedBook?.isbn || "",
+                },
+              } as Stock;
+            })
+          : [];
         setItems(stockItems);
         setFilteredItems(stockItems);
       } catch (e: unknown) {
@@ -258,8 +296,11 @@ export default function StockListView() {
             </TableHeader>
             <TableBody>
               {currentItems.map((it) => {
-                const low = (it.quantity ?? 0) <= 5;
-                const title = it.book?.title ?? it.bookId ?? "(no title)";
+                const low = (it.quantity ?? 0) <= alertThreshold;
+                const title =
+                  it.book?.title ||
+                  (typeof it.bookId === "string" ? it.bookId : "") ||
+                  "(no title)";
 
                 return (
                   <TableRow key={it._id}>
