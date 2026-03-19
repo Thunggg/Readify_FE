@@ -36,7 +36,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { AccountSession } from "@/types/session";
-import { authApiRequest } from "@/api-request/auth";
 import { toast } from "sonner";
 
 type Props = {
@@ -64,17 +63,23 @@ export function SessionsDialog({ open, onOpenChange }: Props) {
 //   { id: "2", isCurrent: false },
 //   { id: "3", isCurrent: false },
 // ];
+
+  // đếm số lượng session hiện tại
   const currentCount = useMemo(
     () => sessions.filter((s) => s.isCurrent).length,
     [sessions]
   );
-
+  
+  // lấy các session không phải hiện tại
   const logoutableSessions = useMemo(
     () => sessions.filter((s) => !s.isCurrent),
     [sessions],
   );
 
+
+  // đếm số lượng session đã chọn
   const selectedCount = selectedIds.length;
+  
   const allLogoutableSelected =
     logoutableSessions.length > 0 &&
     selectedIds.length === logoutableSessions.length;
@@ -84,13 +89,9 @@ export function SessionsDialog({ open, onOpenChange }: Props) {
     setError(null);
     try {
       const res = await AccountApiRequest.getSessions();
-      const payload: any = res?.payload;
-      if (payload?.success === true) setSessions(payload.data ?? []);
-      else if (payload?.success === false)
-        setError(payload?.message || "Failed to load sessions.");
-      else if (Array.isArray(payload)) setSessions(payload);
-      else if (Array.isArray(payload?.data)) setSessions(payload.data);
-      else setError("Failed to load sessions.");
+      if(res?.status === 200){
+        setSessions(res?.payload as AccountSession[] ?? []);
+      }
     } catch (e: any) {
       setError(e?.message || "Failed to load sessions.");
     } finally {
@@ -110,6 +111,7 @@ export function SessionsDialog({ open, onOpenChange }: Props) {
         });
 
         setSessions(sessions.filter((s) => !selectedIds.includes(s.id)));
+        setSelectedIds([]);
       }
       else {
         toast.error(res?.payload?.message, {
