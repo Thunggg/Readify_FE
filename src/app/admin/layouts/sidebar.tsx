@@ -20,10 +20,10 @@ import {
   UserCog,
   Bell,
   MessageSquare,
+  FileText,
   LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const sidebarGroups = [
@@ -86,6 +86,18 @@ const sidebarGroups = [
       {
         title: "Review Management",
         href: "/admin/reviews",
+        icon: MessageSquare,
+        badge: null,
+      },
+      {
+        title: "Blog Management",
+        href: "/admin/blog",
+        icon: FileText,
+        badge: null,
+      },
+      {
+        title: "Blog Comments",
+        href: "/admin/blog-comments",
         icon: MessageSquare,
         badge: null,
       },
