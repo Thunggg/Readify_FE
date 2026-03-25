@@ -6,6 +6,7 @@ import type {
   SearchPublicBooksParams,
   BookSuggestion,
   SearchBookSuggestion,
+  AdminTrendingBooksResponse,
   AdminBook,
   SearchAdminBooksParams,
   CreateBookRequest,
@@ -144,6 +145,20 @@ export const BookApiRequest = {
       }
     );
   },
+
+  getTrendingRecommendations(params?: {
+  limit?: number;
+  includeWebData?: boolean;
+}) {
+  return http.get<ApiResponse<AdminTrendingBooksResponse>>(
+    `${BASE_ADMIN}/recommendations/trending`,
+    {
+      params: params,
+      credentials: "include",
+      cache: "no-store",
+    }
+  );
+},
 
   adminPublish(accessToken: string, bookId: string) {
     return http.post<ApiResponse<AdminBook>>(
