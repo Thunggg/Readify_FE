@@ -43,10 +43,8 @@ import {
   TrendingDown,
   ShoppingCart,
   Package,
-  Download,
   CalendarIcon,
   RefreshCw,
-  FileSpreadsheet,
 } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -76,7 +74,6 @@ export default function IncomeDashboard() {
     dayjs().subtract(5, "month").toDate()
   );
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
-  const [isExporting, setIsExporting] = useState(false);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -191,148 +188,6 @@ export default function IncomeDashboard() {
     fetchData();
   }, [fetchData]);
 
-  const handleExport = async (exportFormat: "csv" | "excel") => {
-    setIsExporting(true);
-    try {
-      const params = {
-        startDate: startDate?.toISOString(),
-        endDate: endDate?.toISOString(),
-        groupBy: "day" as GroupBy,
-      };
-
-      console.log("Exporting with params:", params);
-      const response = await IncomeApiRequest.exportIncome(params);
-      console.log("Export response:", response);
-
-      if (response?.payload?.success && response?.payload?.data) {
-        const { data, totals, exportInfo } = response.payload.data;
-
-        if (!data || !Array.isArray(data)) {
-          throw new Error("Dữ liệu xuất không hợp lệ");
-        }
-
-        console.log("Export data:", { data, totals, exportInfo });
-
-        if (exportFormat === "csv") {
-          // Generate CSV
-          const headers = [
-            "Thời gian",
-            "Doanh thu",
-            "Tổng tiền gốc",
-            "Giảm giá",
-            "Số đơn hàng",
-            "Số sách bán",
-          ];
-          const rows = data.map((item) => [
-            item.period,
-            item.revenue,
-            item.totalAmount,
-            item.discountAmount,
-            item.orders,
-            item.booksSold,
-          ]);
-
-          // Add totals row
-          rows.push([
-            "TỔNG CỘNG",
-            totals.revenue,
-            totals.totalAmount,
-            totals.discountAmount,
-            totals.orders,
-            totals.booksSold,
-          ]);
-
-          const csvContent = [
-            headers.join(","),
-            ...rows.map((row) => row.join(",")),
-          ].join("\n");
-
-          const blob = new Blob(["\uFEFF" + csvContent], {
-            type: "text/csv;charset=utf-8;",
-          });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = `income_report_${dayjs().format("YYYY-MM-DD")}.csv`;
-          link.click();
-
-          toast.success("Xuất báo cáo CSV thành công!");
-        } else {
-          // Generate Excel-compatible HTML table
-          const htmlContent = `
-            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-            <head><meta charset="UTF-8"></head>
-            <body>
-              <table border="1">
-                <thead>
-                  <tr>
-                    <th>Thời gian</th>
-                    <th>Doanh thu</th>
-                    <th>Tổng tiền gốc</th>
-                    <th>Giảm giá</th>
-                    <th>Số đơn hàng</th>
-                    <th>Số sách bán</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${data
-                    .map(
-                      (item) => `
-                    <tr>
-                      <td>${item.period}</td>
-                      <td>${item.revenue}</td>
-                      <td>${item.totalAmount}</td>
-                      <td>${item.discountAmount}</td>
-                      <td>${item.orders}</td>
-                      <td>${item.booksSold}</td>
-                    </tr>
-                  `
-                    )
-                    .join("")}
-                  <tr style="font-weight: bold; background-color: #f0f0f0;">
-                    <td>TỔNG CỘNG</td>
-                    <td>${totals.revenue}</td>
-                    <td>${totals.totalAmount}</td>
-                    <td>${totals.discountAmount}</td>
-                    <td>${totals.orders}</td>
-                    <td>${totals.booksSold}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p>Xuất ngày: ${dayjs(exportInfo.exportedAt).format("DD/MM/YYYY HH:mm")}</p>
-              <p>Khoảng thời gian: ${dayjs(exportInfo.dateRange.start).format("DD/MM/YYYY")} - ${dayjs(exportInfo.dateRange.end).format("DD/MM/YYYY")}</p>
-            </body>
-            </html>
-          `;
-
-          const blob = new Blob([htmlContent], {
-            type: "application/vnd.ms-excel;charset=utf-8;",
-          });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = `income_report_${dayjs().format("YYYY-MM-DD")}.xls`;
-          link.click();
-
-          toast.success("Xuất báo cáo Excel thành công!");
-        }
-      } else {
-        console.error("Export response invalid:", response);
-        toast.error("Không có dữ liệu để xuất");
-      }
-    } catch (error: any) {
-      console.error("Export failed:", error);
-      console.error("Export error details:", {
-        message: error?.message,
-        payload: error?.payload,
-        status: error?.status,
-      });
-      
-      const errorMessage = error?.message || error?.payload?.message || "Không thể xuất báo cáo";
-      toast.error(errorMessage);
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
   const ChangeIndicator = ({
     value,
     suffix = "%",
@@ -436,37 +291,6 @@ export default function IncomeDashboard() {
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
 
-          {/* Export Dropdown */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button disabled={isExporting}>
-                <Download className="mr-2 h-4 w-4" />
-                Xuất báo cáo
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-48 p-2">
-              <div className="space-y-1">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => handleExport("csv")}
-                  disabled={isExporting}
-                >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Xuất CSV
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => handleExport("excel")}
-                  disabled={isExporting}
-                >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Xuất Excel
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
         </div>
       </div>
 
