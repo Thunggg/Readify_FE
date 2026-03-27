@@ -158,7 +158,6 @@ export default function TicketRateDialog({
             onClick={() => {
               handleRateTicket();
               onOpenChange(false);
-              
             }}
           >
             Submit

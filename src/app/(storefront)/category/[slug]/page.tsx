@@ -7,18 +7,29 @@ const categoryNames: Record<string, string> = {
   "tam-ly": "Tâm lý",
   "lich-su": "Lịch sử",
   "kinh-te": "Kinh tế",
+  "thieu-nhi": "Thiếu nhi",
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const categoryName = categoryNames[params.slug] || params.slug
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const categoryName = categoryNames[slug] ?? slug;
   return {
     title: `${categoryName} - BookStore`,
     description: `Khám phá các cuốn sách ${categoryName.toLowerCase()} hay nhất`,
   }
 }
 
-export default function CategoryPage({ params }: { params: { slug: string } }) {
-  const categoryName = categoryNames[params.slug] || params.slug
-
-  return <CategoryContent slug={params.slug} categoryName={categoryName} />
+export default async function CategoryPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return (
+    <CategoryContent slug={slug} categoryName={categoryNames[slug] ?? slug} />
+  );
 }
