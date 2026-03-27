@@ -25,11 +25,37 @@ import { CategoryApiRequest, type Category } from "@/api-request/category"
 import { SupplierApiRequest, type Supplier } from "@/api-request/supplier"
 import { AuthorApiRequest, type Author } from "@/api-request/author"
 import { MediaApiRequest } from "@/api-request/media"
-import { MediaType, MediaFolder } from "@/types/media"
 import { createBookFormSchema, type CreateBookFormInput } from "@/validation/book-schemas"
 import type { CreateBookRequest } from "@/types/book"
 import { cn } from "@/lib/utils"
 import { useDebounce } from "@/hooks/use-debounce"
+import { toast } from "sonner"
+
+type UploadedBookImage = {
+  _id: string
+  url: string
+}
+
+type BackendValidationDetail = {
+  field?: string
+  message?: string
+}
+
+const normalizeBackendField = (field?: string): string | null => {
+  if (!field) return null
+
+  const map: Record<string, string> = {
+    categoryId: "categoryIds",
+    categories: "categoryIds",
+    imageIds: "images",
+    addImages: "images",
+    removeImages: "images",
+    authorIds: "authors",
+    stockQuantity: "initialQuantity",
+  }
+
+  return map[field] ?? field
+}
 
 export function AddBookForm() {
   const router = useRouter()
@@ -38,6 +64,7 @@ export function AddBookForm() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [globalError, setGlobalError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [titleWarning, setTitleWarning] = useState("")
 
   // Form state
   const [title, setTitle] = useState("")
@@ -56,10 +83,8 @@ export function AddBookForm() {
   const [stockLocation, setStockLocation] = useState("")
 
   // Image upload
-  const [coverImage, setCoverImage] = useState<File | null>(null)
-  const [coverPreview, setCoverPreview] = useState<string | null>(null)
-  const [additionalImages, setAdditionalImages] = useState<File[]>([])
-  const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([])
+  const [coverImage, setCoverImage] = useState<UploadedBookImage | null>(null)
+  const [additionalImages, setAdditionalImages] = useState<UploadedBookImage[]>([])
   const [uploadingImages, setUploadingImages] = useState(false)
 
   // Publisher search (single-select)
@@ -75,15 +100,70 @@ export function AddBookForm() {
   const [authorResults, setAuthorResults] = useState<Author[]>([])
   const [selectedAuthors, setSelectedAuthors] = useState<{ _id: string; name: string }[]>([])
   const debouncedAuthorSearch = useDebounce(authorSearch, 400)
+  const debouncedTitle = useDebounce(title, 500)
 
   // Category search (multi-select)
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [categorySearch, setCategorySearch] = useState("")
 
+  const isTitleValid = title.trim().length >= 2
+  const isIsbnValid = /^(?:\d{9}[\dX]|\d{13})$/.test(isbn.trim())
+  const isBasePriceValid = Number(basePrice) > 0
+
+  const setFieldError = (name: string, message: string) => {
+    setErrors((prev) => ({ ...prev, [name]: message }))
+  }
+
+  const clearFieldError = (name: string) => {
+    setErrors((prev) => {
+      if (!prev[name]) return prev
+      const next = { ...prev }
+      delete next[name]
+      return next
+    })
+  }
+
+  const scrollToFirstError = (fieldErrors: Record<string, string>) => {
+    const order = [
+      "title",
+      "isbn",
+      "pageCount",
+      "publishDate",
+      "tags",
+      "basePrice",
+      "publisherId",
+      "authors",
+      "categoryIds",
+      "images",
+      "initialQuantity",
+      "stockLocation",
+    ]
+
+    const anchorMap: Record<string, string> = {
+      publisherId: "publisher-section",
+      authors: "authors-section",
+      categoryIds: "categories-section",
+      images: "images-section",
+    }
+
+    const firstField = order.find((name) => fieldErrors[name]) || Object.keys(fieldErrors)[0]
+    if (!firstField) return
+
+    const targetId = anchorMap[firstField] || firstField
+    setTimeout(() => {
+      const target = document.getElementById(targetId)
+      if (!target) return
+      target.scrollIntoView({ behavior: "smooth", block: "center" })
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+        target.focus()
+      }
+    }, 0)
+  }
+
   const fetchCategories = useCallback(async () => {
     try {
       const res = await CategoryApiRequest.getCategories({ limit: 50 })
-      if (res.payload.success) {
+      if (res && res.payload.success) {
         const data = res.payload.data as any
         setCategories(data.items ?? data ?? [])
       }
@@ -104,7 +184,7 @@ export function AddBookForm() {
           q: debouncedPublisherSearch || undefined,
           limit: 20,
         })
-        if (res.payload.success) {
+        if (res && res.payload.success) {
           const data = res.payload.data as any
           setPublishers(data.items ?? data ?? [])
         }
@@ -123,7 +203,7 @@ export function AddBookForm() {
           q: debouncedAuthorSearch || undefined,
           limit: 20,
         })
-        if (res.payload.success) {
+        if (res && res.payload.success) {
           const data = res.payload.data as any
           setAuthorResults(data.items ?? data ?? [])
         }
@@ -134,6 +214,37 @@ export function AddBookForm() {
     fetchAuthors()
   }, [debouncedAuthorSearch])
 
+  useEffect(() => {
+    const checkDuplicateTitle = async () => {
+      const normalized = debouncedTitle.trim().toLowerCase()
+      if (!normalized) {
+        setTitleWarning("")
+        return
+      }
+
+      try {
+        const res = await BookApiRequest.adminGetBooks("", {
+          q: debouncedTitle.trim(),
+          limit: 5,
+        })
+
+        if (!res?.payload?.success) {
+          setTitleWarning("")
+          return
+        }
+
+        const data = res.payload.data as { items?: Array<{ title?: string }> }
+        const duplicate = (data.items ?? []).some((item) => (item.title ?? "").trim().toLowerCase() === normalized)
+
+        setTitleWarning(duplicate ? "This book seems to already exist." : "")
+      } catch {
+        setTitleWarning("")
+      }
+    }
+
+    checkDuplicateTitle()
+  }, [debouncedTitle])
+
   const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(categorySearch.toLowerCase())
   )
@@ -142,58 +253,77 @@ export function AddBookForm() {
     setSelectedCategoryIds((prev) =>
       prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
     )
+    clearFieldError("categoryIds")
   }
 
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadBookImageNow = async (file: File): Promise<UploadedBookImage | null> => {
+    const res = await MediaApiRequest.uploadBookImage(file)
+    if (res?.payload?.success && res.payload.data?._id && res.payload.data?.url) {
+      return { _id: res.payload.data._id, url: res.payload.data.url }
+    }
+    return null
+  }
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setCoverImage(file)
-      setCoverPreview(URL.createObjectURL(file))
+    if (!file) return
+
+    setUploadingImages(true)
+    setGlobalError("")
+    try {
+      const uploaded = await uploadBookImageNow(file)
+      if (!uploaded) {
+        setFieldError("images", "Upload ảnh bìa thất bại")
+        return
+      }
+      setCoverImage(uploaded)
+      clearFieldError("images")
+    } catch (error: any) {
+      setFieldError("images", error?.payload?.message || error?.message || "Upload ảnh bìa thất bại")
+    } finally {
+      setUploadingImages(false)
+      e.target.value = ""
     }
   }
 
-  const handleAdditionalImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAdditionalImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newFiles = [...additionalImages, ...files].slice(0, 10)
-    setAdditionalImages(newFiles)
-    setAdditionalPreviews(newFiles.map((f) => URL.createObjectURL(f)))
+    if (files.length === 0) return
+
+    const remainSlots = Math.max(0, 10 - additionalImages.length)
+    const filesToUpload = files.slice(0, remainSlots)
+    if (filesToUpload.length === 0) {
+      e.target.value = ""
+      return
+    }
+
+    setUploadingImages(true)
+    setGlobalError("")
+    try {
+      const uploadedItems: UploadedBookImage[] = []
+      for (const file of filesToUpload) {
+        const uploaded = await uploadBookImageNow(file)
+        if (uploaded) uploadedItems.push(uploaded)
+      }
+
+      if (uploadedItems.length === 0) {
+        setFieldError("images", "Upload ảnh bổ sung thất bại")
+        return
+      }
+
+      setAdditionalImages((prev) => [...prev, ...uploadedItems].slice(0, 10))
+      clearFieldError("images")
+    } catch (error: any) {
+      setFieldError("images", error?.payload?.message || error?.message || "Upload ảnh bổ sung thất bại")
+    } finally {
+      setUploadingImages(false)
+      e.target.value = ""
+    }
   }
 
   const removeAdditionalImage = (index: number) => {
     setAdditionalImages((prev) => prev.filter((_, i) => i !== index))
-    setAdditionalPreviews((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  const uploadImages = async (): Promise<{ imageIds: string[]; thumbnailUrl: string }> => {
-    const imageIds: string[] = []
-    let thumbnailUrl = ""
-
-    // Upload cover image first
-    if (coverImage) {
-      const res = await MediaApiRequest.upload(coverImage, {
-        type: MediaType.IMAGE,
-        folder: MediaFolder.BOOK,
-      })
-      if (res.payload.success) {
-        const media = res.payload.data as any
-        imageIds.push(media._id)
-        thumbnailUrl = media.url
-      }
-    }
-
-    // Upload additional images
-    for (const file of additionalImages) {
-      const res = await MediaApiRequest.upload(file, {
-        type: MediaType.IMAGE,
-        folder: MediaFolder.BOOK,
-      })
-      if (res.payload.success) {
-        const media = res.payload.data as any
-        imageIds.push(media._id)
-      }
-    }
-
-    return { imageIds, thumbnailUrl }
+    clearFieldError("images")
   }
 
   const handleSubmit = async () => {
@@ -215,37 +345,39 @@ export function AddBookForm() {
       publishDate: publishDate || undefined,
       pageCount: pageCount ? Number(pageCount) : undefined,
       tags: tags || undefined,
-      initialQuantity: initialQuantity ? Number(initialQuantity) : undefined,
+      initialQuantity: Number(initialQuantity) || 0,
       stockLocation: stockLocation || undefined,
     }
 
     const result = createBookFormSchema.safeParse(formValues)
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
-      result.error.errors.forEach((err) => {
+      result.error.issues.forEach((err) => {
         const field = err.path[0] as string
         if (!fieldErrors[field]) {
           fieldErrors[field] = err.message
         }
       })
       setErrors(fieldErrors)
+      scrollToFirstError(fieldErrors)
       return
+    }
+
+    if (titleWarning) {
+      const confirmed = window.confirm("This book already exists. Do you still want to add it?")
+      if (!confirmed) {
+        return
+      }
     }
 
     setLoading(true)
 
     try {
-      // Upload images first
-      let imageIds: string[] = []
-      let thumbnailUrl = ""
-
-      if (coverImage || additionalImages.length > 0) {
-        setUploadingImages(true)
-        const uploadResult = await uploadImages()
-        imageIds = uploadResult.imageIds
-        thumbnailUrl = uploadResult.thumbnailUrl
-        setUploadingImages(false)
-      }
+      const imageIds = [
+        ...(coverImage ? [coverImage._id] : []),
+        ...additionalImages.map((img) => img._id),
+      ]
+      const thumbnailUrl = coverImage?.url ?? ""
 
       // Build request body
       const body: CreateBookRequest = {
@@ -263,7 +395,7 @@ export function AddBookForm() {
       if (publishDate) body.publishDate = publishDate
       if (pageCount) body.pageCount = Number(pageCount)
       if (tags.trim()) body.tags = tags.split(",").map((t) => t.trim()).filter(Boolean)
-      if (initialQuantity) body.initialQuantity = Number(initialQuantity)
+      body.initialQuantity = Number(initialQuantity)
       if (stockLocation.trim()) body.stockLocation = stockLocation.trim()
       if (imageIds.length > 0) body.images = imageIds
       if (thumbnailUrl) body.thumbnailUrl = thumbnailUrl
@@ -272,32 +404,39 @@ export function AddBookForm() {
       await BookApiRequest.adminCreate("", body)
 
       setSuccess(true)
+      toast.success("Tao sach thanh cong")
       setTimeout(() => {
         router.push("/admin/books")
       }, 1500)
     } catch (error: any) {
-      // Extract validation details from various error shapes
-      const details: { field?: string; message: string }[] =
+      // Extract validation details from multiple backend error shapes
+      const details: BackendValidationDetail[] =
         error?.payload?.data?.details ||
+        error?.payload?.details ||
         error?.data?.details ||
+        error?.details ||
         []
 
       if (Array.isArray(details) && details.length > 0) {
-        // Map known fields to inline FieldError
         const fieldErrors: Record<string, string> = {}
         const errorMessages: string[] = []
 
-        details.forEach((d: any) => {
-          if (d.field) {
-            fieldErrors[d.field] = d.message
-            errorMessages.push(`${d.field}: ${d.message}`)
-          } else if (d.message) {
-            errorMessages.push(d.message)
+        details.forEach((d) => {
+          const message = d.message || "Dữ liệu không hợp lệ"
+          const normalizedField = normalizeBackendField(d.field)
+
+          if (normalizedField) {
+            if (!fieldErrors[normalizedField]) {
+              fieldErrors[normalizedField] = message
+            }
+          } else {
+            errorMessages.push(message)
           }
         })
 
         setErrors(fieldErrors)
         setGlobalError(errorMessages.join("\n"))
+        scrollToFirstError(fieldErrors)
       } else {
         const message =
           error?.payload?.message || error?.message || "Có lỗi xảy ra"
@@ -305,7 +444,6 @@ export function AddBookForm() {
       }
     } finally {
       setLoading(false)
-      setUploadingImages(false)
     }
   }
 
@@ -351,22 +489,43 @@ export function AddBookForm() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="title">Tên sách *</Label>
-              <Input
-                id="title"
-                placeholder="Nhập tên sách"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="title"
+                  placeholder="Nhập tên sách"
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value)
+                    clearFieldError("title")
+                  }}
+                  className={isTitleValid ? "pr-10" : undefined}
+                />
+                {isTitleValid && (
+                  <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-green-600" />
+                )}
+              </div>
               <FieldError name="title" />
+              {titleWarning && !errors.title && (
+                <p className="text-sm text-amber-600">{titleWarning}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="isbn">ISBN</Label>
-              <Input
-                id="isbn"
-                placeholder="9781234567890 (10 hoặc 13 chữ số)"
-                value={isbn}
-                onChange={(e) => setIsbn(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="isbn"
+                  placeholder="9781234567890 (10 hoặc 13 chữ số)"
+                  value={isbn}
+                  onChange={(e) => {
+                    setIsbn(e.target.value)
+                    clearFieldError("isbn")
+                  }}
+                  className={isIsbnValid ? "pr-10" : undefined}
+                />
+                {isIsbnValid && (
+                  <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-green-600" />
+                )}
+              </div>
               <FieldError name="isbn" />
             </div>
           </div>
@@ -395,13 +554,22 @@ export function AddBookForm() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="basePrice">Giá bán (VND) *</Label>
-              <Input
-                id="basePrice"
-                type="number"
-                placeholder="450000"
-                value={basePrice}
-                onChange={(e) => setBasePrice(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="basePrice"
+                  type="number"
+                  placeholder="450000"
+                  value={basePrice}
+                  onChange={(e) => {
+                    setBasePrice(e.target.value)
+                    clearFieldError("basePrice")
+                  }}
+                  className={isBasePriceValid ? "pr-10" : undefined}
+                />
+                {isBasePriceValid && (
+                  <CheckCircle2 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-green-600" />
+                )}
+              </div>
               <FieldError name="basePrice" />
             </div>
             <div className="space-y-2">
@@ -442,8 +610,12 @@ export function AddBookForm() {
                 type="number"
                 placeholder="320"
                 value={pageCount}
-                onChange={(e) => setPageCount(e.target.value)}
+                onChange={(e) => {
+                  setPageCount(e.target.value)
+                  clearFieldError("pageCount")
+                }}
               />
+              <FieldError name="pageCount" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="publishDate">Ngày xuất bản</Label>
@@ -451,8 +623,12 @@ export function AddBookForm() {
                 id="publishDate"
                 type="date"
                 value={publishDate}
-                onChange={(e) => setPublishDate(e.target.value)}
+                onChange={(e) => {
+                  setPublishDate(e.target.value)
+                  clearFieldError("publishDate")
+                }}
               />
+              <FieldError name="publishDate" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (phân cách bằng dấu phẩy)</Label>
@@ -460,8 +636,12 @@ export function AddBookForm() {
                 id="tags"
                 placeholder="programming, clean-code, design"
                 value={tags}
-                onChange={(e) => setTags(e.target.value)}
+                onChange={(e) => {
+                  setTags(e.target.value)
+                  clearFieldError("tags")
+                }}
               />
+              <FieldError name="tags" />
             </div>
           </div>
         </CardContent>
@@ -469,6 +649,7 @@ export function AddBookForm() {
 
       {/* Publisher */}
       <Card>
+        <div id="publisher-section" />
         <CardHeader>
           <CardTitle>Nhà xuất bản *</CardTitle>
           <CardDescription>Tìm kiếm và chọn nhà xuất bản</CardDescription>
@@ -505,6 +686,7 @@ export function AddBookForm() {
                           setPublisherId(pub._id)
                           setPublisherName(pub.name)
                           setPublisherOpen(false)
+                          clearFieldError("publisherId")
                         }}
                       >
                         <Check
@@ -527,6 +709,7 @@ export function AddBookForm() {
 
       {/* Authors */}
       <Card>
+        <div id="authors-section" />
         <CardHeader>
           <CardTitle>Tác giả</CardTitle>
           <CardDescription>Tìm kiếm và chọn tác giả cho sách</CardDescription>
@@ -569,6 +752,7 @@ export function AddBookForm() {
                                 ? prev.filter((a) => a._id !== author._id)
                                 : [...prev, { _id: author._id, name: author.name }]
                             )
+                            clearFieldError("authors")
                           }}
                         >
                           <Check
@@ -613,11 +797,13 @@ export function AddBookForm() {
               ))}
             </div>
           )}
+          <FieldError name="authors" />
         </CardContent>
       </Card>
 
       {/* Categories */}
       <Card>
+        <div id="categories-section" />
         <CardHeader>
           <CardTitle>Danh mục *</CardTitle>
           <CardDescription>Tìm kiếm và chọn ít nhất 1 danh mục cho sách</CardDescription>
@@ -700,6 +886,7 @@ export function AddBookForm() {
 
       {/* Images */}
       <Card>
+        <div id="images-section" />
         <CardHeader>
           <CardTitle>Hình ảnh</CardTitle>
           <CardDescription>Upload ảnh bìa và ảnh sách</CardDescription>
@@ -708,10 +895,10 @@ export function AddBookForm() {
           <div className="space-y-2">
             <Label>Ảnh bìa</Label>
             <div className="flex items-center gap-4">
-              {coverPreview ? (
+              {coverImage?.url ? (
                 <div className="relative size-32 rounded-lg border bg-muted">
                   <img
-                    src={coverPreview}
+                    src={coverImage.url}
                     alt="Cover preview"
                     className="size-full rounded-lg object-cover"
                   />
@@ -721,7 +908,6 @@ export function AddBookForm() {
                     className="absolute -top-2 -right-2 size-6"
                     onClick={() => {
                       setCoverImage(null)
-                      setCoverPreview(null)
                     }}
                   >
                     ×
@@ -740,15 +926,16 @@ export function AddBookForm() {
                 </label>
               )}
             </div>
+            <FieldError name="images" />
           </div>
 
           <div className="space-y-2">
             <Label>Ảnh bổ sung</Label>
             <div className="grid grid-cols-5 gap-4">
-              {additionalPreviews.map((preview, index) => (
+              {additionalImages.map((img, index) => (
                 <div key={index} className="relative aspect-square rounded-lg border bg-muted">
                   <img
-                    src={preview}
+                    src={img.url}
                     alt={`Preview ${index + 1}`}
                     className="size-full rounded-lg object-cover"
                   />
@@ -775,6 +962,7 @@ export function AddBookForm() {
                 </label>
               )}
             </div>
+            <FieldError name="images" />
           </div>
         </CardContent>
       </Card>
@@ -788,14 +976,18 @@ export function AddBookForm() {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="initialQuantity">Số lượng ban đầu</Label>
+              <Label htmlFor="initialQuantity">Số lượng ban đầu *</Label>
               <Input
                 id="initialQuantity"
                 type="number"
                 placeholder="100"
                 value={initialQuantity}
-                onChange={(e) => setInitialQuantity(e.target.value)}
+                onChange={(e) => {
+                  setInitialQuantity(e.target.value)
+                  clearFieldError("initialQuantity")
+                }}
               />
+              <FieldError name="initialQuantity" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="stockLocation">Vị trí kho</Label>
@@ -803,8 +995,12 @@ export function AddBookForm() {
                 id="stockLocation"
                 placeholder="MAIN"
                 value={stockLocation}
-                onChange={(e) => setStockLocation(e.target.value)}
+                onChange={(e) => {
+                  setStockLocation(e.target.value)
+                  clearFieldError("stockLocation")
+                }}
               />
+              <FieldError name="stockLocation" />
             </div>
           </div>
         </CardContent>
@@ -815,11 +1011,16 @@ export function AddBookForm() {
         <Button variant="outline" onClick={() => router.push("/admin/books")} disabled={loading}>
           Hủy
         </Button>
-        <Button onClick={handleSubmit} disabled={loading}>
+        <Button onClick={handleSubmit} disabled={loading || uploadingImages}>
           {loading ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              {uploadingImages ? "Đang upload ảnh..." : "Đang tạo sách..."}
+              Đang tạo sách...
+            </>
+          ) : uploadingImages ? (
+            <>
+              <Loader2 className="mr-2 size-4 animate-spin" />
+              Đang upload ảnh...
             </>
           ) : (
             <>

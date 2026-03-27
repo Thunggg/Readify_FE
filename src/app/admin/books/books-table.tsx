@@ -48,7 +48,6 @@ import { handleErrorApi } from "@/lib/utils"
 const BookStatusMap: Record<number, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   0: { label: "Ngừng bán", variant: "destructive" },
   1: { label: "Đang bán", variant: "default" },
-  2: { label: "Ẩn", variant: "outline" },
   3: { label: "Bản nháp", variant: "secondary" },
   4: { label: "Hết hàng", variant: "destructive" },
 }
@@ -56,7 +55,7 @@ const BookStatusMap: Record<number, { label: string; variant: "default" | "secon
 type SortField = "title" | "basePrice" | "soldCount" | "createdAt"
 type SortOrder = "asc" | "desc"
 
-export function BooksTable() {
+export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
   const [books, setBooks] = useState<AdminBook[]>([])
   const [meta, setMeta] = useState<PaginationMeta | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -84,11 +83,14 @@ export function BooksTable() {
         order: sortOrder,
       }
 
+      if (deletedOnly) params.isDeleted = true
+
       if (debouncedSearch) params.q = debouncedSearch
       if (statusFilter !== "all") params.status = Number(statusFilter)
       if (categoryFilter !== "all") params.categoryId = categoryFilter
 
       const res = await BookApiRequest.adminGetBooks("", params)
+      if (!res) return
       const payload = res.payload
 
       if (payload.success) {
@@ -100,11 +102,12 @@ export function BooksTable() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, itemsPerPage, sortField, sortOrder, debouncedSearch, statusFilter, categoryFilter])
+  }, [currentPage, itemsPerPage, sortField, sortOrder, debouncedSearch, statusFilter, categoryFilter, deletedOnly])
 
   const fetchCategories = useCallback(async () => {
     try {
       const res = await CategoryApiRequest.getCategories({ limit: 50 })
+      if (!res) return
       const payload = res.payload
       if (payload.success) {
         const data = payload.data as any
@@ -190,7 +193,7 @@ export function BooksTable() {
             />
           </div>
           <div className="flex gap-2">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={setStatusFilter} disabled={deletedOnly}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Trạng thái" />
               </SelectTrigger>
@@ -199,7 +202,6 @@ export function BooksTable() {
                 <SelectItem value="1">Đang bán</SelectItem>
                 <SelectItem value="3">Bản nháp</SelectItem>
                 <SelectItem value="0">Ngừng bán</SelectItem>
-                <SelectItem value="2">Ẩn</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -328,7 +330,7 @@ export function BooksTable() {
                             Xem chi tiết
                           </Link>
                         </DropdownMenuItem>
-                        {!book.isDeleted && (
+                        {!book.isDeleted && !deletedOnly && (
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/books/${book._id}/edit`}>
                               <Pencil className="mr-2 size-4" />
@@ -337,7 +339,7 @@ export function BooksTable() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        {book.isDeleted ? (
+                        {book.isDeleted || deletedOnly ? (
                           <DropdownMenuItem
                             onSelect={(e) => {
                               e.preventDefault()
@@ -426,7 +428,7 @@ export function BooksTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa sách</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa sách này? Sách sẽ được đánh dấu đã xóa và có thể khôi phục sau.
+              Are you sure you want to delete this book?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

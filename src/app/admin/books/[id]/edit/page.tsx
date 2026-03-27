@@ -14,6 +14,17 @@ import { BookApiRequest } from "@/api-request/book"
 import { cookies } from "next/headers"
 import type { AdminBook } from "@/types/book"
 
+const isAdminBook = (data: unknown): data is AdminBook => {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "_id" in data &&
+    typeof (data as { _id?: unknown })._id === "string" &&
+    "title" in data &&
+    typeof (data as { title?: unknown }).title === "string"
+  )
+}
+
 export default async function EditBookPage({
   params,
 }: {
@@ -24,15 +35,22 @@ export default async function EditBookPage({
   const cookieStore = await cookies()
   const accessToken = cookieStore.get("accessToken")?.value ?? ""
 
-  let book: AdminBook
+  let book: AdminBook | null = null
 
   try {
     const res = await BookApiRequest.adminGetById(accessToken, id)
     if (!res || !res.payload.success) {
       notFound()
     }
-    book = res.payload.data as AdminBook
+    if (!isAdminBook(res.payload.data)) {
+      notFound()
+    }
+    book = res.payload.data
   } catch {
+    notFound()
+  }
+
+  if (!book) {
     notFound()
   }
 
