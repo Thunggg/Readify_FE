@@ -17,17 +17,17 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Pencil, Package, DollarSign, BookOpen, Warehouse, MapPin } from "lucide-react"
+import { Pencil, Package, DollarSign, BookOpen, Warehouse, MapPin, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { BookApiRequest } from "@/api-request/book"
 import { cookies } from "next/headers"
 import type { AdminBook } from "@/types/book"
+import { DeleteBookButton } from "@/components/admin/books/delete-book-button"
 
 const BookStatusMap: Record<number, string> = {
   0: "Ngừng bán",
   1: "Đang bán",
-  2: "Ẩn",
   3: "Bản nháp",
   4: "Hết hàng",
 }
@@ -104,6 +104,17 @@ export default async function BookDetailPage({
                   Chỉnh sửa
                 </Link>
               </Button>
+            )}
+            {!book.isDeleted && (
+              <DeleteBookButton
+                bookId={book._id}
+                trigger={
+                  <Button variant="destructive">
+                    <Trash2 className="mr-2 size-4" />
+                    Delete
+                  </Button>
+                }
+              />
             )}
           </div>
         </div>

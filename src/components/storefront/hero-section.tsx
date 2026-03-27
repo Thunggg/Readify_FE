@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { useState } from "react"
 
 const banners = [
@@ -54,13 +55,14 @@ export function HeroSection() {
     <section className="container py-8">
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Main Banner Carousel */}
-        <Card className="lg:col-span-2 relative overflow-hidden bg-gradient-to-r from-amber-900/90 to-amber-800/80 border-0 group">
+        <Card className="lg:col-span-2 relative overflow-hidden bg-linear-to-r from-amber-900/90 to-amber-800/80 border-0 group">
           <div className="absolute inset-0 opacity-30">
             <Image
               src={currentBanner.image || "/placeholder.svg"}
               alt="Banner"
               fill
               className="object-cover transition-transform duration-500"
+              sizes="(min-width: 1024px) 66vw, 100vw"
             />
           </div>
           <div className="relative p-8 lg:p-12 text-white min-h-[400px] flex flex-col justify-between">
@@ -70,8 +72,8 @@ export function HeroSection() {
               </div>
               <h1 className="text-4xl lg:text-5xl font-bold mb-4 text-balance">{currentBanner.title}</h1>
               <p className="text-lg mb-6 max-w-xl text-pretty text-white/90">{currentBanner.description}</p>
-              <Button size="lg" className="bg-white text-black hover:bg-white/90">
-                {currentBanner.buttonText}
+              <Button size="lg" asChild className="bg-white text-black hover:bg-white/90">
+                <Link href={currentBanner.buttonLink}>{currentBanner.buttonText}</Link>
               </Button>
             </div>
 
@@ -118,8 +120,14 @@ export function HeroSection() {
               <div>
                 <h3 className="text-xl font-bold mb-2 text-pink-900 dark:text-pink-100">Sách thiếu nhi</h3>
                 <p className="text-pink-800 dark:text-pink-200 mb-3">Bộ sưu tập sách cho trẻ em</p>
-                <Button variant="link" className="text-pink-700 dark:text-pink-300 p-0 h-auto font-semibold">
-                  Xem chi tiết <ArrowRight className="ml-1 h-4 w-4" />
+                <Button
+                  variant="link"
+                  asChild
+                  className="text-pink-700 dark:text-pink-300 p-0 h-auto font-semibold"
+                >
+                  <Link href="/category/thieu-nhi">
+                    Xem chi tiết <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
               <div className="w-16 h-20 bg-pink-200 dark:bg-pink-900 rounded flex items-center justify-center">
@@ -129,6 +137,7 @@ export function HeroSection() {
                   width={64}
                   height={80}
                   className="object-cover rounded"
+                  style={{ width: "auto", height: "auto" }}
                 />
               </div>
             </div>
@@ -139,8 +148,14 @@ export function HeroSection() {
               <div>
                 <h3 className="text-xl font-bold mb-2 text-cyan-900 dark:text-cyan-100">Kinh tế học</h3>
                 <p className="text-cyan-800 dark:text-cyan-200 mb-3">Top sách doanh nhân</p>
-                <Button variant="link" className="text-cyan-700 dark:text-cyan-300 p-0 h-auto font-semibold">
-                  Khám phá <ArrowRight className="ml-1 h-4 w-4" />
+                <Button
+                  variant="link"
+                  asChild
+                  className="text-cyan-700 dark:text-cyan-300 p-0 h-auto font-semibold"
+                >
+                  <Link href="/category/kinh-te">
+                    Khám phá <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
                 </Button>
               </div>
               <div className="w-16 h-20 bg-cyan-200 dark:bg-cyan-900 rounded flex items-center justify-center">
@@ -150,6 +165,7 @@ export function HeroSection() {
                   width={64}
                   height={80}
                   className="object-cover rounded"
+                  style={{ width: "auto", height: "auto" }}
                 />
               </div>
             </div>

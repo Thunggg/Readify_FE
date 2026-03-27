@@ -25,12 +25,26 @@ export const MediaApiRequest = {
   },
 
   /**
+   * Upload riêng ảnh sách (BE route tách biệt khỏi avatar)
+   */
+  uploadBookImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return http.post<ApiResponse<Media>>("/media/upload/book", formData, {
+      credentials: "include",
+    });
+  },
+
+  /**
    * Upload avatar (wrapper function cho tiện)
    */
   uploadAvatar: async (file: File) => {
-    return MediaApiRequest.upload(file, {
-      type: MediaType.IMAGE,
-      folder: MediaFolder.USER,
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return http.post<ApiResponse<Media>>("/media/upload/avatar", formData, {
+      credentials: "include",
     });
   },
 };

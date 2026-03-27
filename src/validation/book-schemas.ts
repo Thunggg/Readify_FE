@@ -27,11 +27,9 @@ export const createBookApiSchema = z.object({
     .max(10, "Tối đa 10 tác giả")
     .optional(),
 
-  language: z
-    .enum(["vi", "en", "ja", "ko", "zh"], {
-      errorMap: () => ({ message: "Ngôn ngữ không hợp lệ" }),
-    })
-    .optional(),
+  language: z.enum(["vi", "en", "ja", "ko", "zh"], {
+    message: "Ngôn ngữ không hợp lệ",
+  }).optional(),
 
   publishDate: z.string().optional(),
 
@@ -59,14 +57,12 @@ export const createBookApiSchema = z.object({
 
   basePrice: z.coerce
     .number()
-    .min(0, "Giá phải lớn hơn hoặc bằng 0")
+    .min(1, "Giá phải lớn hơn 0")
     .max(10000000000, "Giá tối đa 10 tỷ"),
 
-  currency: z
-    .enum(["VND", "USD", "CNY"], {
-      errorMap: () => ({ message: "Loại tiền không hợp lệ" }),
-    })
-    .optional(),
+  currency: z.enum(["VND", "USD", "CNY"], {
+    message: "Loại tiền không hợp lệ",
+  }).optional(),
 
   images: z
     .array(z.string().regex(mongoIdRegex, "ID hình ảnh không hợp lệ"))
@@ -83,9 +79,9 @@ export const createBookApiSchema = z.object({
   initialQuantity: z.coerce
     .number()
     .int("Số lượng phải là số nguyên")
-    .min(0, "Số lượng không được âm")
+    .min(1, "Số lượng phải lớn hơn 0")
     .max(100000, "Số lượng tối đa 100,000")
-    .optional(),
+    ,
 
   stockLocation: z.string().optional(),
 });
@@ -117,11 +113,9 @@ export const updateBookApiSchema = z.object({
     .max(10, "Tối đa 10 tác giả")
     .optional(),
 
-  language: z
-    .enum(["vi", "en", "ja", "ko", "zh"], {
-      errorMap: () => ({ message: "Ngôn ngữ không hợp lệ" }),
-    })
-    .optional(),
+  language: z.enum(["vi", "en", "ja", "ko", "zh"], {
+    message: "Ngôn ngữ không hợp lệ",
+  }).optional(),
 
   publishDate: z.string().optional(),
 
@@ -150,15 +144,13 @@ export const updateBookApiSchema = z.object({
 
   basePrice: z.coerce
     .number()
-    .min(0, "Giá phải lớn hơn hoặc bằng 0")
+    .min(1, "Giá phải lớn hơn 0")
     .max(10000000000, "Giá tối đa 10 tỷ")
     .optional(),
 
-  currency: z
-    .enum(["VND", "USD", "CNY"], {
-      errorMap: () => ({ message: "Loại tiền không hợp lệ" }),
-    })
-    .optional(),
+  currency: z.enum(["VND", "USD", "CNY"], {
+    message: "Loại tiền không hợp lệ",
+  }).optional(),
 
   addImages: z
     .array(z.string().regex(mongoIdRegex, "ID hình ảnh không hợp lệ"))
@@ -204,7 +196,7 @@ export const createBookFormSchema = z.object({
     .max(10, "Tối đa 10 danh mục"),
   basePrice: z.coerce
     .number()
-    .min(0, "Giá phải lớn hơn hoặc bằng 0")
+    .min(1, "Giá phải lớn hơn 0")
     .max(10000000000, "Giá tối đa 10 tỷ"),
   currency: z.string().optional(),
   language: z.string().optional(),
@@ -219,9 +211,9 @@ export const createBookFormSchema = z.object({
   initialQuantity: z.coerce
     .number()
     .int("Số lượng phải là số nguyên")
-    .min(0, "Số lượng không được âm")
+    .min(1, "Số lượng phải lớn hơn 0")
     .max(100000, "Số lượng tối đa 100,000")
-    .optional(),
+    ,
   stockLocation: z.string().optional(),
 });
 
@@ -251,7 +243,7 @@ export const updateBookFormSchema = z.object({
     .max(10, "Tối đa 10 danh mục"),
   basePrice: z.coerce
     .number()
-    .min(0, "Giá phải lớn hơn hoặc bằng 0")
+    .min(1, "Giá phải lớn hơn 0")
     .max(10000000000, "Giá tối đa 10 tỷ"),
   currency: z.string().optional(),
   language: z.string().optional(),
@@ -264,6 +256,11 @@ export const updateBookFormSchema = z.object({
     .optional(),
   tags: z.string().optional(),
   thumbnailUrl: z.string().optional(),
+  stockQuantity: z.coerce
+    .number()
+    .int("Số lượng phải là số nguyên")
+    .min(1, "Số lượng phải lớn hơn 0")
+    .max(100000, "Số lượng tối đa 100,000"),
 });
 
 export type UpdateBookFormInput = z.infer<typeof updateBookFormSchema>;
