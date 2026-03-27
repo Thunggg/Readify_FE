@@ -4,6 +4,11 @@ import envConfig from "@/configs/config-env";
 type CustomOptions = RequestInit & {
   baseUrl?: string | undefined;
   params?: Record<string, any>;
+  /**
+   * If true, do NOT attempt refresh/logout redirect on 401.
+   * The request will throw HttpError instead.
+   */
+  skipAuthHandling?: boolean;
 };
 
 const ENTITY_ERROR_STATUS = 422;
@@ -108,6 +113,30 @@ const request = async <Response>(
     }
   }
 
+  const parseResponseBody = async (response: globalThis.Response) => {
+    const contentType = response.headers.get("content-type") || "";
+    const isJson = contentType.includes("application/json");
+
+    if (isJson) {
+      try {
+        return await response.json();
+      } catch {
+        // fall through
+      }
+    }
+
+    try {
+      const text = await response.text();
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { message: text };
+      }
+    } catch {
+      return null;
+    }
+  };
+
   const doFetch = async () => {
     const response = await fetch(fullUrl, {
       ...options,
@@ -119,7 +148,7 @@ const request = async <Response>(
       method,
       credentials: "include", // Include cookies for authentication
     });
-    const payload: Response = await response.json();
+    const payload: Response = (await parseResponseBody(response)) as Response;
     return { response, payload };
   };
 
@@ -136,6 +165,9 @@ const request = async <Response>(
         },
       );
     } else if (response.status === 401) {
+      if (options?.skipAuthHandling) {
+        throw new HttpError(response.status, response.statusText, payload);
+      }
       // Avoid infinite loop: don't attempt refresh on refresh endpoint itself
       const isRefreshCall =
         url === "/api/auth/refresh-token" ||
