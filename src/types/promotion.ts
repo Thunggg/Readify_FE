@@ -43,6 +43,7 @@ export type Promotion = {
   endDate: string;
   usageLimit?: number;
   usedCount: number;
+  usedByUsers?: string[]; // Array of user IDs who have used this promotion
   status: PromotionStatus;
   bookIds?: string[];
   categoryIds?: string[];
@@ -118,4 +119,57 @@ export type UpdatePromotionDto = {
   usageLimit?: number;
   status?: Exclude<PromotionStatus, PromotionStatus.EXPIRED>; // Only ACTIVE or INACTIVE
   // Note: code and startDate cannot be changed after creation
+};
+
+// Promotion Log Types
+export enum PromotionLogAction {
+  CREATED = "CREATED",
+  UPDATED = "UPDATED",
+  DELETED = "DELETED",
+  APPLIED = "APPLIED",
+  APPLY = "APPLY",
+}
+
+export enum PromotionLogSortBy {
+  CREATED_AT = "CREATED_AT",
+  ACTION = "ACTION",
+  PROMOTION_CODE = "PROMOTION_CODE",
+}
+
+export type PromotionLog = {
+  _id: string;
+  promotionId: {
+    _id: string;
+    code: string;
+    name: string;
+    status?: string;
+  };
+  promotionCode: string;
+  promotionName: string;
+  action: string; // "APPLY", "CREATED", "UPDATED", "DELETED"
+  performedBy: {
+    _id: string;
+    email: string;
+    role: number;
+    firstName?: string;
+    lastName?: string;
+  };
+  newData?: Record<string, any>;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SearchPromotionLogDto = {
+  search?: string;
+  promotionId?: string;
+  promotionCode?: string;
+  action?: PromotionLogAction;
+  performedBy?: string;
+  fromDate?: string;
+  toDate?: string;
+  sortBy?: PromotionLogSortBy;
+  order?: SortOrder;
+  page?: number;
+  limit?: number;
 };
