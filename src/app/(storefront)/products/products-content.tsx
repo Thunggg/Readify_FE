@@ -46,10 +46,8 @@ export function ProductsContent() {
   const currentPage = Number(searchParams.get("page")) || 1
   const currentSort = (searchParams.get("sort") as SortOption) || "newest"
   const currentSearch = searchParams.get("q") || ""
-  const currentCategoryId = searchParams.get("categoryId") || ""
   const currentMinPrice = parseNonNegativeNumberParam(searchParams.get("minPrice"))
   const currentMaxPrice = parseNonNegativeNumberParam(searchParams.get("maxPrice"))
-  const currentInStock = searchParams.get("inStock") === "true" ? true : undefined
 
   const hasValidPriceRange =
     currentMinPrice === undefined ||
@@ -83,12 +81,10 @@ export function ProductsContent() {
         }
         
         if (currentSearch) params.q = currentSearch
-        if (currentCategoryId) params.categoryId = currentCategoryId
         if (hasValidPriceRange) {
           if (currentMinPrice !== undefined) params.minPrice = currentMinPrice
           if (currentMaxPrice !== undefined) params.maxPrice = currentMaxPrice
         }
-        if (currentInStock) params.inStock = currentInStock
 
         const res = await BookApiRequest.getBooks(params)
         
@@ -105,7 +101,7 @@ export function ProductsContent() {
     }
 
     fetchBooks()
-  }, [currentPage, currentSort, currentSearch, currentCategoryId, currentMinPrice, currentMaxPrice, currentInStock, hasValidPriceRange])
+  }, [currentPage, currentSort, currentSearch, currentMinPrice, currentMaxPrice, hasValidPriceRange])
 
   // Handlers
   const handleSortChange = (value: string) => {
@@ -118,16 +114,14 @@ export function ProductsContent() {
   }
 
   const handleFilterChange = (filters: {
-    categoryId?: string
     minPrice?: number
     maxPrice?: number
-    inStock?: boolean
   }) => {
     updateParams({
-      categoryId: filters.categoryId,
       minPrice: filters.minPrice?.toString(),
       maxPrice: filters.maxPrice?.toString(),
-      inStock: filters.inStock ? "true" : undefined,
+      categoryId: undefined,
+      inStock: undefined,
       page: "1",
     })
   }
@@ -248,12 +242,11 @@ export function ProductsContent() {
         {/* Desktop Filters - Sidebar */}
         <aside className="hidden lg:block w-64 shrink-0">
           <ProductFilters 
+            key={`desktop-${currentMinPrice ?? ""}-${currentMaxPrice ?? ""}`}
             onFilterChange={handleFilterChange}
             initialFilters={{
-              categoryId: currentCategoryId,
               minPrice: hasValidPriceRange ? currentMinPrice : undefined,
               maxPrice: hasValidPriceRange ? currentMaxPrice : undefined,
-              inStock: currentInStock,
             }}
           />
         </aside>
@@ -274,12 +267,11 @@ export function ProductsContent() {
                   <div className="py-4">
                     <h2 className="text-lg font-semibold mb-4">Filters</h2>
                     <ProductFilters 
+                      key={`mobile-${currentMinPrice ?? ""}-${currentMaxPrice ?? ""}`}
                       onFilterChange={handleFilterChange}
                       initialFilters={{
-                        categoryId: currentCategoryId,
                         minPrice: hasValidPriceRange ? currentMinPrice : undefined,
                         maxPrice: hasValidPriceRange ? currentMaxPrice : undefined,
-                        inStock: currentInStock,
                       }}
                     />
                   </div>
