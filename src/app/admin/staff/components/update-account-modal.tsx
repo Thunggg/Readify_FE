@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, TriangleAlert, UserPlus, Upload, X } from "lucide-react";
+import { z } from "zod";
 
 import type { AdminAccount } from "@/types/account";
 
@@ -31,7 +32,7 @@ import { toast } from "sonner"
 import { handleErrorApi } from "@/lib/utils";
 import dayjs from "dayjs";
 import { StaffApiRequest } from "@/api-request/staff";
-import { updateStaffFormSchema, type UpdateStaffFormInput } from "@/validation/staff-form-schemas";
+import { updateStaffFormSchema } from "@/validation/staff-form-schemas";
 import { MediaApiRequest } from "@/api-request/media";
 
 // Component modal để cập nhật thông tin tài khoản staff
@@ -47,6 +48,8 @@ export default function UpdateAccountModal({
   selectedAccount: AdminAccount | null;
   onUpdateAccount: (data: AdminAccount) => void;
 }) {
+  type UpdateAccountFormValues = z.input<typeof updateStaffFormSchema>;
+
   // State cho lỗi chung (hiện tại không dùng)
   const [error] = useState<string | null>(null);
   // State để toggle hiển thị mật khẩu
@@ -59,7 +62,7 @@ export default function UpdateAccountModal({
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Khởi tạo form với react-hook-form và zod validation
-  const form = useForm<UpdateStaffFormInput>({
+  const form = useForm<UpdateAccountFormValues>({
     resolver: zodResolver(updateStaffFormSchema),
     defaultValues: {
       firstName: "",
@@ -118,7 +121,7 @@ export default function UpdateAccountModal({
   const { handleSubmit, register, control, formState: { errors, isDirty } } = form;
 
   // Hàm xử lý submit form
-  async function onSubmit(formData: UpdateStaffFormInput) {
+  async function onSubmit(formData: UpdateAccountFormValues) {
     try {
       // Kiểm tra có selectedAccount không
       if (!selectedAccount?._id) return;
@@ -137,7 +140,7 @@ export default function UpdateAccountModal({
           if (uploadRes?.payload?.success) {
             avatarUrl = uploadRes.payload.data.url;
           }
-        } catch (uploadError) {
+        } catch {
           // Nếu upload thất bại, hiển thị toast lỗi
           toast.error("Failed to upload avatar");
         } finally {
@@ -156,9 +159,13 @@ export default function UpdateAccountModal({
 
       // Gọi API cập nhật staff
       const res = await StaffApiRequest.updateStaff(selectedAccount._id, apiData);
-      if (!res.payload.success) {
+      if (!res || !res.payload.success) {
         // Xử lý lỗi API
-        handleErrorApi({ error: res.payload, setError: form.setError, duration: 5000 });
+        handleErrorApi({
+          error: res?.payload ?? { message: "Failed to update staff account" },
+          setError: form.setError,
+          duration: 5000,
+        });
         return;
       }
 

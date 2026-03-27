@@ -8,11 +8,11 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import BlogsTable from "./blogs-table";
+import BlogsTable from "../blogs-table";
 
-export default function BlogManagementPage() {
+export default function BlogTrashPage() {
   return (
     <SidebarInset>
       <div className="flex flex-1 flex-col">
@@ -24,7 +24,11 @@ export default function BlogManagementPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Blog Management</BreadcrumbPage>
+                <BreadcrumbLink href="/admin/blog">Blog Management</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Trash</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -33,28 +37,18 @@ export default function BlogManagementPage() {
         <div className="flex flex-1 flex-col gap-4 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Quản lý blog</h1>
-              <p className="text-muted-foreground">
-                Danh sách bài viết, lọc dữ liệu và quản lý nội dung blog
-              </p>
+              <h1 className="text-3xl font-bold tracking-tight">Blog Trash</h1>
+              <p className="text-muted-foreground">Danh sách bài viết đã xóa</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" asChild>
-                <Link href="/admin/blog/trash">
-                  <Trash2 className="mr-2 size-4" />
-                  Trash
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/admin/blog/new">
-                  <Plus className="mr-2 size-4" />
-                  Tạo bài viết
-                </Link>
-              </Button>
-            </div>
+            <Button variant="outline" asChild>
+              <Link href="/admin/blog">
+                <ArrowLeft className="mr-2 size-4" />
+                Quay lại
+              </Link>
+            </Button>
           </div>
 
-          <BlogsTable />
+          <BlogsTable deletedOnly />
         </div>
       </div>
     </SidebarInset>

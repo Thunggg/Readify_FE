@@ -75,6 +75,40 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
   const [isUploading, setIsUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const errorFieldOrder = ["title", "excerpt", "content", "categoryId", "tags", "featuredImage"] as const;
+
+  const scrollToFirstError = (errors: Record<string, string>) => {
+    const firstField = errorFieldOrder.find((field) => errors[field]);
+    if (!firstField) return;
+
+    const target =
+      document.getElementById(`field-${firstField}`) ??
+      document.getElementById(firstField);
+
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+      target.focus({ preventScroll: true });
+    }
+  };
+
+  const mapBackendFieldErrors = (source: any): Record<string, string> => {
+    const details = source?.data?.details ?? source?.details ?? source?.payload?.data?.details ?? source?.payload?.details;
+    if (!Array.isArray(details)) return {};
+
+    const mapped: Record<string, string> = {};
+    details.forEach((detail: any) => {
+      const field = typeof detail?.field === "string" ? detail.field.trim() : "";
+      const message = typeof detail?.message === "string" ? detail.message : "Dữ liệu không hợp lệ";
+      if (!field) return;
+      mapped[field] = message;
+    });
+
+    return mapped;
+  };
+
   const submitLabel = mode === "create" ? "Tạo bài viết" : "Lưu thay đổi";
 
   const tags = useMemo(
@@ -90,14 +124,17 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
     const errors: Record<string, string> = {};
 
     if (!title.trim()) errors.title = "Tiêu đề là bắt buộc";
-    if (title.trim().length > 0 && title.trim().length < 10) {
-      errors.title = "Tiêu đề cần ít nhất 10 ký tự";
+    if (title.trim().length > 0 && title.trim().length < 2) {
+      errors.title = "Tiêu đề cần ít nhất 2 ký tự";
     }
 
     if (!content.trim()) errors.content = "Nội dung là bắt buộc";
     if (!categoryId) errors.categoryId = "Vui lòng chọn danh mục";
 
     setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      scrollToFirstError(errors);
+    }
     return Object.keys(errors).length === 0;
   };
 
@@ -194,6 +231,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
   }, [debouncedBookSearch]);
 
   const handleSubmit = async () => {
+    setFieldErrors({});
     if (!validate()) return;
 
     const body: CreateBlogPostRequest = {
@@ -217,6 +255,11 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
         }
 
         if (!res.payload.success) {
+          const backendErrors = mapBackendFieldErrors(res.payload);
+          if (Object.keys(backendErrors).length > 0) {
+            setFieldErrors(backendErrors);
+            scrollToFirstError(backendErrors);
+          }
           handleErrorApi({ error: res.payload.message });
           return;
         }
@@ -234,6 +277,11 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
         }
 
         if (!res.payload.success) {
+          const backendErrors = mapBackendFieldErrors(res.payload);
+          if (Object.keys(backendErrors).length > 0) {
+            setFieldErrors(backendErrors);
+            scrollToFirstError(backendErrors);
+          }
           handleErrorApi({ error: res.payload.message });
           return;
         }
@@ -242,6 +290,11 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
       router.push("/admin/blog");
       router.refresh();
     } catch (error) {
+      const backendErrors = mapBackendFieldErrors(error);
+      if (Object.keys(backendErrors).length > 0) {
+        setFieldErrors(backendErrors);
+        scrollToFirstError(backendErrors);
+      }
       handleErrorApi({ error });
     } finally {
       setIsSubmitting(false);
@@ -270,7 +323,15 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.title) return prev;
+                  const next = { ...prev };
+                  delete next.title;
+                  return next;
+                });
+              }}
               placeholder="Nhập tiêu đề bài viết"
             />
             {fieldErrors.title && <p className="text-sm text-destructive">{fieldErrors.title}</p>}
@@ -282,7 +343,15 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
               id="excerpt"
               rows={3}
               value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
+              onChange={(e) => {
+                setExcerpt(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.excerpt) return prev;
+                  const next = { ...prev };
+                  delete next.excerpt;
+                  return next;
+                });
+              }}
               placeholder="Tóm tắt ngắn về nội dung bài viết"
             />
           </div>
@@ -293,7 +362,15 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
               id="content"
               rows={14}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.content) return prev;
+                  const next = { ...prev };
+                  delete next.content;
+                  return next;
+                });
+              }}
               placeholder="Nội dung bài viết (có thể dán HTML nếu cần)"
             />
             {fieldErrors.content && <p className="text-sm text-destructive">{fieldErrors.content}</p>}
@@ -309,8 +386,19 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Danh mục</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
+            <Select
+              value={categoryId}
+              onValueChange={(value) => {
+                setCategoryId(value);
+                setFieldErrors((prev) => {
+                  if (!prev.categoryId) return prev;
+                  const next = { ...prev };
+                  delete next.categoryId;
+                  return next;
+                });
+              }}
+            >
+              <SelectTrigger id="categoryId">
                 <SelectValue placeholder="Chọn danh mục" />
               </SelectTrigger>
               <SelectContent>
@@ -428,9 +516,18 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
             <Input
               id="tags"
               value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
+              onChange={(e) => {
+                setTagsInput(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.tags) return prev;
+                  const next = { ...prev };
+                  delete next.tags;
+                  return next;
+                });
+              }}
               placeholder="Ví dụ: review, ky nang, sach hay"
             />
+            {fieldErrors.tags && <p className="text-sm text-destructive">{fieldErrors.tags}</p>}
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {tags.map((tag) => (
@@ -449,7 +546,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
           <CardTitle>Ảnh bài viết</CardTitle>
           <CardDescription>Upload ảnh đại diện blog từ máy tính</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4" id="field-featuredImage">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -491,6 +588,9 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
               alt="Blog featured"
               className="h-52 w-full max-w-xl rounded-md border object-cover"
             />
+          )}
+          {fieldErrors.featuredImage && (
+            <p className="text-sm text-destructive">{fieldErrors.featuredImage}</p>
           )}
         </CardContent>
       </Card>

@@ -50,6 +50,7 @@ export type AdminBlogListParams = {
   tag?: string;
   author?: string;
   status?: BlogPostStatus;
+  isDeleted?: boolean;
   startDate?: string;
   endDate?: string;
   search?: string;
@@ -77,7 +78,7 @@ export type CreateBlogPostRequest = {
 
 export type UpdateBlogPostRequest = CreateBlogPostRequest;
 
-export type BlogCommentStatus = 'pending' | 'approved' | 'spam' | 'rejected';
+export type BlogCommentStatus = 'pending' | 'approved' | 'spam' | 'rejected' | 'deleted';
 
 export type BlogComment = {
   _id: string;
@@ -90,6 +91,7 @@ export type BlogComment = {
     _id: string;
     firstName?: string;
     lastName?: string;
+    email?: string;
     avatarUrl?: string;
   };
   authorName: string;
@@ -97,7 +99,10 @@ export type BlogComment = {
   content: string;
   status: BlogCommentStatus;
   parent?: string;
+  replies?: BlogComment[];
   createdAt: string;
+  updatedAt?: string;
+  deletedAt?: string | null;
 };
 
 export type AdminBlogCommentListParams = {

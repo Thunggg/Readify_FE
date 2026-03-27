@@ -19,6 +19,7 @@ import {
   BookOpen,
   Tag,
 } from 'lucide-react';
+import { BlogCommentsSection } from './blog-comments-section';
 
 interface BlogDetailContentProps {
   slug: string;
@@ -319,6 +320,10 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
         </div>
 
         <Separator className="mb-8" />
+
+        <div className="mb-8">
+          <BlogCommentsSection postId={post._id} />
+        </div>
       </article>
 
       {/* Related posts */}

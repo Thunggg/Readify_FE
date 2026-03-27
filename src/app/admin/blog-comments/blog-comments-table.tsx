@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import dayjs from "dayjs";
-import { Check, ChevronsUpDown, Loader2, MoreHorizontal, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, MessageSquareReply, MoreHorizontal, Search, Trash2, X } from "lucide-react";
 
 import { BlogApiRequest } from "@/api-request/blog";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn, handleErrorApi } from "@/lib/utils";
 import type { PaginationMeta } from "@/types/api";
@@ -103,6 +114,10 @@ export default function BlogCommentsTable() {
   const [blogOptions, setBlogOptions] = useState<AdminBlogPost[]>([]);
   const [selectedBlogTitle, setSelectedBlogTitle] = useState("");
   const [isLoadingBlogs, setIsLoadingBlogs] = useState(false);
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  const [replyTarget, setReplyTarget] = useState<BlogComment | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
   const [limit] = useState(10);
 
@@ -270,10 +285,6 @@ export default function BlogCommentsTable() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa bình luận này?")) {
-      return;
-    }
-
     try {
       const res = await BlogApiRequest.deleteComment(id);
       if (!res) {
@@ -286,9 +297,42 @@ export default function BlogCommentsTable() {
         return;
       }
 
+      setDeleteCommentId(null);
       setComments((prev) => prev.filter((comment) => comment._id !== id));
+      await fetchComments();
     } catch (error) {
       handleErrorApi({ error });
+    }
+  };
+
+  const handleReply = async () => {
+    if (!replyTarget?._id) return;
+    const content = replyContent.trim();
+    if (!content) {
+      handleErrorApi({ error: "Nội dung phản hồi không được để trống" });
+      return;
+    }
+
+    setReplySubmitting(true);
+    try {
+      const res = await BlogApiRequest.replyComment(replyTarget._id, content);
+      if (!res) {
+        handleErrorApi({ error: "Không thể phản hồi bình luận" });
+        return;
+      }
+
+      if (!res.payload.success) {
+        handleErrorApi({ error: res.payload.message });
+        return;
+      }
+
+      setReplyTarget(null);
+      setReplyContent("");
+      await fetchComments();
+    } catch (error) {
+      handleErrorApi({ error });
+    } finally {
+      setReplySubmitting(false);
     }
   };
 
@@ -488,10 +532,28 @@ export default function BlogCommentsTable() {
                         ))}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setReplyTarget(comment);
+                            setReplyContent("");
+                          }}
+                        >
+                          <MessageSquareReply className="mr-2 size-4" />
+                          Reply comment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            handleStatusUpdate(comment._id, "rejected");
+                          }}
+                        >
+                          Hide comment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           className="text-destructive"
                           onSelect={(e) => {
                             e.preventDefault();
-                            handleDelete(comment._id);
+                            setDeleteCommentId(comment._id);
                           }}
                         >
                           <Trash2 className="mr-2 size-4" />
@@ -522,6 +584,58 @@ export default function BlogCommentsTable() {
           />
         )}
       </div>
+
+      <AlertDialog open={!!deleteCommentId} onOpenChange={() => setDeleteCommentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bình luận</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bình luận và toàn bộ reply liên quan sẽ bị xóa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive"
+              onClick={() => {
+                if (deleteCommentId) {
+                  handleDelete(deleteCommentId);
+                }
+              }}
+            >
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!replyTarget} onOpenChange={() => setReplyTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reply comment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Phản hồi cho: {replyTarget?.authorName ?? "-"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Nhập nội dung phản hồi..."
+              rows={5}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReply}
+              disabled={replySubmitting}
+            >
+              {replySubmitting ? "Đang gửi..." : "Gửi phản hồi"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
