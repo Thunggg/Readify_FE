@@ -26,13 +26,10 @@ export const AccountApiRequest = {
   },
 
   getSessions: async () => {
-    const response = await http.get<ApiResponse<AccountSession[]>>(
-      "/accounts/sessions",
-      {
-        credentials: "include",
-        cache: "no-store",
-      },
-    );
+    const response = await http.get<AccountSession[]>("/accounts/sessions", {
+      credentials: "include",
+      cache: "no-store",
+    });
     return response;
   },
 

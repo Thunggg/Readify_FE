@@ -18,12 +18,6 @@ export interface RecentOrdersParams {
   limit?: number;
 }
 
-export interface ExportIncomeParams {
-  startDate?: string;
-  endDate?: string;
-  groupBy?: GroupBy;
-}
-
 // ===== RESPONSE DATA =====
 export interface OverviewStats {
   currentMonth: {
@@ -95,32 +89,4 @@ export interface RecentOrder {
 
 export interface RecentOrders {
   orders: RecentOrder[];
-}
-
-export interface ExportDataItem {
-  period: string;
-  revenue: number;
-  totalAmount: number;
-  discountAmount: number;
-  orders: number;
-  booksSold: number;
-}
-
-export interface ExportIncome {
-  data: ExportDataItem[];
-  totals: {
-    revenue: number;
-    totalAmount: number;
-    discountAmount: number;
-    orders: number;
-    booksSold: number;
-  };
-  exportInfo: {
-    dateRange: {
-      start: string;
-      end: string;
-    };
-    groupBy: GroupBy;
-    exportedAt: string;
-  };
 }

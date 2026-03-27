@@ -17,10 +17,12 @@ import {
   ChevronRight,
   Users,
   Book,
+  Library,
   UserCog,
   Bell,
   MessageSquare,
   FileText,
+  Sparkles,
   LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,12 @@ const sidebarGroups = [
         title: "Income Statistic",
         href: "/admin/income",
         icon: DollarSign,
+        badge: null,
+      },
+      {
+        title: "Recommendations",
+        href: "/admin/recommendations",
+        icon: Sparkles,
         badge: null,
       },
     ],
@@ -51,6 +59,12 @@ const sidebarGroups = [
         title: "Book Management",
         href: "/admin/books",
         icon: Book,
+        badge: null,
+      },
+      {
+        title: "Collection Management",
+        href: "/admin/collections",
+        icon: Library,
         badge: null,
       },
       {

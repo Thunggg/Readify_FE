@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-const NEXT_PUBLIC_AI_ENDPOINT = process.env.NEXT_PUBLIC_AI_ENDPOINT ?? "http://localhost:5000";
+const NEXT_PUBLIC_AI_ENDPOINT =
+  process.env.NEXT_PUBLIC_AI_ENDPOINT ?? "http://localhost:5000";
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
     if (!body.question || typeof body.question !== "string") {
       return NextResponse.json(
         { message: "question is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       const text = await res.text();
       return NextResponse.json(
         { message: `AI service error: ${res.status}`, detail: text },
-        { status: res.status }
+        { status: res.status },
       );
     }
 
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
     console.error("[/api/chat] Error:", error);
     return NextResponse.json(
       { message: "Failed to connect to AI service" },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

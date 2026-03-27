@@ -115,7 +115,7 @@ export function TicketListTable() {
           order?: "asc" | "desc";
           page?: number;
           limit?: number;
-        });
+        }); // satisfies để kiểm tra type của response
 
         if (cancelled) return;
 
@@ -143,6 +143,7 @@ export function TicketListTable() {
         if (!cancelled) setIsLoading(false);
       }
     };
+    
     fetchTickets();
 
     return () => {

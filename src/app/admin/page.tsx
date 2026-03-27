@@ -1,12 +1,19 @@
 "use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Package,
   DollarSign,
   Truck,
   ShoppingCart,
   TrendingUp,
+  Star,
+  Sparkles,
 } from "lucide-react";
+import { BookApiRequest } from "@/api-request/book";
+import type { AdminTrendingBook } from "@/types/book";
 
 const stats = [
   {
@@ -48,6 +55,39 @@ const stats = [
 ];
 
 export default function WarehouseDashboard() {
+  const [trendingBooks, setTrendingBooks] = useState<AdminTrendingBook[]>([]);
+  const [trendingLoading, setTrendingLoading] = useState(true);
+  const [trendingError, setTrendingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        setTrendingLoading(true);
+        const response = await BookApiRequest.getTrendingRecommendations({
+          limit: 8,
+          includeWebData: true,
+        });
+
+        if (!response) {
+          throw new Error("No response from recommendation service");
+        }
+
+        const payload = response.payload as any;
+        if (!payload?.success) {
+          throw new Error(payload?.message || "Failed to load recommendations");
+        }
+
+        setTrendingBooks(payload?.data?.items || []);
+      } catch (error: unknown) {
+        setTrendingError(error instanceof Error ? error.message : "Failed to load recommendations");
+      } finally {
+        setTrendingLoading(false);
+      }
+    };
+
+    fetchTrending();
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -173,6 +213,70 @@ export default function WarehouseDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <Sparkles className="h-5 w-5" />
+                Trending Book Recommendations
+              </CardTitle>
+              <p className="text-muted-foreground mt-1">
+                Powered by purchases, 5-star reviews, newly released books, and web signals.
+              </p>
+            </div>
+            <Badge variant="secondary">AI + Data</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {trendingLoading ? (
+            <p className="text-sm text-muted-foreground">Loading recommendations...</p>
+          ) : trendingError ? (
+            <p className="text-sm text-red-500">{trendingError}</p>
+          ) : trendingBooks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No recommendations available yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {trendingBooks.map((book, index) => (
+                <div
+                  key={book._id}
+                  className="rounded-lg border p-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">#{index + 1}</Badge>
+                      <Link
+                        href={`/admin/books/${book._id}`}
+                        className="font-semibold hover:underline"
+                      >
+                        {book.title}
+                      </Link>
+                    </div>
+                    <div className="text-xs text-muted-foreground flex flex-wrap gap-2">
+                      <span>Sold: {book.soldCount}</span>
+                      <span>Recent orders: {book.recentPurchasedQty}</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5" />
+                        5-star: {book.fiveStarCount}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {book.trendReasons?.slice(0, 2).join(" • ")}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold">Trend score: {book.score.toFixed(2)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Internal {book.internalScore.toFixed(2)} | Web {book.externalScore.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
