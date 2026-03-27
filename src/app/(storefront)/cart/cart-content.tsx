@@ -27,7 +27,6 @@ export function CartContent() {
   const [validation, setValidation] = useState<StockValidation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDiscountModal, setShowDiscountModal] = useState(false);
 
   // Track ongoing actions to prevent race conditions
   const actionInProgressRef = useRef<Set<string>>(new Set());
@@ -76,8 +75,8 @@ export function CartContent() {
           prev.map((item) =>
             item.bookId === bookId
               ? { ...item, isSelected: updatedItem.isSelected }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err: any) {
@@ -135,8 +134,8 @@ export function CartContent() {
           prev.map((item) =>
             item.bookId === bookId
               ? { ...item, quantity: updatedItem.quantity }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (err: any) {
@@ -193,7 +192,7 @@ export function CartContent() {
 
   const subtotal = selectedItems.reduce(
     (sum, item) => sum + getEffectivePrice(item) * item.quantity,
-    0
+    0,
   );
   const shipping = subtotal > 200000 ? 0 : subtotal > 0 ? 30000 : 0;
   const discount = 0;
@@ -270,8 +269,8 @@ export function CartContent() {
         </Button>
         <h1 className="text-3xl font-bold">Shopping Cart</h1>
         <p className="text-muted-foreground mt-2">
-          You have {cartItems.length} items in your cart (
-          {selectedItems.length} selected)
+          You have {cartItems.length} items in your cart ({selectedItems.length}{" "}
+          selected)
         </p>
 
         {/* Show validation warnings */}
@@ -367,11 +366,13 @@ export function CartContent() {
                         </h3>
                         <p className="text-sm text-muted-foreground">
                           {(item.book?.authors || item.book?.author)?.join(
-                            ", "
+                            ", ",
                           ) || "Unknown Author"}
                         </p>
                         {item.stock?.quantity === 0 ? (
-                          <p className="text-xs text-red-500 mt-1">Out of Stock</p>
+                          <p className="text-xs text-red-500 mt-1">
+                            Out of Stock
+                          </p>
                         ) : item.stock &&
                           item.stock.quantity < item.quantity ? (
                           <p className="text-xs text-orange-500 mt-1">
@@ -510,18 +511,6 @@ export function CartContent() {
                 </p>
               )}
 
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 bg-transparent"
-                  onClick={() => setShowDiscountModal(true)}
-                  disabled={selectedItems.length === 0}
-                >
-                  <Ticket className="h-4 w-4" />
-                  <span>Apply Discount Code</span>
-                </Button>
-              </div>
-
               <Button
                 className="w-full"
                 size="lg"
@@ -540,12 +529,6 @@ export function CartContent() {
           </Card>
         </div>
       </div>
-
-      <DiscountModal
-        open={showDiscountModal}
-        onOpenChange={setShowDiscountModal}
-        subtotal={subtotal}
-      />
     </div>
   );
 }
