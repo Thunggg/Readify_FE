@@ -52,9 +52,10 @@ export class EntityError extends HttpError {
   }
 }
 let clientLogoutRequest: Promise<any> | null = null;
-let clientRefreshRequest:
-  | Promise<{ ok: boolean; accessToken?: string }>
-  | null = null;
+let clientRefreshRequest: Promise<{
+  ok: boolean;
+  accessToken?: string;
+}> | null = null;
 
 const request = async <Response>(
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
@@ -137,7 +138,8 @@ const request = async <Response>(
     } else if (response.status === 401) {
       // Avoid infinite loop: don't attempt refresh on refresh endpoint itself
       const isRefreshCall =
-        url === "/api/auth/refresh-token" || url.endsWith("/auth/refresh-token");
+        url === "/api/auth/refresh-token" ||
+        url.endsWith("/auth/refresh-token");
 
       // CLIENT: try refresh-token once, then retry original request
       if (isBrowser && !isRefreshCall) {
@@ -180,7 +182,10 @@ const request = async <Response>(
 
           if (refreshed.ok) {
             const retry = await doFetch();
-            const retryData = { status: retry.response.status, payload: retry.payload };
+            const retryData = {
+              status: retry.response.status,
+              payload: retry.payload,
+            };
             if (!retry.response.ok) {
               // still unauthorized (or other error) after refresh
               throw new HttpError(
