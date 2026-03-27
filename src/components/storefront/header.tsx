@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WishlistIcon } from "@/components/shared/wishlist-icon";
+import { NotificationDropdown } from "@/components/shared/notification-dropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -181,6 +182,9 @@ export function Header() {
 
           {/* Wishlist */}
           <WishlistIcon />
+
+          {/* Notifications */}
+          <NotificationDropdown />
 
           {/* Cart */}
           <Button variant="ghost" size="icon" className="relative" asChild>

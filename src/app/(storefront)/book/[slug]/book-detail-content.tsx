@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,30 @@ import {
 import { BookApiRequest } from "@/api-request/book";
 import { CartApiRequest } from "@/api-request/cart";
 import { WishlistApiRequest } from "@/api-request/wishlist";
+import { ReviewApiRequest } from "@/api-request/review";
+import { BookReviews } from "./book-reviews";
 import { PublicBook, PublicBookDetail } from "@/types/book";
+import type { BookRatingSummary } from "@/types/review";
 interface BookDetailContentProps {
   bookSlug: string;
+}
+
+const DEFAULT_COVER = "/book-default-cover.jpg";
+
+/** Return the URL only when it looks valid; otherwise fall back to the default cover. */
+function safeImageUrl(url?: string | null): string {
+  if (!url || typeof url !== "string" || !url.trim()) return DEFAULT_COVER;
+  // Accept absolute http(s) URLs and local paths starting with "/"
+  if (url.startsWith("/") || url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  // Try constructing a URL to validate it
+  try {
+    new URL(url);
+    return url;
+  } catch {
+    return DEFAULT_COVER;
+  }
 }
 
 export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
@@ -33,6 +54,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
   const [book, setBook] = useState<PublicBookDetail | null>(null);
+  const [ratingSummary, setRatingSummary] = useState<BookRatingSummary | null>(null);
   const [relatedBooks, setRelatedBooks] = useState<PublicBook[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingCart, setLoadingCart] = useState(false);
@@ -54,11 +76,27 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
         if (!mounted) return;
 
-        // book detail
+        // book detail + review summary (same source as Reviews tab)
         if (bookRes && bookRes.status >= 200 && bookRes.status < 300) {
-          setBook(bookRes.payload.data as PublicBookDetail);
+          const bookData = bookRes.payload.data as PublicBookDetail;
+          setBook(bookData);
+          setRatingSummary(null);
+          if (bookData._id) {
+            try {
+              const summaryRes = await ReviewApiRequest.getBookRatingSummary(bookData._id);
+              if (mounted && summaryRes?.payload?.success && summaryRes.payload.data) {
+                setRatingSummary(summaryRes.payload.data);
+              }
+            } catch (summaryErr) {
+              if (mounted) {
+                console.error("Fetch book rating summary failed", summaryErr);
+                setRatingSummary(null);
+              }
+            }
+          }
         } else {
           setBook(null);
+          setRatingSummary(null);
         }
 
         // related books
@@ -83,6 +121,18 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
       mounted = false;
     };
   }, [bookSlug]);
+
+  const refreshRatingSummary = useCallback(async () => {
+    if (!book?._id) return;
+    try {
+      const res = await ReviewApiRequest.getBookRatingSummary(book._id);
+      if (res?.payload?.success && res.payload.data) {
+        setRatingSummary(res.payload.data);
+      }
+    } catch (err) {
+      console.error("Refresh rating summary failed", err);
+    }
+  }, [book?._id]);
 
   // Check if book is in wishlist when book loads
   useEffect(() => {
@@ -228,11 +278,10 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
               <CardContent className="p-0">
                 <div className="relative aspect-[3/4] bg-muted">
                   <Image
-                    src={
+                    src={safeImageUrl(
                       book.images?.[selectedImage]?.url ||
-                      book.thumbnailUrl ||
-                      "/book-default-cover.jpg"
-                    }
+                      book.thumbnailUrl
+                    )}
                     alt={book.title}
                     fill
                     className="object-cover"
@@ -255,7 +304,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                     }`}
                   >
                     <Image
-                      src={image.url || "/book-default-cover.jpg"}
+                      src={safeImageUrl(image.url)}
                       alt={`${book.title} image ${index + 1}`}
                       fill
                       className="object-cover"
@@ -295,7 +344,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
             )}
           </div>
 
-          {/* Rating */}
+          {/* Rating — aligned with GET /reviews/book/:id/summary (approved reviews) */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -303,7 +352,10 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                   <Star
                     key={i}
                     className={`h-5 w-5 ${
-                      i < Math.floor(book.averageRating || 0)
+                      i <
+                      Math.floor(
+                        ratingSummary?.ratingAvg ?? book.averageRating ?? 0,
+                      )
                         ? "fill-yellow-400 text-yellow-400"
                         : "text-muted"
                     }`}
@@ -311,12 +363,13 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                 ))}
               </div>
               <span className="text-lg font-semibold">
-                {book.averageRating?.toFixed(1) || "0.0"}
+                {(ratingSummary?.ratingAvg ?? book.averageRating ?? 0).toFixed(1)}
               </span>
             </div>
             <Separator orientation="vertical" className="h-6" />
             <span className="text-sm text-muted-foreground">
-              {(book.totalReviews || 0).toLocaleString()} reviews
+              {(ratingSummary?.ratingCount ?? book.totalReviews ?? 0).toLocaleString()}{" "}
+              reviews
             </span>
             {book.soldCount !== undefined && (
               <>
@@ -454,16 +507,21 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
         </div>
       </div>
 
-      {/* Product Details Tabs */}
-      <Card className="mb-12">
-        <CardContent className="p-6">
-          <Tabs defaultValue="description">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="description">Product description</TabsTrigger>
-              <TabsTrigger value="specs">Specifications</TabsTrigger>
+      <Card className="mb-12 shadow-sm rounded-xl overflow-hidden border-none bg-card/60 backdrop-blur-sm">
+        <CardContent className="p-8">
+          <Tabs defaultValue="description" className="w-full">
+            <TabsList className="mb-8 p-1 bg-muted/30 rounded-xl grid w-full max-w-lg grid-cols-3">
+              <TabsTrigger value="description" className="rounded-lg py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">Book description</TabsTrigger>
+              <TabsTrigger value="specs" className="rounded-lg py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm">Specifications</TabsTrigger>
+              <TabsTrigger value="reviews" className="rounded-lg py-3 data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-2">
+                Reviews
+                <Badge variant="outline" className="h-5 px-1.5 py-0 min-w-[1.25rem] flex items-center justify-center bg-primary/10 border-primary/20 text-primary text-[10px]">
+                  {book.totalReviews || 0}
+                </Badge>
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="description" className="mt-6 space-y-4">
+            <TabsContent value="description" className="mt-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
               {book.description && (
                 <div>
                   <h3 className="mb-3 text-xl font-semibold">Book overview</h3>
@@ -532,6 +590,14 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                   </div>
                 )}
               </div>
+            </TabsContent>
+            <TabsContent value="reviews" className="mt-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              {book?._id && (
+                <BookReviews
+                  bookId={book._id}
+                  onRatingSummaryUpdated={refreshRatingSummary}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

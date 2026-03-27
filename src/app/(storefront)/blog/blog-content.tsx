@@ -28,7 +28,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Search, Eye, MessageCircle, Calendar } from 'lucide-react';
+import { Search, Eye, MessageCircle, Calendar, Share2 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -116,6 +116,18 @@ export function BlogContent() {
   }, [currentSearch]);
 
   // Handlers
+  const handleSharePost = async (post: BlogPost) => {
+    const url = `${window.location.origin}/blog/${post.slug}`;
+
+    if (navigator.share) {
+      navigator.share({ title: post.title, url });
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+    alert('Đã sao chép liên kết!');
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     updateParams({ search: searchInput || undefined, page: '1' });
@@ -377,6 +389,20 @@ export function BlogContent() {
                         {post.commentCount}
                       </span>
                     )}
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 ml-auto"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void handleSharePost(post);
+                      }}
+                      aria-label="Share post"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   {/* Author */}

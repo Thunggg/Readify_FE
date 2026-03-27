@@ -309,20 +309,33 @@ export default function ReviewsTable() {
                   <TableCell>{statusLabel(review.status)}</TableCell>
                   <TableCell>
                     {review.adminReply ? (
-                      <Badge
-                        variant="outline"
-                        className="text-green-600 border-green-600"
-                      >
-                        <MessageSquareIcon className="size-3 mr-1" />
-                        Replied
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge
+                          variant="outline"
+                          className="w-fit text-green-600 border-green-600/30 bg-green-50/50"
+                        >
+                          <MessageSquareIcon className="size-3 mr-1" />
+                          Replied
+                        </Badge>
+                        <Button 
+                          variant="link" 
+                          size="sm" 
+                          className="h-auto p-0 text-xs text-muted-foreground hover:text-primary justify-start"
+                          onClick={() => handleReply(review)}
+                        >
+                          Edit response
+                        </Button>
+                      </div>
                     ) : (
-                      <Badge
+                      <Button
                         variant="outline"
-                        className="text-muted-foreground"
+                        size="sm"
+                        className="h-8 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
+                        onClick={() => handleReply(review)}
                       >
-                        No reply
-                      </Badge>
+                        <MessageSquareIcon className="size-3 mr-2" />
+                        Reply now
+                      </Button>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">

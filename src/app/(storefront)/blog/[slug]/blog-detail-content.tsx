@@ -18,7 +18,21 @@ import {
   Share2,
   BookOpen,
   Tag,
+  Heart,
+  Loader2,
 } from 'lucide-react';
+import { useCurrentUser } from '@/contexts/user-context';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface BlogDetailContentProps {
   slug: string;
@@ -28,6 +42,14 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
   const [post, setPost] = useState<BlogPostDetail | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { currentUser } = useCurrentUser();
+  const currentUserId = currentUser?._id ?? currentUser?.id;
+
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [confirmUnlikeOpen, setConfirmUnlikeOpen] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -74,6 +96,90 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
       mounted = false;
     };
   }, [slug]);
+
+  // Like status (only meaningful for logged-in users)
+  useEffect(() => {
+    if (!post?._id) return;
+
+    if (!currentUserId) {
+      setLiked(false);
+      setLikesCount(0);
+      return;
+    }
+
+    let mounted = true;
+    const fetchLikeStatus = async () => {
+      try {
+        const res = await BlogApiRequest.getPostLikeStatus(post._id);
+        if (!mounted) return;
+
+        if (res?.payload?.success) {
+          setLiked(res.payload.data.liked);
+          setLikesCount(res.payload.data.likesCount);
+        }
+      } catch {
+        if (!mounted) return;
+        setLiked(false);
+        setLikesCount(0);
+      }
+    };
+
+    fetchLikeStatus();
+    return () => {
+      mounted = false;
+    };
+  }, [post?._id, currentUserId]);
+
+  const handleLike = async () => {
+    if (!post?._id) return;
+    if (!currentUserId) {
+      toast.warning('Vui lòng đăng nhập để thích bài viết');
+      return;
+    }
+
+    setLikeLoading(true);
+    try {
+      const res = await BlogApiRequest.likePost(post._id);
+      if (res?.payload?.success) {
+        setLiked(res.payload.data.liked);
+        setLikesCount(res.payload.data.likesCount);
+      }
+    } catch {
+      toast.error('Không thể thực hiện thao tác like');
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  const handleUnlike = async () => {
+    if (!post?._id) return;
+    if (!currentUserId) return;
+
+    setLikeLoading(true);
+    try {
+      const res = await BlogApiRequest.unlikePost(post._id);
+      if (res?.payload?.success) {
+        setLiked(res.payload.data.liked);
+        setLikesCount(res.payload.data.likesCount);
+      }
+    } catch {
+      toast.error('Không thể bỏ thích bài viết');
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  const handleToggleLike = () => {
+    if (likeLoading) return;
+
+    if (liked) {
+      // "Unlike" is effectively a delete operation => show confirmation dialog.
+      setConfirmUnlikeOpen(true);
+      return;
+    }
+
+    void handleLike();
+  };
 
   // Format date
   const formatDate = (dateStr?: string) => {
@@ -302,21 +408,64 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
               Quay lại Blog
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({ title: post.title, url: window.location.href });
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert('Đã sao chép liên kết!');
-              }
-            }}
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                disabled={likeLoading}
+                onClick={handleToggleLike}
+                aria-label={liked ? 'Bỏ thích bài viết' : 'Thích bài viết'}
+              >
+                {likeLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Heart
+                    className={`h-4 w-4 ${liked ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`}
+                  />
+                )}
+              </Button>
+              <span className="text-xs text-muted-foreground font-medium">{likesCount}</span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({ title: post.title, url: window.location.href });
+                } else {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Đã sao chép liên kết!');
+                }
+              }}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        <AlertDialog open={confirmUnlikeOpen} onOpenChange={setConfirmUnlikeOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xác nhận bỏ thích</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn bỏ thích bài viết này? Hệ thống sẽ xóa lượt like của bạn.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={likeLoading}>Hủy</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await handleUnlike();
+                  setConfirmUnlikeOpen(false);
+                }}
+              >
+                Bỏ thích
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Separator className="mb-8" />
       </article>

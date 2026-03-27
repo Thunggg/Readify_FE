@@ -31,6 +31,11 @@ export type BlogCategory = {
   postCount: number;
 };
 
+export type BlogPostLikeStatus = {
+  liked: boolean;
+  likesCount: number;
+};
+
 // ─── Search Params ───────────────────────────────────
 export type SearchBlogParams = {
   page?: number;

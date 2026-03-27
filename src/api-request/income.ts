@@ -75,4 +75,17 @@ export const IncomeApiRequest = {
     );
     return response;
   },
+
+  // Get AI Insight Summary
+  getAiSummary: async (params?: IncomeStatisticsParams) => {
+    const response = await http.get<ApiResponse<any>>(
+      "/income/ai-summary",
+      {
+        params,
+        credentials: "include",
+        cache: "no-store",
+      }
+    );
+    return response;
+  },
 };

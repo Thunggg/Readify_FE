@@ -47,6 +47,26 @@ export interface AdminReplyRequest {
   adminReply: string;
 }
 
+export interface CreateReviewRequest {
+  bookId: string;
+  orderId?: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface UpdateReviewRequest {
+  rating?: number;
+  comment?: string;
+}
+
+/** Public rating aggregate for a book (matches GET /reviews/book/:bookId/summary) */
+export interface BookRatingSummary {
+  bookId: string;
+  ratingAvg: number;
+  ratingCount: number;
+  ratingDistribution: Record<number, number>;
+}
+
 export interface UpdateReviewStatusRequest {
   status: ReviewStatus;
 }

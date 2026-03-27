@@ -67,6 +67,11 @@ const LoginForm = () => {
       }
 
       const accessToken = response?.payload?.data?.accessToken;
+      
+      // Save for WebSockets since main cookie is httpOnly
+      if (typeof window !== "undefined") {
+        localStorage.setItem("accessToken", accessToken);
+      }
 
       // set access token vào cookie của next server
        await fetch("/api/auth", {

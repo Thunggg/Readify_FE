@@ -17,12 +17,14 @@ import {
   ChevronRight,
   Users,
   Book,
+  BookOpen,
   Library,
   UserCog,
   Bell,
   MessageSquare,
   Sparkles,
   LifeBuoy,
+  Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -41,6 +43,12 @@ const sidebarGroups = [
         title: "Recommendations",
         href: "/admin/recommendations",
         icon: Sparkles,
+        badge: null,
+      },
+      {
+        title: "Payment Log",
+        href: "/admin/payment-logs",
+        icon: Hash,
         badge: null,
       },
     ],
@@ -95,6 +103,12 @@ const sidebarGroups = [
         href: "/admin/promotion",
         icon: Tag,
         badge: "New",
+      },
+      {
+        title: "Blog Category",
+        href: "/admin/blog-category",
+        icon: BookOpen,
+        badge: null,
       },
       {
         title: "Review Management",

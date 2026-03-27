@@ -33,6 +33,14 @@ export const AccountApiRequest = {
     return response;
   },
 
+  getAccountById: async (id: string) => {
+    const response = await http.get<ApiResponse<AdminAccount>>(`/accounts/${id}`, {
+      credentials: "include",
+      cache: "no-store",
+    });
+    return response;
+  },
+
   getAccountsList: async (params?: {
     page?: number;
     limit?: number;

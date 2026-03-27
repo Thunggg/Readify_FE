@@ -1,4 +1,5 @@
 "use client";
+import ReactMarkdown from "react-markdown";
 import { useState, useEffect, useCallback } from "react";
 import {
   Card,
@@ -45,6 +46,7 @@ import {
   Package,
   CalendarIcon,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
@@ -67,6 +69,8 @@ export default function IncomeDashboard() {
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [topBooks, setTopBooks] = useState<TopSellingBook[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   // Filter states
   const [groupBy, setGroupBy] = useState<GroupBy>("month");
@@ -111,10 +115,10 @@ export default function IncomeDashboard() {
           IncomeApiRequest.getOverview(),
           IncomeApiRequest.getStatistics(params),
           IncomeApiRequest.getCategoryStatistics(params),
-          IncomeApiRequest.getTopSellingBooks({ 
+          IncomeApiRequest.getTopSellingBooks({
             startDate: params.startDate,
             endDate: params.endDate,
-            limit: 10 
+            limit: 10
           }),
           IncomeApiRequest.getRecentOrders({ limit: 5 }),
         ]);
@@ -172,7 +176,7 @@ export default function IncomeDashboard() {
 
       const errorMessage = error?.payload?.message || error?.message || "Không thể tải dữ liệu thống kê";
       toast.error(errorMessage);
-      
+
       // Log thêm thông tin chi tiết
       if (error?.status === 401) {
         toast.error("Vui lòng đăng nhập lại");
@@ -183,6 +187,24 @@ export default function IncomeDashboard() {
       setIsLoading(false);
     }
   }, [startDate, endDate, groupBy]);
+
+  const fetchAiSummary = async () => {
+    setIsAiLoading(true);
+    try {
+      const params = {
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      };
+      const res = await IncomeApiRequest.getAiSummary(params);
+      if (res?.payload?.success) {
+        setAiSummary(res.payload.data.summary);
+      }
+    } catch (error: any) {
+      toast.error("Không thể lấy phân tích AI");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -281,7 +303,6 @@ export default function IncomeDashboard() {
               <SelectItem value="year">Theo năm</SelectItem>
             </SelectContent>
           </Select>
-
           <Button
             variant="outline"
             size="icon"
@@ -291,8 +312,73 @@ export default function IncomeDashboard() {
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
 
+          <Button
+            variant="default"
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 font-semibold"
+            onClick={fetchAiSummary}
+            disabled={isAiLoading || isLoading}
+          >
+            <Sparkles className={cn("mr-2 h-4 w-4", isAiLoading && "animate-pulse")} />
+            Phân tích AI
+          </Button>
         </div>
       </div>
+
+      {/* AI Summary Section */}
+      {aiSummary && (
+        <Card className="border-purple-200 dark:border-purple-800/50 bg-purple-50/50 dark:bg-purple-900/10 overflow-hidden relative shadow-sm">
+          <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10 pointer-events-none">
+            <Sparkles className="h-28 w-28 text-purple-600 dark:text-purple-400" />
+          </div>
+          <CardHeader className="pb-3 border-b border-purple-100 dark:border-purple-800/30">
+            <CardTitle className="text-purple-800 dark:text-purple-300 flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              Thông tin chi tiết từ AI
+            </CardTitle>
+            <CardDescription className="text-purple-600/80 dark:text-purple-400/80">
+              Dựa trên dữ liệu doanh thu và xu hướng bán hàng của bạn
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="prose max-w-none text-foreground text-sm leading-relaxed space-y-4">
+              <ReactMarkdown
+                components={{
+                  h1: ({ node, ...props }) => <h1 className="text-xl md:text-2xl font-bold mt-6 mb-4 text-purple-900 dark:text-purple-200" {...props} />,
+                  h2: ({ node, ...props }) => <h2 className="text-lg md:text-xl font-bold mt-5 mb-3 text-purple-800 dark:text-purple-300 border-b border-purple-100 dark:border-purple-800/30 pb-2" {...props} />,
+                  h3: ({ node, ...props }) => <h3 className="text-base md:text-lg font-semibold mt-4 mb-2 text-purple-700 dark:text-purple-400" {...props} />,
+                  h4: ({ node, ...props }) => <h4 className="text-sm md:text-base font-medium mt-4 mb-2 text-foreground" {...props} />,
+                  p: ({ node, ...props }) => <p className="mb-4 text-muted-foreground leading-relaxed" {...props} />,
+                  ul: ({ node, ...props }) => <ul className="list-disc list-outside pl-5 mb-4 space-y-2 text-muted-foreground marker:text-purple-500" {...props} />,
+                  ol: ({ node, ...props }) => <ol className="list-decimal list-outside pl-5 mb-4 space-y-2 text-muted-foreground marker:text-purple-500" {...props} />,
+                  li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                  strong: ({ node, ...props }) => <strong className="font-semibold text-foreground dark:text-purple-100" {...props} />,
+                  code: (props: any) => {
+                    const { node, inline, ...rest } = props;
+                    return inline ? (
+                      <code className="bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300 px-1.5 py-0.5 rounded-md text-xs font-mono" {...rest} />
+                    ) : (
+                      <pre className="bg-purple-50 dark:bg-purple-900/20 text-foreground p-4 rounded-lg overflow-x-auto text-sm my-4 border border-purple-100 dark:border-purple-800/30"><code {...rest} /></pre>
+                    );
+                  },
+                  blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-purple-400 dark:border-purple-600 pl-4 py-2 my-4 italic text-muted-foreground bg-purple-50/50 dark:bg-purple-900/10 rounded-r-lg" {...props} />
+                }}
+              >
+                {aiSummary}
+              </ReactMarkdown>
+            </div>
+            <div className="mt-8 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-purple-200 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                onClick={() => setAiSummary(null)}
+              >
+                Đóng phân tích
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
