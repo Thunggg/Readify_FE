@@ -16,7 +16,6 @@ import {
   Share2,
   Truck,
   ShieldCheck,
-  RotateCcw,
   Minus,
   Plus,
 } from "lucide-react";
@@ -179,7 +178,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
   function formatPrice(value?: number | string | null) {
     if (value === null || value === undefined) return "0 ₫";
 
-    // nếu là string, cố parse thành số
+    // Parse string input to number when needed.
     const num =
       typeof value === "number"
         ? value
@@ -187,7 +186,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
 
     if (!Number.isFinite(num)) return "0 ₫";
 
-    return num.toLocaleString("vi-VN") + " ₫";
+    return num.toLocaleString("en-US") + " ₫";
   }
 
   return (
@@ -509,7 +508,7 @@ export function BookDetailContent({ bookSlug }: BookDetailContentProps) {
                       Publication Date
                     </span>
                     <span className="font-medium">
-                      {new Date(book.publishDate).toLocaleDateString("vi-VN")}
+                      {new Date(book.publishDate).toLocaleDateString("en-US")}
                     </span>
                   </div>
                 )}

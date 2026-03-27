@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useState } from "react";
@@ -218,7 +218,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
     try {
       const res = await BlogApiRequest.deleteBlogPost(slug);
       if (!res) {
-        handleErrorApi({ error: "Không thể xóa bài viết" });
+        handleErrorApi({ error: "Unable to delete post" });
         return;
       }
 
@@ -237,7 +237,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
     try {
       const res = await BlogApiRequest.restoreBlogPost(slug);
       if (!res) {
-        handleErrorApi({ error: "Không thể khôi phục bài viết" });
+        handleErrorApi({ error: "Unable to restore post" });
         return;
       }
 
@@ -278,7 +278,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
           <div className="relative w-full lg:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm theo tiêu đề, nội dung..."
+              placeholder="Search by title, content..."
               className="pl-8"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -294,10 +294,10 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
               disabled={deletedOnly}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 {STATUS_OPTIONS.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
@@ -313,10 +313,10 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
               }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Danh mục" />
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả danh mục</SelectItem>
+                <SelectItem value="all">All categories</SelectItem>
                 {categories.map((item) => (
                   <SelectItem key={item._id} value={item.slug}>
                     {item.name}
@@ -332,7 +332,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
               }}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Sắp xếp" />
+                <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
                 {SORT_OPTIONS.map((item) => (
@@ -350,15 +350,15 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[90px]">Ảnh</TableHead>
-              <TableHead>Tiêu đề</TableHead>
-              <TableHead>Danh mục</TableHead>
-              <TableHead>Tác giả</TableHead>
+              <TableHead className="w-[90px]">Image</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Author</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-center">Views</TableHead>
               <TableHead className="text-center">Comments</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
+              <TableHead>Created at</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -371,7 +371,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
             ) : blogs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                  Không có bài viết phù hợp
+                  No matching posts
                 </TableCell>
               </TableRow>
             ) : (
@@ -418,13 +418,13 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {!deletedOnly ? (
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/blog/${blog._id}`}>
                               <Eye className="mr-2 size-4" />
-                              Xem chi tiết
+                              View details
                             </Link>
                           </DropdownMenuItem>
                         ) : null}
@@ -432,7 +432,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/blog/${blog._id}/edit`}>
                               <Pencil className="mr-2 size-4" />
-                              Chỉnh sửa
+                              Edit
                             </Link>
                           </DropdownMenuItem>
                         ) : null}
@@ -446,7 +446,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
                             }}
                           >
                             <Trash2 className="mr-2 size-4" />
-                            Xóa
+                            Delete
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
@@ -456,7 +456,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
                             }}
                           >
                             <RotateCcw className="mr-2 size-4" />
-                            Khôi phục
+                            Restore
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
@@ -472,7 +472,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {meta
-            ? `Hiển thị ${(meta.page - 1) * meta.limit + 1} - ${Math.min(meta.page * meta.limit, meta.total)} trên ${meta.total} bài viết`
+            ? `Showing ${(meta.page - 1) * meta.limit + 1} - ${Math.min(meta.page * meta.limit, meta.total)} of ${meta.total} posts`
             : ""}
         </p>
         {totalPages > 1 && (
@@ -487,13 +487,13 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
       <AlertDialog open={!!deleteSlug} onOpenChange={() => setDeleteSlug(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
+            <AlertDialogTitle>Confirm post deletion</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa bài viết này?
+              Are you sure you want to delete this post?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive"
               onClick={() => {
@@ -502,7 +502,7 @@ export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: bool
                 }
               }}
             >
-              Xóa
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

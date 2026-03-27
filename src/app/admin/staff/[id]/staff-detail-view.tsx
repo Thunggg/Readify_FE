@@ -131,7 +131,7 @@ export function StaffDetailView({ id }: { id: string }) {
   }
 
   if (!account) {
-    return <div className="text-sm text-destructive">Không tìm thấy staff account.</div>;
+    return <div className="text-sm text-destructive">Staff account not found.</div>;
   }
 
   return (
@@ -164,7 +164,7 @@ export function StaffDetailView({ id }: { id: string }) {
 
       <Card className="md:col-span-2">
         <CardHeader>
-          <CardTitle>Thông tin chi tiết</CardTitle>
+          <CardTitle>Detail information</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <div>

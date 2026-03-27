@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -44,12 +44,13 @@ import type { AdminBook, SearchAdminBooksParams } from "@/types/book"
 import type { PaginationMeta } from "@/types/api"
 import { useDebounce } from "@/hooks/use-debounce"
 import { handleErrorApi } from "@/lib/utils"
+import { toast } from "sonner"
 
 const BookStatusMap: Record<number, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  0: { label: "Ngừng bán", variant: "destructive" },
-  1: { label: "Đang bán", variant: "default" },
-  3: { label: "Bản nháp", variant: "secondary" },
-  4: { label: "Hết hàng", variant: "destructive" },
+  0: { label: "Discontinued", variant: "destructive" },
+  1: { label: "On sale", variant: "default" },
+  3: { label: "Draft", variant: "secondary" },
+  4: { label: "Out of stock", variant: "destructive" },
 }
 
 type SortField = "title" | "basePrice" | "soldCount" | "createdAt"
@@ -144,9 +145,14 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
   const handleDelete = async (id: string) => {
     setActionLoading(true)
     try {
-      await BookApiRequest.adminDelete("", id)
+      const res = await BookApiRequest.adminDelete("", id)
+      if (!res?.payload?.success) {
+        handleErrorApi({ error: res?.payload?.message || "Cannot delete book" })
+        return
+      }
       setDeleteBookId(null)
-      fetchBooks()
+      toast.success("Book deleted successfully")
+      await fetchBooks()
     } catch (error) {
       handleErrorApi({ error })
     } finally {
@@ -186,7 +192,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
           <div className="relative flex-1 md:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm theo tên sách, ISBN..."
+              placeholder="Search by book title, ISBN..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
@@ -195,21 +201,21 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
           <div className="flex gap-2">
             <Select value={statusFilter} onValueChange={setStatusFilter} disabled={deletedOnly}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="1">Đang bán</SelectItem>
-                <SelectItem value="3">Bản nháp</SelectItem>
-                <SelectItem value="0">Ngừng bán</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="1">On sale</SelectItem>
+                <SelectItem value="3">Draft</SelectItem>
+                <SelectItem value="0">Discontinued</SelectItem>
               </SelectContent>
             </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Danh mục" />
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả danh mục</SelectItem>
+                <SelectItem value="all">All categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat._id} value={cat._id}>
                     {cat.name}
@@ -225,28 +231,28 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Ảnh</TableHead>
+              <TableHead className="w-[80px]">Image</TableHead>
               <TableHead>
                 <Button variant="ghost" onClick={() => handleSort("title")} className="h-8 px-2">
-                  Tên sách
+                  Title
                   <SortIcon field="title" />
                 </Button>
               </TableHead>
-              <TableHead>Danh mục</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead className="text-right">
                 <Button variant="ghost" onClick={() => handleSort("basePrice")} className="h-8 px-2">
-                  Giá
+                  Price
                   <SortIcon field="basePrice" />
                 </Button>
               </TableHead>
               <TableHead className="text-center">
                 <Button variant="ghost" onClick={() => handleSort("soldCount")} className="h-8 px-2">
-                  Đã bán
+                  Sold
                   <SortIcon field="soldCount" />
                 </Button>
               </TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -259,7 +265,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
             ) : books.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  Không tìm thấy sách nào
+                  No books found
                 </TableCell>
               </TableRow>
             ) : (
@@ -306,7 +312,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
                   </TableCell>
                   <TableCell>
                     {book.isDeleted ? (
-                      <Badge variant="destructive">Đã xóa</Badge>
+                      <Badge variant="destructive">Deleted</Badge>
                     ) : (
                       <Badge variant={BookStatusMap[book.status ?? 1]?.variant ?? "secondary"}>
                         {BookStatusMap[book.status ?? 1]?.label ?? "N/A"}
@@ -322,19 +328,19 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link href={`/admin/books/${book._id}`}>
                             <Eye className="mr-2 size-4" />
-                            Xem chi tiết
+                            View details
                           </Link>
                         </DropdownMenuItem>
                         {!book.isDeleted && !deletedOnly && (
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/books/${book._id}/edit`}>
                               <Pencil className="mr-2 size-4" />
-                              Chỉnh sửa
+                              Edit
                             </Link>
                           </DropdownMenuItem>
                         )}
@@ -347,7 +353,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
                             }}
                           >
                             <RotateCcw className="mr-2 size-4" />
-                            Khôi phục
+                            Restore
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem
@@ -358,7 +364,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
                             }}
                           >
                             <Trash2 className="mr-2 size-4" />
-                            Xóa
+                            Delete
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
@@ -374,7 +380,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {meta
-            ? `Hiển thị ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, meta.total)} trên ${meta.total} sách`
+            ? `Showing ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, meta.total)} of ${meta.total} books`
             : ""}
         </p>
         <div className="flex items-center gap-2">
@@ -384,7 +390,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1 || loading}
           >
-            Trước
+            Previous
           </Button>
           <div className="flex items-center gap-1">
             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -418,7 +424,7 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages || loading}
           >
-            Sau
+            Next
           </Button>
         </div>
       </div>
@@ -426,19 +432,19 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
       <AlertDialog open={!!deleteBookId} onOpenChange={() => setDeleteBookId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa sách</AlertDialogTitle>
+            <AlertDialogTitle>Confirm book deletion</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this book?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionLoading}>Hủy</AlertDialogCancel>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteBookId && handleDelete(deleteBookId)}
               className="bg-destructive"
               disabled={actionLoading}
             >
-              {actionLoading ? "Đang xóa..." : "Xóa"}
+              {actionLoading ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -446,3 +452,4 @@ export function BooksTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
     </div>
   )
 }
+

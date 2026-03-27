@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { SidebarInset } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
@@ -29,13 +29,13 @@ export default function NewBookPage() {
             <BreadcrumbSeparator />
 
             <BreadcrumbItem>
-              <BreadcrumbLink href="/admin/books">Quản lý sách</BreadcrumbLink>
+              <BreadcrumbLink href="/admin/books">Book Management</BreadcrumbLink>
             </BreadcrumbItem>
 
             <BreadcrumbSeparator />
 
             <BreadcrumbItem>
-              <BreadcrumbPage>Thêm sách mới</BreadcrumbPage>
+              <BreadcrumbPage>Add New Book</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -44,10 +44,10 @@ export default function NewBookPage() {
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Thêm sách mới
+            Add New Book
           </h1>
           <p className="text-muted-foreground">
-            Điền thông tin để thêm sách vào kho
+            Fill in the information to add books to inventory
           </p>
         </div>
 

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -44,10 +44,10 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { toast } from "sonner"
 
 const BookStatusMap: Record<number, string> = {
-  0: "Ngừng bán",
-  1: "Đang bán",
-  3: "Bản nháp",
-  4: "Hết hàng",
+  0: "Discontinued",
+  1: "On sale",
+  3: "Draft",
+  4: "Out of stock",
 }
 
 type UploadedBookImage = {
@@ -506,7 +506,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
 
       // Check if anything changed
       if (Object.keys(body).length === 0) {
-        setGlobalError("Không có thay đổi nào để lưu")
+        setGlobalError("No changes to save")
         setLoading(false)
         return
       }
@@ -549,7 +549,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
         scrollToFirstError(fieldErrors)
       } else {
         const message =
-          error?.payload?.message || error?.message || "Có lỗi xảy ra"
+          error?.payload?.message || error?.message || "An error occurred"
         setGlobalError(message)
       }
     } finally {
@@ -568,7 +568,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
       {globalError && (
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
-          <AlertTitle>Lỗi</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>
             {globalError.includes("\n") ? (
               <ul className="list-disc list-inside space-y-1">
@@ -586,9 +586,9 @@ export function EditBookForm({ book }: { book: AdminBook }) {
       {success && (
         <Alert>
           <CheckCircle2 className="size-4" />
-          <AlertTitle>Thành công</AlertTitle>
+          <AlertTitle>Success</AlertTitle>
           <AlertDescription>
-            Sách đã được cập nhật! Đang chuyển hướng...
+            Book updated successfully! Redirecting...
           </AlertDescription>
         </Alert>
       )}
@@ -596,16 +596,16 @@ export function EditBookForm({ book }: { book: AdminBook }) {
       {/* Basic Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin cơ bản</CardTitle>
-          <CardDescription>Cập nhật thông tin cơ bản về sách</CardDescription>
+          <CardTitle>Basic information</CardTitle>
+          <CardDescription>Update basic book information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="title">Tên sách</Label>
+              <Label htmlFor="title">Book title</Label>
               <Input
                 id="title"
-                placeholder="Nhập tên sách"
+                placeholder="Enter book title"
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value)
@@ -642,7 +642,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
             <Label htmlFor="subtitle">Phụ đề</Label>
             <Input
               id="subtitle"
-              placeholder="Nhập phụ đề (tùy chọn)"
+              placeholder="Enter subtitle (optional)"
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
             />
@@ -652,7 +652,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
             <Label htmlFor="description">Mô tả</Label>
             <Textarea
               id="description"
-              placeholder="Mô tả nội dung sách..."
+              placeholder="Describe the book content..."
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -752,8 +752,8 @@ export function EditBookForm({ book }: { book: AdminBook }) {
       {/* Status */}
       <Card>
         <CardHeader>
-          <CardTitle>Trạng thái</CardTitle>
-          <CardDescription>Thay đổi trạng thái sách</CardDescription>
+          <CardTitle>Status</CardTitle>
+          <CardDescription>Change book status</CardDescription>
         </CardHeader>
         <CardContent>
           <Select value={status} onValueChange={setStatus}>
@@ -776,7 +776,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
         <div id="publisher-section" />
         <CardHeader>
           <CardTitle>Nhà xuất bản</CardTitle>
-          <CardDescription>Tìm kiếm và chọn nhà xuất bản</CardDescription>
+          <CardDescription>Search and select publisher</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Label>Nhà xuất bản</Label>
@@ -788,19 +788,19 @@ export function EditBookForm({ book }: { book: AdminBook }) {
                 aria-expanded={publisherOpen}
                 className="w-full justify-between font-normal"
               >
-                {publisherId ? publisherName || publisherId : "Chọn nhà xuất bản..."}
+                {publisherId ? publisherName || publisherId : "Select publisher..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Tìm nhà xuất bản..."
+                  placeholder="Search publisher..."
                   value={publisherSearch}
                   onValueChange={setPublisherSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>Không tìm thấy nhà xuất bản</CommandEmpty>
+                  <CommandEmpty>No publisher found</CommandEmpty>
                   <CommandGroup>
                     {publishers.map((pub) => (
                       <CommandItem
@@ -836,7 +836,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
         <div id="authors-section" />
         <CardHeader>
           <CardTitle>Tác giả</CardTitle>
-          <CardDescription>Tìm kiếm và chọn tác giả cho sách</CardDescription>
+          <CardDescription>Search and select authors for the book</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Label>Tác giả</Label>
@@ -849,20 +849,20 @@ export function EditBookForm({ book }: { book: AdminBook }) {
                 className="w-full justify-between font-normal"
               >
                 {selectedAuthors.length > 0
-                  ? `Đã chọn ${selectedAuthors.length} tác giả`
-                  : "Chọn tác giả..."}
+                  ? `Selected ${selectedAuthors.length} tác giả`
+                  : "Select authors..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Tìm tác giả..."
+                  placeholder="Search authors..."
                   value={authorSearch}
                   onValueChange={setAuthorSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>Không tìm thấy tác giả</CommandEmpty>
+                  <CommandEmpty>No authors found</CommandEmpty>
                   <CommandGroup>
                     {authorResults.map((author) => {
                       const isSelected = selectedAuthors.some((a) => a._id === author._id)
@@ -929,11 +929,11 @@ export function EditBookForm({ book }: { book: AdminBook }) {
       <Card>
         <div id="categories-section" />
         <CardHeader>
-          <CardTitle>Danh mục</CardTitle>
-          <CardDescription>Tìm kiếm và chọn danh mục cho sách</CardDescription>
+          <CardTitle>Category</CardTitle>
+          <CardDescription>Search and select categories for the book</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Label>Danh mục</Label>
+          <Label>Category</Label>
           <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -943,20 +943,20 @@ export function EditBookForm({ book }: { book: AdminBook }) {
                 className="w-full justify-between font-normal"
               >
                 {selectedCategoryIds.length > 0
-                  ? `Đã chọn ${selectedCategoryIds.length} danh mục`
-                  : "Chọn danh mục..."}
+                  ? `Selected ${selectedCategoryIds.length} danh mục`
+                  : "Select categories..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Tìm danh mục..."
+                  placeholder="Search categories..."
                   value={categorySearch}
                   onValueChange={setCategorySearch}
                 />
                 <CommandList>
-                  <CommandEmpty>Không tìm thấy danh mục</CommandEmpty>
+                  <CommandEmpty>No categories found</CommandEmpty>
                   <CommandGroup>
                     {filteredCategories.map((cat) => {
                       const isSelected = selectedCategoryIds.includes(cat._id)
@@ -1011,8 +1011,8 @@ export function EditBookForm({ book }: { book: AdminBook }) {
       {/* Stock / Warehouse */}
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin kho</CardTitle>
-          <CardDescription>Số lượng tồn kho và vị trí lưu trữ</CardDescription>
+          <CardTitle>Inventory information</CardTitle>
+          <CardDescription>Stock quantity and storage location</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -1047,9 +1047,9 @@ export function EditBookForm({ book }: { book: AdminBook }) {
           </div>
           {book.stock && (
             <p className="text-xs text-muted-foreground">
-              Trạng thái: {book.stock.status === "available" ? "Còn hàng" : book.stock.status}
+              Status: {book.stock.status === "available" ? "Còn hàng" : book.stock.status}
               {book.stock.lastUpdated && (
-                <> · Cập nhật lần cuối: {new Date(book.stock.lastUpdated).toLocaleDateString("vi-VN")}</>
+                <> · Last updated: {new Date(book.stock.lastUpdated).toLocaleDateString("vi-VN")}</>
               )}
             </p>
           )}
@@ -1061,7 +1061,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
         <div id="images-section" />
         <CardHeader>
           <CardTitle>Hình ảnh</CardTitle>
-          <CardDescription>Quản lý ảnh bìa và ảnh sách</CardDescription>
+          <CardDescription>Manage cover and book images</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Cover image */}
@@ -1144,7 +1144,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
               </div>
               {removeImageIds.length > 0 && (
                 <p className="text-sm text-destructive">
-                  {removeImageIds.length} ảnh sẽ bị xóa khi lưu
+                  {removeImageIds.length} image(s) will be removed when saved
                 </p>
               )}
               <FieldError name="images" />
@@ -1153,7 +1153,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
 
           {/* New additional images */}
           <div className="space-y-2">
-            <Label>Thêm ảnh mới</Label>
+            <Label>Add ảnh mới</Label>
             <div className="grid grid-cols-5 gap-4">
               {newImages.map((img, index) => (
                 <div
@@ -1200,13 +1200,13 @@ export function EditBookForm({ book }: { book: AdminBook }) {
           onClick={() => router.push(`/admin/books/${book._id}`)}
           disabled={loading}
         >
-          Hủy
+          Cancel
         </Button>
         <Button onClick={handleSubmit} disabled={loading || uploadingImages}>
           {loading ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Đang cập nhật...
+              Updating...
             </>
           ) : uploadingImages ? (
             <>
@@ -1216,7 +1216,7 @@ export function EditBookForm({ book }: { book: AdminBook }) {
           ) : (
             <>
               <Save className="mr-2 size-4" />
-              Lưu thay đổi
+              Save changes
             </>
           )}
         </Button>

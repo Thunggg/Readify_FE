@@ -15,7 +15,7 @@ export default async function StaffDetailPage({
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Staff Detail</h2>
-          <p className="text-muted-foreground">Thông tin chi tiết tài khoản staff</p>
+          <p className="text-muted-foreground">Staff account details</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" asChild>

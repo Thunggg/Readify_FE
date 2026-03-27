@@ -182,7 +182,7 @@ export function EditStaffForm({ id }: { id: string }) {
   }
 
   if (!account?._id) {
-    return <div className="text-sm text-destructive">Không tìm thấy staff account.</div>;
+    return <div className="text-sm text-destructive">Staff account not found.</div>;
   }
 
   return (

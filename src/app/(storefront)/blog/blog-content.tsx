@@ -140,7 +140,7 @@ export function BlogContent() {
   // Format date
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
+    return new Date(dateStr).toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -234,12 +234,12 @@ export function BlogContent() {
   // Empty
   const renderEmpty = () => (
     <div className="text-center py-16">
-      <h3 className="text-lg font-semibold mb-2">Không tìm thấy bài viết</h3>
+      <h3 className="text-lg font-semibold mb-2">No posts found</h3>
       <p className="text-muted-foreground mb-4">
-        Không có bài viết nào phù hợp với bộ lọc hiện tại.
+        No posts match the current filters.
       </p>
       <Button variant="outline" onClick={() => router.push('/blog')}>
-        Xóa bộ lọc
+        Clear filters
       </Button>
     </div>
   );
@@ -250,7 +250,7 @@ export function BlogContent() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Blog</h1>
         <p className="text-muted-foreground">
-          Khám phá các bài viết, tin tức và đánh giá sách mới nhất
+          Explore the latest articles, news, and book reviews
         </p>
       </div>
 
@@ -259,7 +259,7 @@ export function BlogContent() {
         <form onSubmit={handleSearch} className="relative w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Tìm kiếm bài viết..."
+            placeholder="Search posts..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             className="pl-9"
@@ -268,13 +268,13 @@ export function BlogContent() {
 
         <Select value={currentSort} onValueChange={handleSortChange}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Sắp xếp" />
+            <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Mới nhất</SelectItem>
-            <SelectItem value="oldest">Cũ nhất</SelectItem>
-            <SelectItem value="popular">Phổ biến nhất</SelectItem>
-            <SelectItem value="title">Theo tiêu đề</SelectItem>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="popular">Most popular</SelectItem>
+            <SelectItem value="title">Title</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -288,7 +288,7 @@ export function BlogContent() {
             className="rounded-full"
             onClick={() => updateParams({ category: undefined, page: '1' })}
           >
-            Tất cả
+            All
           </Button>
           {categories.map((cat) => (
             <Button
@@ -310,8 +310,8 @@ export function BlogContent() {
       {/* Result count */}
       {meta && !isLoading && (
         <p className="text-sm text-muted-foreground mb-4">
-          Hiển thị <span className="font-semibold text-foreground">{posts.length}</span> trong{' '}
-          {meta.total} bài viết
+          Showing <span className="font-semibold text-foreground">{posts.length}</span> of{' '}
+          {meta.total} posts
         </p>
       )}
 

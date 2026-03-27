@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -36,7 +36,7 @@ export default function EditBlogPostPage() {
       try {
         const res = await BlogApiRequest.getAdminBlogDetail(id);
         if (!res) {
-          handleErrorApi({ error: "Không thể tải bài viết" });
+          handleErrorApi({ error: "Unable to load blog post" });
           router.push("/admin/blog");
           return;
         }
@@ -81,7 +81,7 @@ export default function EditBlogPostPage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Chỉnh sửa bài viết</BreadcrumbPage>
+              <BreadcrumbPage>Edit post</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -89,14 +89,14 @@ export default function EditBlogPostPage() {
 
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa bài viết blog</h1>
-          <p className="text-muted-foreground">Cập nhật nội dung, ảnh và trạng thái bài viết</p>
+          <h1 className="text-3xl font-bold tracking-tight">Edit blog post</h1>
+          <p className="text-muted-foreground">Update post content, image, and status</p>
         </div>
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Đang tải dữ liệu bài viết...</p>
+          <p className="text-sm text-muted-foreground">Loading blog post data...</p>
         ) : !blog ? (
-          <p className="text-sm text-muted-foreground">Không tìm thấy bài viết</p>
+          <p className="text-sm text-muted-foreground">Blog post not found</p>
         ) : (
           <BlogPostForm mode="edit" initialData={blog} />
         )}

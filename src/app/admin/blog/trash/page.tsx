@@ -38,12 +38,12 @@ export default function BlogTrashPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Blog Trash</h1>
-              <p className="text-muted-foreground">Danh sách bài viết đã xóa</p>
+              <p className="text-muted-foreground">List of deleted posts</p>
             </div>
             <Button variant="outline" asChild>
               <Link href="/admin/blog">
                 <ArrowLeft className="mr-2 size-4" />
-                Quay lại
+                Back
               </Link>
             </Button>
           </div>

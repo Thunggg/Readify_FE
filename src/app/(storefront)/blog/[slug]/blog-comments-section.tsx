@@ -15,11 +15,12 @@ import { MessageCircle, Reply, Pencil, Trash2, Send } from 'lucide-react';
 
 type BlogCommentsSectionProps = {
   postId: string;
+  onTotalChange?: (total: number) => void;
 };
 
 function formatDate(date?: string) {
   if (!date) return '';
-  return new Date(date).toLocaleString('vi-VN', {
+  return new Date(date).toLocaleString('en-US', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -32,7 +33,7 @@ function initialOf(name?: string) {
   return (name || '?').trim().charAt(0).toUpperCase() || '?';
 }
 
-export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
+export function BlogCommentsSection({ postId, onTotalChange }: BlogCommentsSectionProps) {
   const { currentUser, loading: loadingUser } = useCurrentUser();
 
   const [comments, setComments] = useState<BlogComment[]>([]);
@@ -57,17 +58,20 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
         const data = res.payload.data;
         setComments(data?.comments ?? []);
         setTotal(data?.total ?? 0);
+        onTotalChange?.(data?.total ?? 0);
       } else {
         setComments([]);
         setTotal(0);
+        onTotalChange?.(0);
       }
     } catch {
       setComments([]);
       setTotal(0);
+      onTotalChange?.(0);
     } finally {
       setLoading(false);
     }
-  }, [postId]);
+  }, [onTotalChange, postId]);
 
   useEffect(() => {
     fetchComments();
@@ -93,13 +97,13 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
 
   const submitRootComment = async () => {
     if (!canWrite) {
-      toast.error('Vui lòng đăng nhập để bình luận');
+      toast.error('Please sign in to comment');
       return;
     }
 
     const content = rootContent.trim();
     if (!content) {
-      toast.error('Vui lòng nhập nội dung bình luận');
+      toast.error('Please enter a comment');
       return;
     }
 
@@ -108,7 +112,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
       const res = await BlogApiRequest.createMyComment(postId, content);
       if (res?.payload?.success) {
         setRootContent('');
-        toast.success('Đã đăng bình luận');
+        toast.success('Comment posted');
         await fetchComments();
       }
     } catch (error) {
@@ -120,13 +124,13 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
 
   const submitReply = async (commentId: string) => {
     if (!canWrite) {
-      toast.error('Vui lòng đăng nhập để trả lời bình luận');
+      toast.error('Please sign in to reply');
       return;
     }
 
     const content = replyContent.trim();
     if (!content) {
-      toast.error('Vui lòng nhập nội dung trả lời');
+      toast.error('Please enter your reply');
       return;
     }
 
@@ -136,7 +140,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
       if (res?.payload?.success) {
         setReplyOpenId(null);
         setReplyContent('');
-        toast.success('Đã gửi trả lời');
+        toast.success('Reply sent');
         await fetchComments();
       }
     } catch (error) {
@@ -154,7 +158,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
   const submitEdit = async (commentId: string) => {
     const content = editingContent.trim();
     if (!content) {
-      toast.error('Vui lòng nhập nội dung bình luận');
+      toast.error('Please enter a comment');
       return;
     }
 
@@ -164,7 +168,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
       if (res?.payload?.success) {
         setEditingId(null);
         setEditingContent('');
-        toast.success('Đã cập nhật bình luận');
+        toast.success('Comment updated');
         await fetchComments();
       }
     } catch (error) {
@@ -175,12 +179,12 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
   };
 
   const deleteComment = async (commentId: string) => {
-    if (!confirm('Bạn có chắc muốn xoá bình luận này?')) return;
+    if (!confirm('Are you sure you want to delete this comment?')) return;
 
     try {
       const res = await BlogApiRequest.deleteMyComment(commentId);
       if (res?.payload?.success) {
-        toast.success('Đã xoá bình luận');
+        toast.success('Comment deleted');
         await fetchComments();
       }
     } catch (error) {
@@ -214,11 +218,11 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                     onChange={(e) => setEditingContent(e.target.value)}
                     rows={3}
                     maxLength={1000}
-                    placeholder="Nhập nội dung bình luận..."
+                    placeholder="Enter your comment..."
                   />
                   <div className="flex items-center gap-2">
                     <Button size="sm" onClick={() => submitEdit(comment._id)} disabled={editing}>
-                      {editing ? 'Đang lưu...' : 'Lưu'}
+                      {editing ? 'Saving...' : 'Save'}
                     </Button>
                     <Button
                       size="sm"
@@ -228,13 +232,13 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                         setEditingContent('');
                       }}
                     >
-                      Huỷ
+                      Cancel
                     </Button>
                   </div>
                 </div>
               ) : (
                 <p className={`mt-2 whitespace-pre-wrap text-sm ${deleted ? 'italic text-muted-foreground' : 'text-foreground'}`}>
-                  {deleted ? 'Comment đã bị xoá' : comment.content}
+                  {deleted ? 'Comment deleted' : comment.content}
                 </p>
               )}
 
@@ -251,7 +255,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                     }}
                   >
                     <Reply className="mr-1 h-3.5 w-3.5" />
-                    Trả lời
+                    Reply
                   </Button>
                 )}
 
@@ -264,7 +268,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                     onClick={() => startEdit(comment)}
                   >
                     <Pencil className="mr-1 h-3.5 w-3.5" />
-                    Sửa
+                    Edit
                   </Button>
                 )}
 
@@ -277,7 +281,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                     onClick={() => deleteComment(comment._id)}
                   >
                     <Trash2 className="mr-1 h-3.5 w-3.5" />
-                    Xoá
+                    Delete
                   </Button>
                 )}
               </div>
@@ -289,7 +293,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                     onChange={(e) => setReplyContent(e.target.value)}
                     rows={3}
                     maxLength={1000}
-                    placeholder="Nhập nội dung trả lời..."
+                    placeholder="Enter your reply..."
                   />
                   <div className="mt-2 flex items-center justify-end gap-2">
                     <Button
@@ -301,10 +305,10 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
                         setReplyContent('');
                       }}
                     >
-                      Huỷ
+                      Cancel
                     </Button>
                     <Button type="button" size="sm" onClick={() => submitReply(comment._id)} disabled={replying}>
-                      {replying ? 'Đang gửi...' : 'Gửi trả lời'}
+                      {replying ? 'Sending...' : 'Send reply'}
                     </Button>
                   </div>
                 </div>
@@ -327,7 +331,7 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-xl">
           <MessageCircle className="h-5 w-5" />
-          Bình luận ({total})
+          Comments ({total})
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -339,22 +343,22 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
             maxLength={1000}
             placeholder={
               canWrite
-                ? 'Chia sẻ suy nghĩ của bạn về bài viết này...'
-                : 'Đăng nhập để viết bình luận...'
+                ? 'Share your thoughts about this post...'
+                : 'Sign in to write a comment...'
             }
             disabled={!canWrite || submittingRoot}
           />
           <div className="mt-2 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">{rootContent.trim().length}/1000 ký tự</p>
+            <p className="text-xs text-muted-foreground">{rootContent.trim().length}/1000 characters</p>
             {canWrite ? (
               <Button type="button" onClick={submitRootComment} disabled={submittingRoot}>
                 <Send className="mr-2 h-4 w-4" />
-                {submittingRoot ? 'Đang gửi...' : 'Gửi bình luận'}
+                {submittingRoot ? 'Sending...' : 'Post comment'}
               </Button>
             ) : (
               !loadingUser && (
                 <Button asChild>
-                  <Link href="/login">Đăng nhập</Link>
+                  <Link href="/login">Sign in</Link>
                 </Button>
               )
             )}
@@ -362,9 +366,9 @@ export function BlogCommentsSection({ postId }: BlogCommentsSectionProps) {
         </div>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Đang tải bình luận...</p>
+          <p className="text-sm text-muted-foreground">Loading comments...</p>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Chưa có bình luận nào. Hãy là người đầu tiên bình luận.</p>
+          <p className="text-sm text-muted-foreground">No comments yet. Be the first to comment.</p>
         ) : (
           <div>{comments.map((comment) => renderComment(comment))}</div>
         )}

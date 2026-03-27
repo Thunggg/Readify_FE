@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -439,7 +439,7 @@ export function AddBookForm() {
         scrollToFirstError(fieldErrors)
       } else {
         const message =
-          error?.payload?.message || error?.message || "Có lỗi xảy ra"
+          error?.payload?.message || error?.message || "An error occurred"
         setGlobalError(message)
       }
     } finally {
@@ -456,7 +456,7 @@ export function AddBookForm() {
       {globalError && (
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
-          <AlertTitle>Lỗi</AlertTitle>
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>
             {globalError.includes("\n") ? (
               <ul className="list-disc list-inside space-y-1">
@@ -474,25 +474,25 @@ export function AddBookForm() {
       {success && (
         <Alert>
           <CheckCircle2 className="size-4" />
-          <AlertTitle>Thành công</AlertTitle>
-          <AlertDescription>Sách đã được tạo thành công! Đang chuyển hướng...</AlertDescription>
+          <AlertTitle>Success</AlertTitle>
+          <AlertDescription>Book created successfully! Redirecting...</AlertDescription>
         </Alert>
       )}
 
       {/* Basic Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin cơ bản</CardTitle>
-          <CardDescription>Nhập thông tin cơ bản về sách</CardDescription>
+          <CardTitle>Basic information</CardTitle>
+          <CardDescription>Enter basic book information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="title">Tên sách *</Label>
+              <Label htmlFor="title">Book title *</Label>
               <div className="relative">
                 <Input
                   id="title"
-                  placeholder="Nhập tên sách"
+                  placeholder="Enter book title"
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value)
@@ -534,7 +534,7 @@ export function AddBookForm() {
             <Label htmlFor="subtitle">Phụ đề</Label>
             <Input
               id="subtitle"
-              placeholder="Nhập phụ đề (tùy chọn)"
+              placeholder="Enter subtitle (optional)"
               value={subtitle}
               onChange={(e) => setSubtitle(e.target.value)}
             />
@@ -544,7 +544,7 @@ export function AddBookForm() {
             <Label htmlFor="description">Mô tả</Label>
             <Textarea
               id="description"
-              placeholder="Mô tả nội dung sách..."
+              placeholder="Describe the book content..."
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -652,7 +652,7 @@ export function AddBookForm() {
         <div id="publisher-section" />
         <CardHeader>
           <CardTitle>Nhà xuất bản *</CardTitle>
-          <CardDescription>Tìm kiếm và chọn nhà xuất bản</CardDescription>
+          <CardDescription>Search and select publisher</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Label>Nhà xuất bản *</Label>
@@ -664,19 +664,19 @@ export function AddBookForm() {
                 aria-expanded={publisherOpen}
                 className="w-full justify-between font-normal"
               >
-                {publisherId ? publisherName || publisherId : "Chọn nhà xuất bản..."}
+                {publisherId ? publisherName || publisherId : "Select publisher..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Tìm nhà xuất bản..."
+                  placeholder="Search publisher..."
                   value={publisherSearch}
                   onValueChange={setPublisherSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>Không tìm thấy nhà xuất bản</CommandEmpty>
+                  <CommandEmpty>No publisher found</CommandEmpty>
                   <CommandGroup>
                     {publishers.map((pub) => (
                       <CommandItem
@@ -712,7 +712,7 @@ export function AddBookForm() {
         <div id="authors-section" />
         <CardHeader>
           <CardTitle>Tác giả</CardTitle>
-          <CardDescription>Tìm kiếm và chọn tác giả cho sách</CardDescription>
+          <CardDescription>Search and select authors for the book</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Label>Tác giả</Label>
@@ -725,20 +725,20 @@ export function AddBookForm() {
                 className="w-full justify-between font-normal"
               >
                 {selectedAuthors.length > 0
-                  ? `Đã chọn ${selectedAuthors.length} tác giả`
-                  : "Chọn tác giả..."}
+                  ? `Selected ${selectedAuthors.length} tác giả`
+                  : "Select authors..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Tìm tác giả..."
+                  placeholder="Search authors..."
                   value={authorSearch}
                   onValueChange={setAuthorSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>Không tìm thấy tác giả</CommandEmpty>
+                  <CommandEmpty>No authors found</CommandEmpty>
                   <CommandGroup>
                     {authorResults.map((author) => {
                       const isSelected = selectedAuthors.some((a) => a._id === author._id)
@@ -805,11 +805,11 @@ export function AddBookForm() {
       <Card>
         <div id="categories-section" />
         <CardHeader>
-          <CardTitle>Danh mục *</CardTitle>
-          <CardDescription>Tìm kiếm và chọn ít nhất 1 danh mục cho sách</CardDescription>
+          <CardTitle>Category *</CardTitle>
+          <CardDescription>Search and select at least 1 category</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Label>Danh mục *</Label>
+          <Label>Category *</Label>
           <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -819,20 +819,20 @@ export function AddBookForm() {
                 className="w-full justify-between font-normal"
               >
                 {selectedCategoryIds.length > 0
-                  ? `Đã chọn ${selectedCategoryIds.length} danh mục`
-                  : "Chọn danh mục..."}
+                  ? `Selected ${selectedCategoryIds.length} danh mục`
+                  : "Select categories..."}
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
               <Command shouldFilter={false}>
                 <CommandInput
-                  placeholder="Tìm danh mục..."
+                  placeholder="Search categories..."
                   value={categorySearch}
                   onValueChange={setCategorySearch}
                 />
                 <CommandList>
-                  <CommandEmpty>Không tìm thấy danh mục</CommandEmpty>
+                  <CommandEmpty>No categories found</CommandEmpty>
                   <CommandGroup>
                     {filteredCategories.map((cat) => {
                       const isSelected = selectedCategoryIds.includes(cat._id)
@@ -889,7 +889,7 @@ export function AddBookForm() {
         <div id="images-section" />
         <CardHeader>
           <CardTitle>Hình ảnh</CardTitle>
-          <CardDescription>Upload ảnh bìa và ảnh sách</CardDescription>
+          <CardDescription>Upload cover and book images</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -971,7 +971,7 @@ export function AddBookForm() {
       <Card>
         <CardHeader>
           <CardTitle>Kho hàng</CardTitle>
-          <CardDescription>Thông tin số lượng ban đầu</CardDescription>
+          <CardDescription>Initial stock information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -1009,13 +1009,13 @@ export function AddBookForm() {
       {/* Actions */}
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={() => router.push("/admin/books")} disabled={loading}>
-          Hủy
+          Cancel
         </Button>
         <Button onClick={handleSubmit} disabled={loading || uploadingImages}>
           {loading ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
-              Đang tạo sách...
+              Creating book...
             </>
           ) : uploadingImages ? (
             <>
@@ -1025,7 +1025,7 @@ export function AddBookForm() {
           ) : (
             <>
               <Save className="mr-2 size-4" />
-              Tạo sách
+              Create book
             </>
           )}
         </Button>
@@ -1033,3 +1033,4 @@ export function AddBookForm() {
     </div>
   )
 }
+

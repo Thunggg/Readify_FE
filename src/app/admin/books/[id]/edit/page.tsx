@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar"
+﻿import { SidebarInset } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -65,7 +65,7 @@ export default async function EditBookPage({
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="/admin/books">Quản lý sách</BreadcrumbLink>
+              <BreadcrumbLink href="/admin/books">Book Management</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -75,7 +75,7 @@ export default async function EditBookPage({
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Chỉnh sửa</BreadcrumbPage>
+              <BreadcrumbPage>Edit</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -83,8 +83,8 @@ export default async function EditBookPage({
 
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Chỉnh sửa sách</h1>
-          <p className="text-muted-foreground">Cập nhật thông tin sách</p>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Book</h1>
+          <p className="text-muted-foreground">Update book information</p>
         </div>
 
         <EditBookForm book={book} />

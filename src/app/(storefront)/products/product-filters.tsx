@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Input } from "@/components/ui/input"
 import { CategoryApiRequest, type Category } from "@/api-request/category"
+import { BookApiRequest } from "@/api-request/book"
 
 interface FilterState {
   categoryId?: string
@@ -19,6 +20,20 @@ interface FilterState {
 interface ProductFiltersProps {
   onFilterChange: (filters: FilterState) => void
   initialFilters?: FilterState
+}
+
+function normalizeCategories(data: unknown): Category[] {
+  if (Array.isArray(data)) return data as Category[]
+
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>
+
+    if (Array.isArray(record.items)) return record.items as Category[]
+    if (Array.isArray(record.categories)) return record.categories as Category[]
+    if (Array.isArray(record.data)) return record.data as Category[]
+  }
+
+  return []
 }
 
 export function ProductFilters({ onFilterChange, initialFilters }: ProductFiltersProps) {
@@ -33,15 +48,50 @@ export function ProductFilters({ onFilterChange, initialFilters }: ProductFilter
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [minPriceInput, setMinPriceInput] = useState(initialFilters?.minPrice?.toString() || "")
   const [maxPriceInput, setMaxPriceInput] = useState(initialFilters?.maxPrice?.toString() || "")
+  const [priceError, setPriceError] = useState<string | null>(null)
 
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
+        let finalCategories: Category[] = []
+
         const res = await CategoryApiRequest.getCategories({ status: 1 })
         if (res && res.payload.success) {
-          setCategories(res.payload.data)
+          finalCategories = normalizeCategories(res.payload.data as unknown)
         }
+
+        if (finalCategories.length === 0) {
+          const fallbackRes = await CategoryApiRequest.getCategories()
+          if (fallbackRes && fallbackRes.payload.success) {
+            finalCategories = normalizeCategories(fallbackRes.payload.data as unknown)
+          }
+        }
+
+        if (finalCategories.length === 0) {
+          // Last fallback: derive categories from public books payload.
+          const booksRes = await BookApiRequest.getBooks({ page: 1, limit: 100 })
+          const items = booksRes?.payload?.success ? booksRes.payload.data.items ?? [] : []
+          const categoryMap = new Map<string, Category>()
+
+          for (const book of items) {
+            for (const c of book.categoryIds ?? []) {
+              if (!categoryMap.has(c._id)) {
+                categoryMap.set(c._id, {
+                  _id: c._id,
+                  name: c.name,
+                  slug: c.slug,
+                  status: 1,
+                  sortOrder: 0,
+                })
+              }
+            }
+          }
+
+          finalCategories = Array.from(categoryMap.values())
+        }
+
+        setCategories(finalCategories)
       } catch (error) {
         console.error("Failed to fetch categories:", error)
       } finally {
@@ -73,8 +123,25 @@ export function ProductFilters({ onFilterChange, initialFilters }: ProductFilter
   }
 
   const handlePriceApply = () => {
-    const minPrice = minPriceInput ? Number(minPriceInput) : undefined
-    const maxPrice = maxPriceInput ? Number(maxPriceInput) : undefined
+    const minPrice = minPriceInput.trim() === "" ? undefined : Number(minPriceInput)
+    const maxPrice = maxPriceInput.trim() === "" ? undefined : Number(maxPriceInput)
+
+    if ((minPriceInput.trim() !== "" && !Number.isFinite(minPrice as number)) || (maxPriceInput.trim() !== "" && !Number.isFinite(maxPrice as number))) {
+      setPriceError("Please enter valid numbers for price.")
+      return
+    }
+
+    if ((minPrice ?? 0) < 0 || (maxPrice ?? 0) < 0) {
+      setPriceError("Price cannot be negative.")
+      return
+    }
+
+    if (minPrice !== undefined && maxPrice !== undefined && maxPrice < minPrice) {
+      setPriceError("Max price must be greater than or equal to min price.")
+      return
+    }
+
+    setPriceError(null)
     
     const newFilters = { ...filters, minPrice, maxPrice }
     setFilters(newFilters)
@@ -97,6 +164,7 @@ export function ProductFilters({ onFilterChange, initialFilters }: ProductFilter
     setFilters(resetFilters)
     setMinPriceInput("")
     setMaxPriceInput("")
+    setPriceError(null)
     onFilterChange(resetFilters)
   }
 
@@ -159,7 +227,10 @@ export function ProductFilters({ onFilterChange, initialFilters }: ProductFilter
               min={0}
               placeholder="0"
               value={minPriceInput}
-              onChange={(e) => setMinPriceInput(e.target.value)}
+              onChange={(e) => {
+                setMinPriceInput(e.target.value)
+                if (priceError) setPriceError(null)
+              }}
               className="h-9 text-sm"
             />
           </div>
@@ -171,11 +242,15 @@ export function ProductFilters({ onFilterChange, initialFilters }: ProductFilter
               min={0}
               placeholder="No limit"
               value={maxPriceInput}
-              onChange={(e) => setMaxPriceInput(e.target.value)}
+              onChange={(e) => {
+                setMaxPriceInput(e.target.value)
+                if (priceError) setPriceError(null)
+              }}
               className="h-9 text-sm"
             />
           </div>
         </div>
+        {priceError && <p className="text-xs text-destructive">{priceError}</p>}
         <Button 
           onClick={handlePriceApply} 
           className="w-full"

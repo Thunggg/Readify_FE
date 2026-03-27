@@ -15,7 +15,7 @@ export default async function StaffEditPage({
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Edit Staff</h2>
-          <p className="text-muted-foreground">Cập nhật thông tin staff account</p>
+          <p className="text-muted-foreground">Update staff account information</p>
         </div>
         <Button variant="outline" asChild>
           <Link href={`/admin/staff/${id}`}>

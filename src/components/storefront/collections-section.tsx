@@ -8,16 +8,16 @@ import { Button } from "@/components/ui/button";
 
 const collections = [
   {
-    title: "Sách thiếu nhi",
-    description: "Truyện tranh, kỹ năng, và sách phát triển tư duy cho bé.",
+    title: "Children's Books",
+    description: "Comics, life skills, and thinking-development books for kids.",
     href: "/category/thieu-nhi",
     icon: Baby,
     accent: "from-pink-500/15 via-pink-500/5 to-transparent",
     iconWrap: "bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300",
   },
   {
-    title: "Kinh tế học",
-    description: "Kinh tế, tài chính, và tư duy quản trị cho người đi làm.",
+    title: "Business & Economics",
+    description: "Economics, finance, and management mindset for professionals.",
     href: "/category/kinh-te",
     icon: TrendingUp,
     accent: "from-cyan-500/15 via-cyan-500/5 to-transparent",
@@ -32,11 +32,11 @@ export function CollectionsSection() {
         <div>
           <h2 className="text-2xl font-bold">Collections</h2>
           <p className="text-muted-foreground">
-            Bộ sưu tập nổi bật dành riêng cho bạn.
+            Featured collections curated for you.
           </p>
         </div>
         <Button variant="outline" asChild className="h-9">
-          <Link href="/discover">Xem tất cả</Link>
+          <Link href="/discover">View all</Link>
         </Button>
       </div>
 
@@ -65,7 +65,7 @@ export function CollectionsSection() {
                       </p>
 
                       <div className="mt-4 inline-flex items-center text-sm font-semibold text-primary">
-                        Khám phá ngay
+                        Explore now
                         <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-0.5" />
                       </div>
                     </div>

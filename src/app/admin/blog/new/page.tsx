@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar";
+﻿import { SidebarInset } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
@@ -26,7 +26,7 @@ export default function NewBlogPostPage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Tạo bài viết</BreadcrumbPage>
+              <BreadcrumbPage>Create post</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -34,8 +34,8 @@ export default function NewBlogPostPage() {
 
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tạo bài viết blog</h1>
-          <p className="text-muted-foreground">Thêm nội dung mới cho khu vực blog storefront</p>
+          <h1 className="text-3xl font-bold tracking-tight">Create blog post</h1>
+          <p className="text-muted-foreground">Add new content to the storefront blog area</p>
         </div>
 
         <BlogPostForm mode="create" />

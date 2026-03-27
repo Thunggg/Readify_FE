@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar"
+﻿import { SidebarInset } from "@/components/ui/sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,7 +24,7 @@ export default function BooksPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Quản lý sách</BreadcrumbPage>
+                <BreadcrumbPage>Book Management</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -33,8 +33,8 @@ export default function BooksPage() {
         <div className="flex flex-1 flex-col gap-4 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Quản lý sách</h1>
-              <p className="text-muted-foreground">Quản lý tất cả sách trong kho</p>
+              <h1 className="text-3xl font-bold tracking-tight">Book Management</h1>
+              <p className="text-muted-foreground">Manage all books in inventory</p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
@@ -46,7 +46,7 @@ export default function BooksPage() {
               <Button asChild>
                 <Link href="/admin/books/new">
                   <Plus className="mr-2 size-4" />
-                  Thêm sách mới
+                  Add New Book
                 </Link>
               </Button>
             </div>

@@ -26,6 +26,13 @@ const ITEMS_PER_PAGE = 12
 
 type SortOption = SearchPublicBooksParams["sort"]
 
+function parseNonNegativeNumberParam(value: string | null): number | undefined {
+  if (!value || value.trim() === "") return undefined
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed < 0) return undefined
+  return parsed
+}
+
 export function ProductsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -40,9 +47,14 @@ export function ProductsContent() {
   const currentSort = (searchParams.get("sort") as SortOption) || "newest"
   const currentSearch = searchParams.get("q") || ""
   const currentCategoryId = searchParams.get("categoryId") || ""
-  const currentMinPrice = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined
-  const currentMaxPrice = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined
+  const currentMinPrice = parseNonNegativeNumberParam(searchParams.get("minPrice"))
+  const currentMaxPrice = parseNonNegativeNumberParam(searchParams.get("maxPrice"))
   const currentInStock = searchParams.get("inStock") === "true" ? true : undefined
+
+  const hasValidPriceRange =
+    currentMinPrice === undefined ||
+    currentMaxPrice === undefined ||
+    currentMaxPrice >= currentMinPrice
 
   // Update URL params
   const updateParams = useCallback((newParams: Record<string, string | undefined>) => {
@@ -72,8 +84,10 @@ export function ProductsContent() {
         
         if (currentSearch) params.q = currentSearch
         if (currentCategoryId) params.categoryId = currentCategoryId
-        if (currentMinPrice) params.minPrice = currentMinPrice
-        if (currentMaxPrice) params.maxPrice = currentMaxPrice
+        if (hasValidPriceRange) {
+          if (currentMinPrice !== undefined) params.minPrice = currentMinPrice
+          if (currentMaxPrice !== undefined) params.maxPrice = currentMaxPrice
+        }
         if (currentInStock) params.inStock = currentInStock
 
         const res = await BookApiRequest.getBooks(params)
@@ -91,7 +105,7 @@ export function ProductsContent() {
     }
 
     fetchBooks()
-  }, [currentPage, currentSort, currentSearch, currentCategoryId, currentMinPrice, currentMaxPrice, currentInStock])
+  }, [currentPage, currentSort, currentSearch, currentCategoryId, currentMinPrice, currentMaxPrice, currentInStock, hasValidPriceRange])
 
   // Handlers
   const handleSortChange = (value: string) => {
@@ -237,8 +251,8 @@ export function ProductsContent() {
             onFilterChange={handleFilterChange}
             initialFilters={{
               categoryId: currentCategoryId,
-              minPrice: currentMinPrice,
-              maxPrice: currentMaxPrice,
+              minPrice: hasValidPriceRange ? currentMinPrice : undefined,
+              maxPrice: hasValidPriceRange ? currentMaxPrice : undefined,
               inStock: currentInStock,
             }}
           />
@@ -263,8 +277,8 @@ export function ProductsContent() {
                       onFilterChange={handleFilterChange}
                       initialFilters={{
                         categoryId: currentCategoryId,
-                        minPrice: currentMinPrice,
-                        maxPrice: currentMaxPrice,
+                        minPrice: hasValidPriceRange ? currentMinPrice : undefined,
+                        maxPrice: hasValidPriceRange ? currentMaxPrice : undefined,
                         inStock: currentInStock,
                       }}
                     />

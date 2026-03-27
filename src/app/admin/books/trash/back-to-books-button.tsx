@@ -14,7 +14,7 @@ export function BackToBooksButton() {
   return (
     <Button variant="outline" onClick={handleBack}>
       <ArrowLeft className="mr-2 size-4" />
-      Quay lại
+      Back
     </Button>
   )
 }

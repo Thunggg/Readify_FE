@@ -9,7 +9,7 @@ export default function StaffTrashPage() {
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Staff Trash</h2>
-          <p className="text-muted-foreground">Danh sách staff đã xóa</p>
+          <p className="text-muted-foreground">List of deleted staff accounts</p>
         </div>
         <Button variant="outline" asChild>
           <Link href="/admin/staff">

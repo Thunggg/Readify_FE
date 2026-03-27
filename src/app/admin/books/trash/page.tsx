@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar"
+﻿import { SidebarInset } from "@/components/ui/sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,7 +22,7 @@ export default function BooksTrashPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/books">Quản lý sách</BreadcrumbLink>
+                <BreadcrumbLink href="/admin/books">Book Management</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -36,7 +36,7 @@ export default function BooksTrashPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Trash</h1>
-              <p className="text-muted-foreground">Danh sách sách đã xóa</p>
+              <p className="text-muted-foreground">List of deleted books</p>
             </div>
             <BackToBooksButton />
           </div>
