@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
@@ -75,7 +75,41 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
   const [isUploading, setIsUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const submitLabel = mode === "create" ? "Tạo bài viết" : "Lưu thay đổi";
+  const errorFieldOrder = ["title", "excerpt", "content", "categoryId", "tags", "featuredImage"] as const;
+
+  const scrollToFirstError = (errors: Record<string, string>) => {
+    const firstField = errorFieldOrder.find((field) => errors[field]);
+    if (!firstField) return;
+
+    const target =
+      document.getElementById(`field-${firstField}`) ??
+      document.getElementById(firstField);
+
+    if (!target) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+      target.focus({ preventScroll: true });
+    }
+  };
+
+  const mapBackendFieldErrors = (source: any): Record<string, string> => {
+    const details = source?.data?.details ?? source?.details ?? source?.payload?.data?.details ?? source?.payload?.details;
+    if (!Array.isArray(details)) return {};
+
+    const mapped: Record<string, string> = {};
+    details.forEach((detail: any) => {
+      const field = typeof detail?.field === "string" ? detail.field.trim() : "";
+      const message = typeof detail?.message === "string" ? detail.message : "Dữ liệu không hợp lệ";
+      if (!field) return;
+      mapped[field] = message;
+    });
+
+    return mapped;
+  };
+
+  const submitLabel = mode === "create" ? "Create post" : "Save changes";
 
   const tags = useMemo(
     () =>
@@ -90,14 +124,17 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
     const errors: Record<string, string> = {};
 
     if (!title.trim()) errors.title = "Tiêu đề là bắt buộc";
-    if (title.trim().length > 0 && title.trim().length < 10) {
-      errors.title = "Tiêu đề cần ít nhất 10 ký tự";
+    if (title.trim().length > 0 && title.trim().length < 2) {
+      errors.title = "Tiêu đề cần ít nhất 2 ký tự";
     }
 
-    if (!content.trim()) errors.content = "Nội dung là bắt buộc";
-    if (!categoryId) errors.categoryId = "Vui lòng chọn danh mục";
+    if (!content.trim()) errors.content = "Content is required";
+    if (!categoryId) errors.categoryId = "Please select a category";
 
     setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      scrollToFirstError(errors);
+    }
     return Object.keys(errors).length === 0;
   };
 
@@ -194,6 +231,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
   }, [debouncedBookSearch]);
 
   const handleSubmit = async () => {
+    setFieldErrors({});
     if (!validate()) return;
 
     const body: CreateBlogPostRequest = {
@@ -212,28 +250,38 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
       if (mode === "create") {
         const res = await BlogApiRequest.createBlogPost(body);
         if (!res) {
-          handleErrorApi({ error: "Không thể tạo bài viết" });
+          handleErrorApi({ error: "Unable to create post" });
           return;
         }
 
         if (!res.payload.success) {
+          const backendErrors = mapBackendFieldErrors(res.payload);
+          if (Object.keys(backendErrors).length > 0) {
+            setFieldErrors(backendErrors);
+            scrollToFirstError(backendErrors);
+          }
           handleErrorApi({ error: res.payload.message });
           return;
         }
       } else {
         const slug = initialData?.slug;
         if (!slug) {
-          handleErrorApi({ error: "Không tìm thấy slug của bài viết" });
+          handleErrorApi({ error: "Post slug not found" });
           return;
         }
 
         const res = await BlogApiRequest.updateBlogPost(slug, body);
         if (!res) {
-          handleErrorApi({ error: "Không thể cập nhật bài viết" });
+          handleErrorApi({ error: "Unable to update post" });
           return;
         }
 
         if (!res.payload.success) {
+          const backendErrors = mapBackendFieldErrors(res.payload);
+          if (Object.keys(backendErrors).length > 0) {
+            setFieldErrors(backendErrors);
+            scrollToFirstError(backendErrors);
+          }
           handleErrorApi({ error: res.payload.message });
           return;
         }
@@ -242,6 +290,11 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
       router.push("/admin/blog");
       router.refresh();
     } catch (error) {
+      const backendErrors = mapBackendFieldErrors(error);
+      if (Object.keys(backendErrors).length > 0) {
+        setFieldErrors(backendErrors);
+        scrollToFirstError(backendErrors);
+      }
       handleErrorApi({ error });
     } finally {
       setIsSubmitting(false);
@@ -252,17 +305,17 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
     <div className="space-y-6">
       {Object.keys(fieldErrors).length > 0 && (
         <Alert variant="destructive">
-          <AlertTitle>Vui lòng kiểm tra lại dữ liệu</AlertTitle>
+          <AlertTitle>Please review your input</AlertTitle>
           <AlertDescription>
-            Một số trường bắt buộc chưa hợp lệ. Hãy cập nhật form rồi thử lại.
+            Some required fields are invalid. Please update the form and try again.
           </AlertDescription>
         </Alert>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Thông tin bài viết</CardTitle>
-          <CardDescription>Nhập tiêu đề, tóm tắt và nội dung chính</CardDescription>
+          <CardTitle>Post information</CardTitle>
+          <CardDescription>Enter title, excerpt, and main content</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -270,8 +323,16 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nhập tiêu đề bài viết"
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.title) return prev;
+                  const next = { ...prev };
+                  delete next.title;
+                  return next;
+                });
+              }}
+              placeholder="Enter post title"
             />
             {fieldErrors.title && <p className="text-sm text-destructive">{fieldErrors.title}</p>}
           </div>
@@ -282,19 +343,35 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
               id="excerpt"
               rows={3}
               value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              placeholder="Tóm tắt ngắn về nội dung bài viết"
+              onChange={(e) => {
+                setExcerpt(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.excerpt) return prev;
+                  const next = { ...prev };
+                  delete next.excerpt;
+                  return next;
+                });
+              }}
+              placeholder="Short summary of the post content"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">Nội dung</Label>
+            <Label htmlFor="content">Content</Label>
             <Textarea
               id="content"
               rows={14}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Nội dung bài viết (có thể dán HTML nếu cần)"
+              onChange={(e) => {
+                setContent(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.content) return prev;
+                  const next = { ...prev };
+                  delete next.content;
+                  return next;
+                });
+              }}
+              placeholder="Post content (you can paste HTML if needed)"
             />
             {fieldErrors.content && <p className="text-sm text-destructive">{fieldErrors.content}</p>}
           </div>
@@ -304,14 +381,25 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
       <Card>
         <CardHeader>
           <CardTitle>Thiết lập hiển thị</CardTitle>
-          <CardDescription>Danh mục, trạng thái xuất bản và metadata</CardDescription>
+          <CardDescription>Category, publish status, and metadata</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label>Danh mục</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn danh mục" />
+            <Label>Category</Label>
+            <Select
+              value={categoryId}
+              onValueChange={(value) => {
+                setCategoryId(value);
+                setFieldErrors((prev) => {
+                  if (!prev.categoryId) return prev;
+                  const next = { ...prev };
+                  delete next.categoryId;
+                  return next;
+                });
+              }}
+            >
+              <SelectTrigger id="categoryId">
+                <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
                 {availableCategories.map((category) => (
@@ -327,10 +415,10 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
           </div>
 
           <div className="space-y-2">
-            <Label>Trạng thái</Label>
+            <Label>Status</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as "draft" | "published") }>
               <SelectTrigger>
-                <SelectValue placeholder="Chọn trạng thái" />
+                <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">Draft</SelectItem>
@@ -340,7 +428,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
           </div>
 
           <div className="space-y-2 md:col-span-2">
-            <Label>Sách liên quan (tuỳ chọn)</Label>
+            <Label>Related book (optional)</Label>
             <Popover open={bookOpen} onOpenChange={setBookOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -350,27 +438,27 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
                   aria-expanded={bookOpen}
                   className="w-full justify-between font-normal"
                 >
-                  {bookId ? bookTitle || bookId : "Tìm và chọn sách liên quan..."}
+                  {bookId ? bookTitle || bookId : "Search and select related book..."}
                   <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command shouldFilter={false}>
                   <CommandInput
-                    placeholder="Nhập tên sách (ít nhất 2 ký tự)..."
+                    placeholder="Enter book title (at least 2 characters)..."
                     value={bookSearch}
                     onValueChange={setBookSearch}
                   />
                   <CommandList>
                     <CommandEmpty>
                       {bookSearch.trim().length < 2
-                        ? "Nhập ít nhất 2 ký tự để tìm sách"
-                        : "Không tìm thấy sách"}
+                        ? "Enter at least 2 characters to search books"
+                        : "No books found"}
                     </CommandEmpty>
                     <CommandGroup>
                       {isLoadingBooks ? (
                         <div className="px-2 py-3 text-sm text-muted-foreground">
-                          Đang tìm sách...
+                          Searching books...
                         </div>
                       ) : (
                         bookSuggestions.map((book) => (
@@ -418,7 +506,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
                 }}
               >
                 <X className="mr-1 size-3" />
-                Bỏ liên kết sách
+                Remove linked book
               </Button>
             )}
           </div>
@@ -428,9 +516,18 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
             <Input
               id="tags"
               value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
+              onChange={(e) => {
+                setTagsInput(e.target.value);
+                setFieldErrors((prev) => {
+                  if (!prev.tags) return prev;
+                  const next = { ...prev };
+                  delete next.tags;
+                  return next;
+                });
+              }}
               placeholder="Ví dụ: review, ky nang, sach hay"
             />
+            {fieldErrors.tags && <p className="text-sm text-destructive">{fieldErrors.tags}</p>}
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {tags.map((tag) => (
@@ -446,10 +543,10 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
 
       <Card>
         <CardHeader>
-          <CardTitle>Ảnh bài viết</CardTitle>
+          <CardTitle>Post image</CardTitle>
           <CardDescription>Upload ảnh đại diện blog từ máy tính</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4" id="field-featuredImage">
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
@@ -472,7 +569,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
                 onClick={() => setFeaturedImage("")}
               >
                 <X className="mr-2 size-4" />
-                Xóa ảnh
+                Remove image
               </Button>
             )}
 
@@ -492,6 +589,9 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
               className="h-52 w-full max-w-xl rounded-md border object-cover"
             />
           )}
+          {fieldErrors.featuredImage && (
+            <p className="text-sm text-destructive">{fieldErrors.featuredImage}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -502,7 +602,7 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
           onClick={() => router.push("/admin/blog")}
           disabled={isSubmitting}
         >
-          Hủy
+          Cancel
         </Button>
         <Button type="button" onClick={handleSubmit} disabled={isSubmitting || isUploading}>
           {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
@@ -512,3 +612,4 @@ export default function BlogPostForm({ mode, categories = [], initialData }: Blo
     </div>
   );
 }
+

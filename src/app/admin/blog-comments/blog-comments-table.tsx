@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import dayjs from "dayjs";
-import { Check, ChevronsUpDown, Loader2, MoreHorizontal, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, MessageSquareReply, MoreHorizontal, Search, Trash2, X } from "lucide-react";
 
 import { BlogApiRequest } from "@/api-request/blog";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn, handleErrorApi } from "@/lib/utils";
 import type { PaginationMeta } from "@/types/api";
@@ -67,6 +78,8 @@ const statusClass: Record<BlogCommentStatus, string> = {
     "border-none bg-green-600/10 text-green-600 dark:bg-green-400/10 dark:text-green-400",
   rejected:
     "border-none bg-red-600/10 text-red-600 dark:bg-red-400/10 dark:text-red-400",
+  deleted:
+    "border-none bg-slate-600/10 text-slate-600 dark:bg-slate-400/10 dark:text-slate-400",
   spam: "border-none bg-muted text-muted-foreground",
 };
 
@@ -103,6 +116,10 @@ export default function BlogCommentsTable() {
   const [blogOptions, setBlogOptions] = useState<AdminBlogPost[]>([]);
   const [selectedBlogTitle, setSelectedBlogTitle] = useState("");
   const [isLoadingBlogs, setIsLoadingBlogs] = useState(false);
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  const [replyTarget, setReplyTarget] = useState<BlogComment | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
   const [limit] = useState(10);
 
@@ -250,7 +267,7 @@ export default function BlogCommentsTable() {
     try {
       const res = await BlogApiRequest.updateCommentStatus(id, nextStatus);
       if (!res) {
-        handleErrorApi({ error: "Không thể cập nhật trạng thái bình luận" });
+        handleErrorApi({ error: "Unable to update comment status" });
         return;
       }
 
@@ -270,14 +287,10 @@ export default function BlogCommentsTable() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa bình luận này?")) {
-      return;
-    }
-
     try {
       const res = await BlogApiRequest.deleteComment(id);
       if (!res) {
-        handleErrorApi({ error: "Không thể xóa bình luận" });
+        handleErrorApi({ error: "Unable to delete comment" });
         return;
       }
 
@@ -286,9 +299,42 @@ export default function BlogCommentsTable() {
         return;
       }
 
+      setDeleteCommentId(null);
       setComments((prev) => prev.filter((comment) => comment._id !== id));
+      await fetchComments();
     } catch (error) {
       handleErrorApi({ error });
+    }
+  };
+
+  const handleReply = async () => {
+    if (!replyTarget?._id) return;
+    const content = replyContent.trim();
+    if (!content) {
+      handleErrorApi({ error: "Reply content cannot be empty" });
+      return;
+    }
+
+    setReplySubmitting(true);
+    try {
+      const res = await BlogApiRequest.replyComment(replyTarget._id, content);
+      if (!res) {
+        handleErrorApi({ error: "Unable to reply to comment" });
+        return;
+      }
+
+      if (!res.payload.success) {
+        handleErrorApi({ error: res.payload.message });
+        return;
+      }
+
+      setReplyTarget(null);
+      setReplyContent("");
+      await fetchComments();
+    } catch (error) {
+      handleErrorApi({ error });
+    } finally {
+      setReplySubmitting(false);
     }
   };
 
@@ -303,7 +349,7 @@ export default function BlogCommentsTable() {
           <div className="relative w-full lg:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm nội dung, email, tên tác giả..."
+              placeholder="Search content, email, author name..."
               className="pl-8"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -319,10 +365,10 @@ export default function BlogCommentsTable() {
                   role="combobox"
                   aria-expanded={blogFilterOpen}
                   className="w-full sm:w-[260px] justify-between gap-2 font-normal"
-                  title={currentPostId ? selectedBlogTitle || currentPostId : "Lọc theo bài viết"}
+                  title={currentPostId ? selectedBlogTitle || currentPostId : "Filter by post"}
                 >
                   <span className="min-w-0 flex-1 truncate text-left">
-                    {currentPostId ? selectedBlogTitle || currentPostId : "Lọc theo bài viết"}
+                    {currentPostId ? selectedBlogTitle || currentPostId : "Filter by post"}
                   </span>
                   <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
                 </Button>
@@ -330,19 +376,19 @@ export default function BlogCommentsTable() {
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command shouldFilter={false}>
                   <CommandInput
-                    placeholder="Nhập tên bài viết (>=2 ký tự)..."
+                    placeholder="Enter post title (>=2 chars)..."
                     value={blogFilterInput}
                     onValueChange={setBlogFilterInput}
                   />
                   <CommandList>
                     <CommandEmpty>
                       {blogFilterInput.trim().length < 2
-                        ? "Nhập ít nhất 2 ký tự để tìm bài viết"
-                        : "Không tìm thấy bài viết"}
+                        ? "Enter at least 2 characters to search posts"
+                        : "Blog post not found"}
                     </CommandEmpty>
                     <CommandGroup>
                       {isLoadingBlogs ? (
-                        <div className="px-2 py-3 text-sm text-muted-foreground">Đang tìm bài viết...</div>
+                        <div className="px-2 py-3 text-sm text-muted-foreground">Searching posts...</div>
                       ) : (
                         blogOptions.map((blog) => (
                           <CommandItem
@@ -381,7 +427,7 @@ export default function BlogCommentsTable() {
                 onClick={() => updateParams({ postId: undefined, page: "1" })}
               >
                 <X className="mr-2 size-4" />
-                Bỏ lọc bài viết
+                Clear post filter
               </Button>
             )}
 
@@ -410,8 +456,8 @@ export default function BlogCommentsTable() {
                 <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="newest">Mới nhất</SelectItem>
-                <SelectItem value="oldest">Cũ nhất</SelectItem>
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -422,12 +468,12 @@ export default function BlogCommentsTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[280px]">Bài viết</TableHead>
-              <TableHead className="w-[220px]">Tác giả</TableHead>
-              <TableHead>Nội dung</TableHead>
+              <TableHead className="w-[280px]">Post</TableHead>
+              <TableHead className="w-[220px]">Author</TableHead>
+              <TableHead>Content</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
+              <TableHead>Created at</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -440,7 +486,7 @@ export default function BlogCommentsTable() {
             ) : comments.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  Không có bình luận phù hợp
+                  No matching comments
                 </TableCell>
               </TableRow>
             ) : (
@@ -473,7 +519,7 @@ export default function BlogCommentsTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {STATUS_OPTIONS.map((option) => (
                           <DropdownMenuItem
@@ -483,19 +529,37 @@ export default function BlogCommentsTable() {
                               handleStatusUpdate(comment._id, option.value);
                             }}
                           >
-                            Đặt trạng thái: {option.label}
+                            Set status: {option.label}
                           </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            setReplyTarget(comment);
+                            setReplyContent("");
+                          }}
+                        >
+                          <MessageSquareReply className="mr-2 size-4" />
+                          Reply comment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            handleStatusUpdate(comment._id, "rejected");
+                          }}
+                        >
+                          Hide comment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           className="text-destructive"
                           onSelect={(e) => {
                             e.preventDefault();
-                            handleDelete(comment._id);
+                            setDeleteCommentId(comment._id);
                           }}
                         >
                           <Trash2 className="mr-2 size-4" />
-                          Xóa bình luận
+                          Delete comment
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -510,7 +574,7 @@ export default function BlogCommentsTable() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {meta
-            ? `Hiển thị ${(meta.page - 1) * meta.limit + 1} - ${Math.min(meta.page * meta.limit, meta.total)} trên ${meta.total} bình luận`
+            ? `Showing ${(meta.page - 1) * meta.limit + 1} - ${Math.min(meta.page * meta.limit, meta.total)} of ${meta.total} comments`
             : ""}
         </p>
 
@@ -522,6 +586,58 @@ export default function BlogCommentsTable() {
           />
         )}
       </div>
+
+      <AlertDialog open={!!deleteCommentId} onOpenChange={() => setDeleteCommentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm comment deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              This comment and all related replies will be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive"
+              onClick={() => {
+                if (deleteCommentId) {
+                  handleDelete(deleteCommentId);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!replyTarget} onOpenChange={() => setReplyTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reply comment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Reply to: {replyTarget?.authorName ?? "-"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Enter reply content..."
+              rows={5}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReply}
+              disabled={replySubmitting}
+            >
+              {replySubmitting ? "Sending..." : "Send reply"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

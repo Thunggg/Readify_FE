@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { ReactNode, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -31,7 +31,7 @@ export function DeleteBookButton({ bookId, trigger }: DeleteBookButtonProps) {
     setLoading(true)
     try {
       await BookApiRequest.adminDelete("", bookId)
-      toast.success("Xoa sach thanh cong")
+      toast.success("Book deleted successfully")
       setOpen(false)
       router.push("/admin/books")
       router.refresh()
@@ -43,9 +43,9 @@ export function DeleteBookButton({ bookId, trigger }: DeleteBookButtonProps) {
         []
 
       if (Array.isArray(details) && details.length > 0) {
-        toast.error(details[0]?.message || "Khong the xoa sach")
+        toast.error(details[0]?.message || "Cannot delete book")
       } else {
-        toast.error(error?.payload?.message || error?.message || "Khong the xoa sach")
+        toast.error(error?.payload?.message || error?.message || "Cannot delete book")
       }
     } finally {
       setLoading(false)
@@ -74,3 +74,4 @@ export function DeleteBookButton({ bookId, trigger }: DeleteBookButtonProps) {
     </AlertDialog>
   )
 }
+

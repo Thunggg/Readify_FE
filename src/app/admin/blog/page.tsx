@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar";
+﻿import { SidebarInset } from "@/components/ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +8,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import BlogsTable from "./blogs-table";
 
@@ -33,17 +33,25 @@ export default function BlogManagementPage() {
         <div className="flex flex-1 flex-col gap-4 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Quản lý blog</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Blog Management</h1>
               <p className="text-muted-foreground">
-                Danh sách bài viết, lọc dữ liệu và quản lý nội dung blog
+                List posts, filter data, and manage blog content
               </p>
             </div>
-            <Button asChild>
-              <Link href="/admin/blog/new">
-                <Plus className="mr-2 size-4" />
-                Tạo bài viết
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" asChild>
+                <Link href="/admin/blog/trash">
+                  <Trash2 className="mr-2 size-4" />
+                  Trash
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/admin/blog/new">
+                  <Plus className="mr-2 size-4" />
+                  Create post
+                </Link>
+              </Button>
+            </div>
           </div>
 
           <BlogsTable />

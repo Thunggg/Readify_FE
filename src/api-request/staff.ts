@@ -43,6 +43,14 @@ export const StaffApiRequest = {
     return response;
   },
 
+  getStaffDetail: async (id: string) => {
+    const response = await http.get<ApiResponse<AdminAccount>>(`/staff/${id}`, {
+      credentials: "include",
+      cache: "no-store",
+    });
+    return response;
+  },
+
   updateStaff: async (id: string, data: UpdateStaffApiRequest) => {
     const response = await http.patch<ApiResponse<AdminAccount>>(
       `/staff/${id}`,
@@ -60,6 +68,20 @@ export const StaffApiRequest = {
   deleteStaff: async (id: string) => {
     const response = await http.delete<ApiResponse<{ _id: string }>>(
       `/staff/${id}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+    return response;
+  },
+
+  restoreStaff: async (id: string) => {
+    const response = await http.patch<ApiResponse<{ _id: string }>>(
+      `/staff/${id}/restore`,
+      null,
       {
         headers: {
           "Content-Type": "application/json",

@@ -1,4 +1,4 @@
-import { AccountApiRequest } from "@/api-request/account";
+import { StaffApiRequest } from "@/api-request/staff";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,10 +26,13 @@ export default function DeleteAccountModal({
 }) {
     async function handleDeleteAccount() {
     try {
-      const res = await AccountApiRequest.deleteAccount(selectedAccount?._id as string);
+      const res = await StaffApiRequest.deleteStaff(selectedAccount?._id as string);
 
-      if (!res.payload.success) {
-        handleErrorApi({ error: res.payload, duration: 5000 });
+      if (!res || !res.payload.success) {
+        handleErrorApi({
+          error: res?.payload ?? { message: "Delete staff failed" },
+          duration: 5000,
+        });
         return;
       }
 

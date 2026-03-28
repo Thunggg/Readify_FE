@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react";
@@ -53,7 +53,7 @@ export default function BlogDetailPage() {
       try {
         const res = await BlogApiRequest.getAdminBlogDetail(id);
         if (!res) {
-          handleErrorApi({ error: "Không thể tải bài viết" });
+          handleErrorApi({ error: "Unable to load blog post" });
           router.push("/admin/blog");
           return;
         }
@@ -98,7 +98,7 @@ export default function BlogDetailPage() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{blog?.title || "Chi tiết"}</BreadcrumbPage>
+              <BreadcrumbPage>{blog?.title || "Detail"}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -106,9 +106,9 @@ export default function BlogDetailPage() {
 
       <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Đang tải dữ liệu bài viết...</p>
+          <p className="text-sm text-muted-foreground">Loading blog post data...</p>
         ) : !blog ? (
-          <p className="text-sm text-muted-foreground">Không tìm thấy bài viết</p>
+          <p className="text-sm text-muted-foreground">Blog post not found</p>
         ) : (
           <>
             <div className="flex items-center justify-between gap-3">
@@ -120,13 +120,13 @@ export default function BlogDetailPage() {
                 <Button variant="outline" asChild>
                   <Link href={`/admin/blog-comments?postId=${blog._id}`}>
                     <MessageCircle className="mr-2 size-4" />
-                    Xem bình luận bài này
+                    View comments for this post
                   </Link>
                 </Button>
                 <Button asChild>
                   <Link href={`/admin/blog/${blog._id}/edit`}>
                     <Pencil className="mr-2 size-4" />
-                    Chỉnh sửa
+                    Edit
                   </Link>
                 </Button>
               </div>
@@ -134,30 +134,30 @@ export default function BlogDetailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Thông tin tổng quan</CardTitle>
-                <CardDescription>Trạng thái hiển thị và metadata bài viết</CardDescription>
+                <CardTitle>Overview</CardTitle>
+                <CardDescription>Display status and post metadata</CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Trạng thái</p>
+                  <p className="text-sm text-muted-foreground">Status</p>
                   <Badge variant={statusVariant[blog.status] ?? "secondary"}>{blog.status}</Badge>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Lượt xem</p>
+                  <p className="text-sm text-muted-foreground">Views</p>
                   <p className="font-semibold flex items-center gap-1">
                     <Eye className="size-4" />
                     {blog.viewCount ?? 0}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Bình luận</p>
+                  <p className="text-sm text-muted-foreground">Comments</p>
                   <p className="font-semibold flex items-center gap-1">
                     <MessageCircle className="size-4" />
                     {blog.commentCount ?? 0}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Ngày tạo</p>
+                  <p className="text-sm text-muted-foreground">Created at</p>
                   <p className="font-semibold flex items-center gap-1">
                     <Calendar className="size-4" />
                     {dayjs(blog.createdAt).format("DD/MM/YYYY HH:mm")}
@@ -179,7 +179,7 @@ export default function BlogDetailPage() {
                   />
                 ) : (
                   <div className="h-40 w-full max-w-2xl rounded-lg border bg-muted flex items-center justify-center text-muted-foreground">
-                    Không có ảnh
+                    No image
                   </div>
                 )}
               </CardContent>
@@ -187,15 +187,15 @@ export default function BlogDetailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Nội dung bài viết</CardTitle>
+                <CardTitle>Post content</CardTitle>
                 <CardDescription>
-                  {blog.category?.name ? `Danh mục: ${blog.category.name}` : "Không có danh mục"}
+                  {blog.category?.name ? `Category: ${blog.category.name}` : "No category"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {blog.excerpt && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Tóm tắt</p>
+                    <p className="text-sm text-muted-foreground mb-1">Excerpt</p>
                     <p>{blog.excerpt}</p>
                   </div>
                 )}

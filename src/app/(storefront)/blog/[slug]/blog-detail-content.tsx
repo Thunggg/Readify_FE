@@ -19,6 +19,7 @@ import {
   BookOpen,
   Tag,
 } from 'lucide-react';
+import { BlogCommentsSection } from './blog-comments-section';
 
 interface BlogDetailContentProps {
   slug: string;
@@ -27,6 +28,7 @@ interface BlogDetailContentProps {
 export function BlogDetailContent({ slug }: BlogDetailContentProps) {
   const [post, setPost] = useState<BlogPostDetail | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+  const [commentTotal, setCommentTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
         if (postRes && postRes.payload.success) {
           const postData = postRes.payload.data as BlogPostDetail;
           setPost(postData);
+          setCommentTotal(postData.commentCount ?? 0);
 
           // Fetch related posts using post ID
           if (postData._id) {
@@ -78,7 +81,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
   // Format date
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
+    return new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'long',
       day: '2-digit',
       month: '2-digit',
@@ -88,7 +91,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
 
   const formatShortDate = (dateStr?: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
+    return new Date(dateStr).toLocaleDateString('en-US', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -120,14 +123,14 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
   if (!post) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold mb-4">Bài viết không tồn tại</h1>
+        <h1 className="text-2xl font-bold mb-4">Post not found</h1>
         <p className="text-muted-foreground mb-6">
-          Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+          The post you are looking for does not exist or has been removed.
         </p>
         <Button asChild>
           <Link href="/blog">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Quay lại Blog
+            Back to Blog
           </Link>
         </Button>
       </div>
@@ -140,7 +143,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/" className="hover:text-foreground transition-colors">
-            Trang chủ
+            Home
           </Link>
           <span>/</span>
           <Link href="/blog" className="hover:text-foreground transition-colors">
@@ -208,15 +211,13 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
 
             <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              {post.viewCount ?? 0} lượt xem
+              {post.viewCount ?? 0} views
             </span>
 
-            {post.commentCount !== undefined && post.commentCount > 0 && (
-              <span className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
-                {post.commentCount} bình luận
-              </span>
-            )}
+            <span className="flex items-center gap-1">
+              <MessageCircle className="h-4 w-4" />
+              {commentTotal ?? 0} comments
+            </span>
           </div>
         </header>
 
@@ -267,7 +268,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-3 text-sm font-medium text-muted-foreground">
                 <BookOpen className="h-4 w-4" />
-                Sách liên quan
+                Related book
               </div>
               <Link
                 href={`/book/${post.book.slug}`}
@@ -287,7 +288,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
                   <h4 className="font-semibold group-hover:text-primary transition-colors">
                     {post.book.title}
                   </h4>
-                  <p className="text-sm text-muted-foreground">Xem chi tiết sách →</p>
+                  <p className="text-sm text-muted-foreground">View book details {'->'}</p>
                 </div>
               </Link>
             </CardContent>
@@ -299,7 +300,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
           <Button variant="outline" asChild>
             <Link href="/blog">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Quay lại Blog
+              Back to Blog
             </Link>
           </Button>
           <Button
@@ -310,7 +311,7 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
                 navigator.share({ title: post.title, url: window.location.href });
               } else {
                 navigator.clipboard.writeText(window.location.href);
-                alert('Đã sao chép liên kết!');
+                alert('Link copied to clipboard!');
               }
             }}
           >
@@ -319,15 +320,19 @@ export function BlogDetailContent({ slug }: BlogDetailContentProps) {
         </div>
 
         <Separator className="mb-8" />
+
+        <div className="mb-8">
+          <BlogCommentsSection postId={post._id} onTotalChange={setCommentTotal} />
+        </div>
       </article>
 
       {/* Related posts */}
       {relatedPosts.length > 0 && (
         <section className="max-w-6xl mx-auto">
           <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Bài viết liên quan</h2>
+            <h2 className="text-2xl font-bold">Related posts</h2>
             <Button variant="link" asChild>
-              <Link href="/blog">Xem tất cả</Link>
+              <Link href="/blog">View all</Link>
             </Button>
           </div>
 

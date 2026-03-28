@@ -14,7 +14,6 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -28,22 +27,23 @@ import {
   CheckCircleIcon,
   CircleHelpIcon,
   CircleMinusIcon,
+  EyeIcon,
   MailIcon,
   MarsIcon,
   MoreHorizontalIcon,
+  RotateCcw,
   VenusIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import AccountsToolbar, { FilterState } from "./components/accounts-toolbar";
 import CreateAccountModal from "./components/create-account-modal";
 import DeleteAccountModal from "./components/delete-account-modal";
-import DetailAccountDrawer from "./components/detail-account-drawer";
 import { convertStatus } from "./components/status-filter-dropdown";
 import { convertRole } from "./components/role-filter-dropdown";
 import type { StatusKey } from "./components/status-filter-dropdown";
 import type { RoleKey } from "./components/role-filter-dropdown";
 import SortableHeader from "./components/sort-header";
-import UpdateAccountModal from "./components/update-account-modal";
 // import {
 //   Pagination,
 //   PaginationContent,
@@ -65,11 +65,9 @@ export type SortField =
   | null;
 export type SortOrder = "asc" | "desc" | null;
 
-export default function AccountsTable() {
+export default function AccountsTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
   const [createOpen, setCreateOpen] = useState(false); // Đóng mở modal tạo tài khoản
-  const [showUpdateDialog, setShowUpdateDialog] = useState(false); // Đóng mở modal cập nhật tài khoản
   const [showDeleteDialog, setShowDeleteDialog] = useState(false); // Đóng mở popup xóa tài khoản
-  const [showDetailAccount, setShowDetailAccount] = useState(false); // Đóng mở drawer chi tiết tài khoản
   const [localAccounts, setLocalAccounts] = useState<AdminAccount[]>([]); // Danh sách tài khoản trong local
   const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(
     null
@@ -84,7 +82,7 @@ export default function AccountsTable() {
   }); // Giá trị filter
 
   const [page, setPage] = useState(1); // Trang hiện tại
-  const [limit, setLimit] = useState(10); // Số lượng tài khoản trên mỗi trang
+  const [limit] = useState(10); // Số lượng tài khoản trên mỗi trang
   const [total, setTotal] = useState(0); // Tổng số lượng tài khoản
 
   const sexLabel = (sex: number) => {
@@ -211,6 +209,7 @@ export default function AccountsTable() {
           role: roleValues,
           sortBy: sortField as string,
           order: sortOrder as "asc" | "desc",
+          ...(deletedOnly ? { isDeleted: true } : {}),
         });
 
         // Kiểm tra response: nếu không có status hoặc payload không success
@@ -235,7 +234,22 @@ export default function AccountsTable() {
     };
     // Gọi hàm fetchAccounts ngay lập tức
     fetchAccounts();
-  }, [sortField, sortOrder, searchValue, filters, page, limit]);
+  }, [sortField, sortOrder, searchValue, filters, page, limit, deletedOnly]);
+
+  const handleRestore = async (id: string) => {
+    try {
+      const res = await StaffApiRequest.restoreStaff(id);
+      if (!res || !res.payload.success) {
+        handleErrorApi({ error: res?.payload ?? { message: "Restore failed" }, duration: 5000 });
+        return;
+      }
+
+      setLocalAccounts(localAccounts.filter((account) => account._id !== id));
+      setTotal((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      handleErrorApi({ error, duration: 5000 });
+    }
+  };
 
   return (
     <>
@@ -247,23 +261,6 @@ export default function AccountsTable() {
             setLocalAccounts([...localAccounts, data]);
           }
         }}
-      />
-      <UpdateAccountModal
-        open={showUpdateDialog}
-        onOpenChange={setShowUpdateDialog}
-        selectedAccount={selectedAccount}
-        onUpdateAccount={(data) => {
-          setLocalAccounts(
-            localAccounts.map((account) =>
-              account._id === data._id ? data : account
-            )
-          );
-        }}
-      />
-      <DetailAccountDrawer
-        open={showDetailAccount}
-        onOpenChange={setShowDetailAccount}
-        selectedAccount={selectedAccount}
       />
       <DeleteAccountModal
         open={showDeleteDialog}
@@ -283,6 +280,7 @@ export default function AccountsTable() {
         filters={filters}
         setLocalsFilters={setLocalsFilters}
         onCreateClick={() => setCreateOpen(true)}
+        hideCreateButton={deletedOnly}
       />
       <Table>
         <TableHeader>
@@ -337,12 +335,17 @@ export default function AccountsTable() {
               </TableCell>
               <TableCell
                 className="cursor-pointer"
-                onClick={() => {
-                  setShowDetailAccount(true);
-                  setSelectedAccount(account);
-                }}
               >
-                {account.email}
+                {account._id ? (
+                  <Link
+                    href={`/admin/staff/${account._id}`}
+                    className="text-primary hover:underline"
+                  >
+                    {account.email}
+                  </Link>
+                ) : (
+                  account.email
+                )}
               </TableCell>
               <TableCell>{`${account.firstName} ${account.lastName}`}</TableCell>
               <TableCell>{account.phone}</TableCell>
@@ -366,22 +369,40 @@ export default function AccountsTable() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-40" align="end">
                     <DropdownMenuGroup>
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          setShowUpdateDialog(true);
-                          setSelectedAccount(account);
-                        }}
-                      >
-                        Edit Account
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          setShowDeleteDialog(true);
-                          setSelectedAccount(account);
-                        }}
-                      >
-                        Delete Account
-                      </DropdownMenuItem>
+                      {account._id ? (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/staff/${account._id}`}>
+                            <EyeIcon className="mr-2 h-4 w-4" />
+                            View Detail
+                          </Link>
+                        </DropdownMenuItem>
+                      ) : null}
+                      {account._id && !deletedOnly ? (
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/staff/${account._id}/edit`}>
+                            Edit Account
+                          </Link>
+                        </DropdownMenuItem>
+                      ) : null}
+                      {!deletedOnly ? (
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            setShowDeleteDialog(true);
+                            setSelectedAccount(account);
+                          }}
+                        >
+                          Delete Account
+                        </DropdownMenuItem>
+                      ) : account._id ? (
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            handleRestore(account._id as string);
+                          }}
+                        >
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Restore Account
+                        </DropdownMenuItem>
+                      ) : null}
                     </DropdownMenuGroup>
                   </DropdownMenuContent>
                 </DropdownMenu>

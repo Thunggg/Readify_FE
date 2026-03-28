@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar"
+﻿import { SidebarInset } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -26,10 +26,10 @@ import type { AdminBook } from "@/types/book"
 import { DeleteBookButton } from "@/components/admin/books/delete-book-button"
 
 const BookStatusMap: Record<number, string> = {
-  0: "Ngừng bán",
-  1: "Đang bán",
-  3: "Bản nháp",
-  4: "Hết hàng",
+  0: "Discontinued",
+  1: "On sale",
+  3: "Draft",
+  4: "Out of stock",
 }
 
 const LanguageMap: Record<string, string> = {
@@ -79,7 +79,7 @@ export default async function BookDetailPage({
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href="/admin/books">Quản lý sách</BreadcrumbLink>
+              <BreadcrumbLink href="/admin/books">Book Management</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -101,7 +101,7 @@ export default async function BookDetailPage({
               <Button variant="outline" asChild>
                 <Link href={`/admin/books/${book._id}/edit`}>
                   <Pencil className="mr-2 size-4" />
-                  Chỉnh sửa
+                  Edit
                 </Link>
               </Button>
             )}
@@ -146,7 +146,7 @@ export default async function BookDetailPage({
                   className="w-full justify-center"
                 >
                   {book.isDeleted
-                    ? "Đã xóa"
+                    ? "Deleted"
                     : (BookStatusMap[book.status ?? 1] ?? "N/A")}
                 </Badge>
 
@@ -200,7 +200,7 @@ export default async function BookDetailPage({
                         : book.stock.status === "reserved"
                           ? "Đã đặt trước"
                           : book.stock.status
-                      : "Chưa nhập kho"}
+                      : "Not stocked yet"}
                   </p>
                 </CardContent>
               </Card>
@@ -236,8 +236,8 @@ export default async function BookDetailPage({
             {/* Stock / Warehouse info */}
             <Card>
               <CardHeader>
-                <CardTitle>Thông tin kho</CardTitle>
-                <CardDescription>Tồn kho và vị trí lưu trữ</CardDescription>
+                <CardTitle>Inventory information</CardTitle>
+                <CardDescription>Inventory and storage location</CardDescription>
               </CardHeader>
               <CardContent>
                 {book.stock ? (
@@ -257,7 +257,7 @@ export default async function BookDetailPage({
                     )}
                     {book.stock.price != null && (
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Giá nhập</p>
+                        <p className="text-sm font-medium text-muted-foreground">Cost price</p>
                         <p className="text-sm">{formatPrice(book.stock.price, book.currency)}</p>
                       </div>
                     )}
@@ -268,7 +268,7 @@ export default async function BookDetailPage({
                       </div>
                     )}
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Trạng thái kho</p>
+                      <p className="text-sm font-medium text-muted-foreground">Status kho</p>
                       <Badge variant={book.stock.status === "available" ? "default" : "secondary"}>
                         {book.stock.status === "available"
                           ? "Còn hàng"
@@ -279,7 +279,7 @@ export default async function BookDetailPage({
                     </div>
                     {book.stock.lastUpdated && (
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-muted-foreground">Cập nhật kho lần cuối</p>
+                        <p className="text-sm font-medium text-muted-foreground">Last stock update</p>
                         <p className="text-sm">
                           {new Date(book.stock.lastUpdated).toLocaleDateString("vi-VN", {
                             year: "numeric",
@@ -293,7 +293,7 @@ export default async function BookDetailPage({
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Chưa có thông tin kho. Sách chưa được nhập kho.</p>
+                  <p className="text-sm text-muted-foreground">No stock information yet. This book has not been stocked.</p>
                 )}
               </CardContent>
             </Card>
@@ -301,8 +301,8 @@ export default async function BookDetailPage({
             {/* Book information */}
             <Card>
               <CardHeader>
-                <CardTitle>Thông tin sách</CardTitle>
-                <CardDescription>Chi tiết về sách</CardDescription>
+                <CardTitle>Book information</CardTitle>
+                <CardDescription>Book details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -324,7 +324,7 @@ export default async function BookDetailPage({
                   )}
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">
-                      Danh mục
+                      Category
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {book.categoryIds?.map((cat) => (
@@ -370,7 +370,7 @@ export default async function BookDetailPage({
                   )}
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">
-                      Ngày tạo
+                      Created at
                     </p>
                     <p className="text-sm">
                       {new Date(book.createdAt).toLocaleDateString("vi-VN", {

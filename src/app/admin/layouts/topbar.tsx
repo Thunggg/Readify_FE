@@ -37,6 +37,7 @@ interface UserInfo {
 
 export function Topbar() {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [stockAlerts, setStockAlerts] = useState<StockAlertsData | null>(null);
@@ -44,6 +45,10 @@ export function Topbar() {
   const [alertThreshold, setAlertThreshold] = useState(DEFAULT_STOCK_ALERT_THRESHOLD);
   const [alertThresholdInput, setAlertThresholdInput] = useState(String(DEFAULT_STOCK_ALERT_THRESHOLD));
   const [sessionsOpen, setSessionsOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -152,6 +157,21 @@ export function Topbar() {
     setAlertThreshold(normalized);
     setAlertThresholdInput(String(normalized));
   };
+
+  if (!isMounted) {
+    return (
+      <div className="flex h-16 items-center justify-between border-b px-6 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="flex items-center max-w-2xl flex-1">
+          <div className="h-10 w-full max-w-lg rounded-md bg-muted/50" />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-md bg-muted/60" />
+          <div className="h-9 w-9 rounded-md bg-muted/60" />
+          <div className="h-9 w-9 rounded-full bg-muted/60" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-16 items-center justify-between border-b px-6 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">

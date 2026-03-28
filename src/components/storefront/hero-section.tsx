@@ -10,30 +10,30 @@ import { useState } from "react"
 const banners = [
   {
     id: 1,
-    title: "Khám phá thế giới qua trang sách",
+    title: "Discover the world through books",
     description:
-      "Những cuốn sách văn học kinh điển và bestseller đang chờ đón bạn. Mở ra cánh cửa tri thức mới mỗi ngày.",
-    badge: "MỚI CẬP NHẬT",
+      "Classic literature and bestsellers are waiting for you. Open a new door to knowledge every day.",
+    badge: "JUST UPDATED",
     image: "/wooden-bookshelf-library.jpg",
-    buttonText: "Khám phá ngay",
+    buttonText: "Explore now",
     buttonLink: "/products",
   },
   {
     id: 2,
-    title: "Sách Kinh Tế & Kinh Doanh",
-    description: "Bộ sưu tập sách kinh doanh, marketing và phát triển bản thân từ các tác giả nổi tiếng thế giới.",
-    badge: "DANH MUC NỔI BẬT",
+    title: "Business & Economics",
+    description: "A collection of business, marketing, and personal growth books from world-renowned authors.",
+    badge: "FEATURED CATEGORY",
     image: "/business-books-collection.jpg",
-    buttonText: "Xem thêm",
+    buttonText: "See more",
     buttonLink: "/category/kinh-te",
   },
   {
     id: 3,
-    title: "Văn Học Việt Nam",
-    description: "Trải nghiệm nét đẹp văn học Việt với những tác phẩm kinh điển và đương đại xuất sắc nhất.",
-    badge: "VĂN HỌC VIỆT",
+    title: "Vietnamese Literature",
+    description: "Experience the beauty of Vietnamese literature through outstanding classic and modern works.",
+    badge: "VIETNAMESE LIT",
     image: "/vietnamese-literature.jpg",
-    buttonText: "Khám phá ngay",
+    buttonText: "Explore now",
     buttonLink: "/category/van-hoc",
   },
 ]
@@ -118,15 +118,15 @@ export function HeroSection() {
           <Card className="flex-1 bg-pink-50 dark:bg-pink-950/20 border-pink-200 dark:border-pink-900 p-6">
             <div className="flex items-start justify-between h-full">
               <div>
-                <h3 className="text-xl font-bold mb-2 text-pink-900 dark:text-pink-100">Sách thiếu nhi</h3>
-                <p className="text-pink-800 dark:text-pink-200 mb-3">Bộ sưu tập sách cho trẻ em</p>
+                <h3 className="text-xl font-bold mb-2 text-pink-900 dark:text-pink-100">Children&apos;s Books</h3>
+                <p className="text-pink-800 dark:text-pink-200 mb-3">A curated collection for young readers</p>
                 <Button
                   variant="link"
                   asChild
                   className="text-pink-700 dark:text-pink-300 p-0 h-auto font-semibold"
                 >
                   <Link href="/category/thieu-nhi">
-                    Xem chi tiết <ArrowRight className="ml-1 h-4 w-4" />
+                    View details <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -146,15 +146,15 @@ export function HeroSection() {
           <Card className="flex-1 bg-cyan-50 dark:bg-cyan-950/20 border-cyan-200 dark:border-cyan-900 p-6">
             <div className="flex items-start justify-between h-full">
               <div>
-                <h3 className="text-xl font-bold mb-2 text-cyan-900 dark:text-cyan-100">Kinh tế học</h3>
-                <p className="text-cyan-800 dark:text-cyan-200 mb-3">Top sách doanh nhân</p>
+                <h3 className="text-xl font-bold mb-2 text-cyan-900 dark:text-cyan-100">Business & Economics</h3>
+                <p className="text-cyan-800 dark:text-cyan-200 mb-3">Top picks for entrepreneurs</p>
                 <Button
                   variant="link"
                   asChild
                   className="text-cyan-700 dark:text-cyan-300 p-0 h-auto font-semibold"
                 >
                   <Link href="/category/kinh-te">
-                    Khám phá <ArrowRight className="ml-1 h-4 w-4" />
+                    Explore <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               </div>

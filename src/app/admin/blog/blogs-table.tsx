@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useState } from "react";
@@ -12,6 +12,7 @@ import {
   Eye,
   Pencil,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 
 import { BlogApiRequest } from "@/api-request/blog";
@@ -42,6 +43,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useDebounce } from "@/hooks/use-debounce";
 import { handleErrorApi } from "@/lib/utils";
 import type {
@@ -79,10 +90,11 @@ const statusBadgeClass: Record<BlogPostStatus, string> = {
     "border-none bg-muted text-muted-foreground",
 };
 
-export default function BlogsTable() {
+export default function BlogsTable({ deletedOnly = false }: { deletedOnly?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isMounted, setIsMounted] = useState(false);
 
   const currentSearch = searchParams.get("search") ?? "";
   const currentStatus = (() => {
@@ -103,10 +115,15 @@ export default function BlogsTable() {
   const [categories, setCategories] = useState<BlogCategory[]>([]);
   const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
 
   const [searchInput, setSearchInput] = useState(currentSearch);
   const debouncedSearchInput = useDebounce(searchInput, 350);
   const [limit] = useState(10);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const updateParams = useCallback(
     (updates: Record<string, string | undefined>) => {
@@ -147,6 +164,7 @@ export default function BlogsTable() {
         page: currentPage,
         limit,
         sortBy: currentSortBy,
+        ...(deletedOnly ? { isDeleted: true } : {}),
       };
 
       if (currentSearch.trim()) params.search = currentSearch.trim();
@@ -174,7 +192,7 @@ export default function BlogsTable() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, limit, currentSortBy, currentSearch, currentStatus, currentCategory]);
+  }, [currentPage, limit, currentSortBy, currentSearch, currentStatus, currentCategory, deletedOnly]);
 
   useEffect(() => {
     fetchCategories();
@@ -197,14 +215,10 @@ export default function BlogsTable() {
   }, [debouncedSearchInput, currentSearch, updateParams]);
 
   const handleDelete = async (slug: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa bài viết này?")) {
-      return;
-    }
-
     try {
       const res = await BlogApiRequest.deleteBlogPost(slug);
       if (!res) {
-        handleErrorApi({ error: "Không thể xóa bài viết" });
+        handleErrorApi({ error: "Unable to delete post" });
         return;
       }
 
@@ -212,6 +226,26 @@ export default function BlogsTable() {
         handleErrorApi({ error: res.payload.message });
         return;
       }
+      setDeleteSlug(null);
+      await fetchBlogs();
+    } catch (error) {
+      handleErrorApi({ error });
+    }
+  };
+
+  const handleRestore = async (slug: string) => {
+    try {
+      const res = await BlogApiRequest.restoreBlogPost(slug);
+      if (!res) {
+        handleErrorApi({ error: "Unable to restore post" });
+        return;
+      }
+
+      if (!res.payload.success) {
+        handleErrorApi({ error: res.payload.message });
+        return;
+      }
+
       await fetchBlogs();
     } catch (error) {
       handleErrorApi({ error });
@@ -222,6 +256,21 @@ export default function BlogsTable() {
     meta?.totalPages ??
     (meta?.total ? Math.max(1, Math.ceil(meta.total / (meta.limit || limit))) : 1);
 
+  if (!isMounted) {
+    return (
+      <div className="space-y-4">
+        <Card className="p-4">
+          <div className="h-10 w-full rounded-md bg-muted/40" />
+        </Card>
+        <Card className="p-6">
+          <div className="flex items-center justify-center text-sm text-muted-foreground">
+            Loading...
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <Card className="p-4">
@@ -229,7 +278,7 @@ export default function BlogsTable() {
           <div className="relative w-full lg:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm theo tiêu đề, nội dung..."
+              placeholder="Search by title, content..."
               className="pl-8"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -242,12 +291,13 @@ export default function BlogsTable() {
               onValueChange={(value) => {
                 updateParams({ status: value, page: "1" });
               }}
+              disabled={deletedOnly}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Trạng thái" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 {STATUS_OPTIONS.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
@@ -263,10 +313,10 @@ export default function BlogsTable() {
               }}
             >
               <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Danh mục" />
+                <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tất cả danh mục</SelectItem>
+                <SelectItem value="all">All categories</SelectItem>
                 {categories.map((item) => (
                   <SelectItem key={item._id} value={item.slug}>
                     {item.name}
@@ -282,7 +332,7 @@ export default function BlogsTable() {
               }}
             >
               <SelectTrigger className="w-full sm:w-[160px]">
-                <SelectValue placeholder="Sắp xếp" />
+                <SelectValue placeholder="Sort" />
               </SelectTrigger>
               <SelectContent>
                 {SORT_OPTIONS.map((item) => (
@@ -300,15 +350,15 @@ export default function BlogsTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[90px]">Ảnh</TableHead>
-              <TableHead>Tiêu đề</TableHead>
-              <TableHead>Danh mục</TableHead>
-              <TableHead>Tác giả</TableHead>
+              <TableHead className="w-[90px]">Image</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Author</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-center">Views</TableHead>
               <TableHead className="text-center">Comments</TableHead>
-              <TableHead>Ngày tạo</TableHead>
-              <TableHead className="text-right">Thao tác</TableHead>
+              <TableHead>Created at</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -321,7 +371,7 @@ export default function BlogsTable() {
             ) : blogs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
-                  Không có bài viết phù hợp
+                  No matching posts
                 </TableCell>
               </TableRow>
             ) : (
@@ -368,31 +418,47 @@ export default function BlogsTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/blog/${blog._id}`}>
-                            <Eye className="mr-2 size-4" />
-                            Xem chi tiết
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/blog/${blog._id}/edit`}>
-                            <Pencil className="mr-2 size-4" />
-                            Chỉnh sửa
-                          </Link>
-                        </DropdownMenuItem>
+                        {!deletedOnly ? (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/blog/${blog._id}`}>
+                              <Eye className="mr-2 size-4" />
+                              View details
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : null}
+                        {!deletedOnly ? (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/blog/${blog._id}/edit`}>
+                              <Pencil className="mr-2 size-4" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                        ) : null}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onSelect={(e) => {
-                            e.preventDefault();
-                            handleDelete(blog.slug);
-                          }}
-                        >
-                          <Trash2 className="mr-2 size-4" />
-                          Xóa
-                        </DropdownMenuItem>
+                        {!deletedOnly ? (
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              setDeleteSlug(blog.slug);
+                            }}
+                          >
+                            <Trash2 className="mr-2 size-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              handleRestore(blog.slug);
+                            }}
+                          >
+                            <RotateCcw className="mr-2 size-4" />
+                            Restore
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -406,7 +472,7 @@ export default function BlogsTable() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {meta
-            ? `Hiển thị ${(meta.page - 1) * meta.limit + 1} - ${Math.min(meta.page * meta.limit, meta.total)} trên ${meta.total} bài viết`
+            ? `Showing ${(meta.page - 1) * meta.limit + 1} - ${Math.min(meta.page * meta.limit, meta.total)} of ${meta.total} posts`
             : ""}
         </p>
         {totalPages > 1 && (
@@ -417,6 +483,30 @@ export default function BlogsTable() {
           />
         )}
       </div>
+
+      <AlertDialog open={!!deleteSlug} onOpenChange={() => setDeleteSlug(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm post deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive"
+              onClick={() => {
+                if (deleteSlug) {
+                  handleDelete(deleteSlug);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

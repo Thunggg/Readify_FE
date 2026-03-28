@@ -86,6 +86,13 @@ export const BlogApiRequest = {
     });
   },
 
+  /** Admin: khôi phục bài viết theo slug */
+  restoreBlogPost(slug: string) {
+    return http.patch<ApiResponse<null>>(`${BASE}/posts/${slug}/restore`, null, {
+      credentials: 'include',
+    });
+  },
+
   /** Admin: lấy danh sách bình luận */
   getAdminComments(params?: AdminBlogCommentListParams) {
     return http.get<ApiPaginatedResponse<BlogComment>>(`${BASE}/comments/admin`, {
@@ -112,6 +119,80 @@ export const BlogApiRequest = {
   /** Admin: xóa bình luận */
   deleteComment(id: string) {
     return http.delete<ApiResponse<null>>(`${BASE}/comments/${id}`, null, {
+      credentials: 'include',
+    });
+  },
+
+  /** Admin: reply bình luận */
+  replyComment(id: string, content: string) {
+    return http.post<ApiResponse<BlogComment>>(
+      `${BASE}/comments/${id}/reply`,
+      { content },
+      {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  },
+
+  /** User: lấy danh sách bình luận theo bài viết */
+  getPostComments(postId: string, params?: { page?: number; limit?: number }) {
+    return http.get<ApiResponse<{ comments: BlogComment[]; total: number }>>(
+      `${BASE}/comments/post/${postId}`,
+      {
+        params,
+        cache: 'no-store',
+      },
+    );
+  },
+
+  /** User: tạo comment gốc */
+  createMyComment(postId: string, content: string) {
+    return http.post<ApiResponse<BlogComment>>(
+      `${BASE}/comments/post/${postId}/me`,
+      { content },
+      {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  },
+
+  /** User: reply comment */
+  replyMyComment(id: string, content: string) {
+    return http.post<ApiResponse<BlogComment>>(
+      `${BASE}/comments/${id}/reply/me`,
+      { content },
+      {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  },
+
+  /** User: sửa comment của chính mình */
+  updateMyComment(id: string, content: string) {
+    return http.put<ApiResponse<BlogComment>>(
+      `${BASE}/comments/${id}/me`,
+      { content },
+      {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  },
+
+  /** User: xoá mềm comment của chính mình */
+  deleteMyComment(id: string) {
+    return http.delete<ApiResponse<null>>(`${BASE}/comments/${id}/me`, null, {
       credentials: 'include',
     });
   },

@@ -19,6 +19,7 @@ export default function AccountsToolbar({
   setLocalsFilters,
 
   onCreateClick,
+  hideCreateButton = false,
   searchPlaceholder = "Search accounts...",
 }: {
   searchValue: string;
@@ -28,6 +29,7 @@ export default function AccountsToolbar({
     filters: FilterState | ((prev: FilterState) => FilterState)
   ) => void;
   onCreateClick: () => void;
+  hideCreateButton?: boolean;
   searchPlaceholder?: string;
 }) {
   const handleSearchChange = (value: string) => {
@@ -63,10 +65,12 @@ export default function AccountsToolbar({
         />
       </div>
 
-      <Button onClick={onCreateClick} className="sm:w-auto">
-        <Plus className="mr-2 h-4 w-4" />
-        Create account
-      </Button>
+      {!hideCreateButton ? (
+        <Button onClick={onCreateClick} className="sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" />
+          Create account
+        </Button>
+      ) : null}
     </div>
   );
 }

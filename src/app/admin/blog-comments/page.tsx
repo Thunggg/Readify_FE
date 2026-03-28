@@ -1,4 +1,4 @@
-import { SidebarInset } from "@/components/ui/sidebar";
+﻿import { SidebarInset } from "@/components/ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -29,9 +29,9 @@ export default function BlogCommentsManagementPage() {
 
         <div className="flex flex-1 flex-col gap-4 p-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Quản lý bình luận blog</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Blog Comment Management</h1>
             <p className="text-muted-foreground">
-              Theo dõi, tìm kiếm, lọc và kiểm duyệt bình luận trong blog
+              Monitor, search, filter, and moderate blog comments
             </p>
           </div>
 

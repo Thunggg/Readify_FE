@@ -1,4 +1,4 @@
-﻿import { SidebarInset } from "@/components/ui/sidebar"
+import { SidebarInset } from "@/components/ui/sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,11 +6,13 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { BooksTable } from "../books-table"
-import { BackToBooksButton } from "./back-to-books-button"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import BlogsTable from "../blogs-table";
 
-export default function BooksTrashPage() {
+export default function BlogTrashPage() {
   return (
     <SidebarInset>
       <div className="flex flex-1 flex-col">
@@ -22,7 +24,7 @@ export default function BooksTrashPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink href="/admin/books">Book Management</BreadcrumbLink>
+                <BreadcrumbLink href="/admin/blog">Blog Management</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -35,15 +37,20 @@ export default function BooksTrashPage() {
         <div className="flex flex-1 flex-col gap-4 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Trash</h1>
-              <p className="text-muted-foreground">List of deleted books</p>
+              <h1 className="text-3xl font-bold tracking-tight">Blog Trash</h1>
+              <p className="text-muted-foreground">List of deleted posts</p>
             </div>
-            <BackToBooksButton />
+            <Button variant="outline" asChild>
+              <Link href="/admin/blog">
+                <ArrowLeft className="mr-2 size-4" />
+                Back
+              </Link>
+            </Button>
           </div>
 
-          <BooksTable deletedOnly />
+          <BlogsTable deletedOnly />
         </div>
       </div>
     </SidebarInset>
-  )
+  );
 }
