@@ -4,11 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Star } from "lucide-react";
+import { WishlistButton } from "@/components/shared/wishlist-button";
 interface BookCardProps {
   _id: string;
   slug: string;
   title: string;
-  authors: string[];
+  authors: {
+    _id: string;
+    name: string;
+    slug: string;
+  }[];
   thumbnailUrl?: string;
 
   basePrice: number;
@@ -29,6 +34,7 @@ function getSafeImageUrl(url?: string) {
 }
 
 export function BookCard({
+  _id,
   slug,
   title,
   authors,
@@ -49,6 +55,10 @@ export function BookCard({
               {badge}
             </Badge>
           )}
+          <WishlistButton 
+            bookId={_id} 
+            className="absolute top-2 right-2 z-10 bg-white/80 hover:bg-white"
+          />
           <Image
             src={getSafeImageUrl(thumbnailUrl)}
             alt={title}
@@ -64,7 +74,9 @@ export function BookCard({
         </Link>
 
         <p className="text-sm text-muted-foreground truncate">
-          {Array.isArray(authors) ? authors.join(", ") : "Đang cập nhật"}
+          {Array.isArray(authors) && authors.length > 0
+            ? authors.map((a) => a.name).join(", ")
+            : "Đang cập nhật"}
         </p>
 
         {rating !== undefined && reviews !== undefined && (
@@ -81,7 +93,7 @@ export function BookCard({
 
         <div className="flex items-center justify-between">
           <span className="text-lg font-bold text-primary">
-            {basePrice.toLocaleString("vi-VN")} {currency}
+            {basePrice ? basePrice.toLocaleString("vi-VN") : "0"} {currency}
           </span>
         </div>
 

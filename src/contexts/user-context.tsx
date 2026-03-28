@@ -19,9 +19,9 @@ export default function CurrentUserProvider ({children}: {children: React.ReactN
     const refreshUser = async () => {
       try {
         setLoading(true);
-        const response = await AccountApiRequest.getMe("");
+        const response = await AccountApiRequest.getMe();
 
-        if(response.status === 200 && response.payload.success){
+        if(response?.status === 200 && response?.payload?.success){
             setCurrentUser(response.payload.data);
         }
         else {

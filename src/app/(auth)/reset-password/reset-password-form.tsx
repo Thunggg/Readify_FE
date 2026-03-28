@@ -58,7 +58,7 @@ const ResetPasswordForm = () => {
         confirmPassword: values.confirmPassword,
       })
 
-      if (response.payload.success) {
+      if (response?.payload?.success) {
         toast.success("Password reset successful!", {
           style: {
             "--normal-bg": "light-dark(var(--color-green-600), var(--color-green-400))",
@@ -70,7 +70,10 @@ const ResetPasswordForm = () => {
         return
       }
 
-      handleErrorApi({ error: new Error(response.payload.message), duration: 5000 })
+      handleErrorApi({
+        error: new Error(response?.payload?.message ?? "Reset password failed"),
+        duration: 5000,
+      })
     } catch (error) {
       handleErrorApi({ error, setError: form.setError, duration: 5000 })
     } finally {

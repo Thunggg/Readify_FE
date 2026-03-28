@@ -111,7 +111,7 @@ const RegisterForm = () => {
         confirmPassword: values.confirmPassword,
       })
 
-      toast.success("Register successful!", {
+      toast.success("The OTP code has been sent!", {
         style: {
           "--normal-bg": "light-dark(var(--color-green-600), var(--color-green-400))",
           "--normal-text": "var(--color-white)",
@@ -375,7 +375,7 @@ const RegisterForm = () => {
                 </div>
 
                 <Button disabled={isLoading || !isAcceptTerm} className="w-full cursor-pointer" type="submit">
-                  {isLoading ? (  
+                  {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating account...

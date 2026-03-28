@@ -1,230 +1,259 @@
-"use client"
+"use client";
 
-import type React from "react"
+import Link from "next/link";
+import { ArrowLeft, Clock, FileText, Send, ShieldCheck } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Mail, Phone, MapPin, Clock } from "lucide-react"
-import { useState } from "react"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { TicketApiRequest } from "@/api-request/ticket";
+import { handleErrorApi } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import z from "zod";
 
-export function ContactContent() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-  })
+export default function NewSupportTicketPage() {
+  const contactSchema = z.object({
+    subject: z
+      .string()
+      .min(1, "Subject is required")
+      .max(200, "Max 200 characters"),
+    message: z
+      .string()
+      .min(1, "Message is required")
+      .max(1000, "Max 1000 characters"),
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("[v0] Contact form submitted:", formData)
-    // Handle form submission
-    alert("Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất.")
+  const form = useForm<z.infer<typeof contactSchema>>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      subject: "",
+      message: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof contactSchema>) {
+    try {
+      const response = await TicketApiRequest.createTicket(
+        values.subject,
+        values.message,
+      );
+
+      toast.success(response?.payload.message ?? "Created ticket", {
+        style: {
+          "--normal-bg": "light-dark(var(--color-green-600), var(--color-green-400))",
+          "--normal-text": "var(--color-white)",
+          "--normal-border":
+            "light-dark(var(--color-green-600), var(--color-green-400))",
+        } as React.CSSProperties,
+      });
+
+      form.reset();
+    } catch (error) {
+      handleErrorApi({ error, setError: form.setError, duration: 5000 });
+    }
   }
 
   return (
-    <div className="container py-12">
-      {/* Page Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Liên hệ với chúng tôi</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. Hãy gửi câu hỏi hoặc phản hồi của bạn cho chúng tôi.
-        </p>
-      </div>
+    <div className="min-h-screen bg-muted/30 py-8">
+      <div className="container">
+        <div className="mb-8">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground">
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <span className="text-foreground">Hỗ trợ</span>
+          </div>
 
-      <div className="grid md:grid-cols-3 gap-8 mb-12">
-        {/* Contact Info Cards */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Phone className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Điện thoại</CardTitle>
-                <CardDescription>Liên hệ qua điện thoại</CardDescription>
-              </div>
+          <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-balance">
+                Gửi yêu cầu hỗ trợ
+              </h1>
+              <p className="text-muted-foreground mt-2 max-w-2xl">
+                Tạo một support ticket để đội ngũ admin hỗ trợ bạn nhanh chóng.
+                Bạn có thể đính kèm hình ảnh/hoá đơn để mô tả vấn đề rõ hơn.
+              </p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="font-medium">1900 1234</p>
-            <p className="text-sm text-muted-foreground">Thứ 2 - Thứ 7: 8:00 - 20:00</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Mail className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Email</CardTitle>
-                <CardDescription>Gửi email cho chúng tôi</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="font-medium">support@bookstore.vn</p>
-            <p className="text-sm text-muted-foreground">Phản hồi trong 24h</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <MapPin className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Địa chỉ</CardTitle>
-                <CardDescription>Ghé thăm cửa hàng</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="font-medium">123 Nguyễn Huệ</p>
-            <p className="text-sm text-muted-foreground">Quận 1, TP. Hồ Chí Minh</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Contact Form */}
-      <div className="grid md:grid-cols-2 gap-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Gửi tin nhắn</CardTitle>
-            <CardDescription>Điền thông tin vào form bên dưới và chúng tôi sẽ liên hệ lại với bạn</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium">
-                    Họ và tên *
-                  </label>
-                  <Input
-                    id="name"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nguyễn Văn A"
-                  />
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <FileText className="size-5 text-primary" />
+                  <CardTitle>Tạo ticket mới</CardTitle>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="phone" className="text-sm font-medium">
-                    Số điện thoại
-                  </label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="0901234567"
-                  />
+                <CardDescription>
+                  Vui lòng điền đầy đủ thông tin bên dưới. Các trường có dấu *
+                  là bắt buộc.
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent>
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-5"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tiêu đề (Subject) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Ví dụ: Không nhận được email xác nhận đơn hàng"
+                              autoComplete="off"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nội dung *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder={
+                                "Mô tả chi tiết vấn đề của bạn:\n- Bạn đang làm gì?\n- Bạn mong đợi điều gì?\n- Lỗi xảy ra như thế nào?"
+                              }
+                              rows={8}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </form>
+                </Form>
+              </CardContent>
+
+              <CardFooter className="justify-between gap-3">
+                <Button variant="outline" asChild>
+                  <Link href="/">
+                    <ArrowLeft className="mr-2 size-4" />
+                    Quay lại
+                  </Link>
+                </Button>
+                <Button
+                  type="submit"
+                  className="cursor-pointer"
+                  onClick={form.handleSubmit(onSubmit)}
+                  disabled={form.formState.isSubmitting}
+                >
+                  <Send className="mr-2 size-4" />
+                  Gửi ticket
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Clock className="size-5 text-primary" />
+                  <CardTitle>Thời gian phản hồi</CardTitle>
                 </div>
-              </div>
+                <CardDescription>
+                  Đây là UI mẫu. Bạn có thể chỉnh lại theo SLA thực tế.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Ưu tiên thường</span>
+                  <span className="font-medium">Trong 24h</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Ưu tiên cao</span>
+                  <span className="font-medium">Trong 8h</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Khẩn cấp</span>
+                  <span className="font-medium">Trong 2h</span>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email *
-                </label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@example.com"
-                />
-              </div>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="size-5 text-primary" />
+                  <CardTitle>Mẹo để xử lý nhanh</CardTitle>
+                </div>
+                <CardDescription>
+                  Càng rõ ràng, admin càng hỗ trợ nhanh.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5">
+                  <li>Ghi rõ bước thực hiện và màn hình bạn đang ở.</li>
+                  <li>Đính kèm ảnh/video nếu có lỗi hiển thị.</li>
+                  <li>Với đơn hàng, hãy thêm mã đơn hàng (Order ID).</li>
+                  <li>
+                    Tránh chia sẻ mật khẩu/OTP. Nếu cần, chỉ cung cấp 4 số cuối
+                    của thẻ/hoá đơn.
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <label htmlFor="subject" className="text-sm font-medium">
-                  Chủ đề *
-                </label>
-                <Input
-                  id="subject"
-                  required
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  placeholder="Vấn đề cần hỗ trợ"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium">
-                  Nội dung *
-                </label>
-                <Textarea
-                  id="message"
-                  required
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="Mô tả chi tiết vấn đề của bạn..."
-                  rows={6}
-                />
-              </div>
-
-              <Button type="submit" className="w-full">
-                Gửi tin nhắn
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Clock className="h-5 w-5 text-primary" />
-                <CardTitle>Giờ làm việc</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Thứ 2 - Thứ 6:</span>
-                <span className="font-medium">8:00 - 20:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Thứ 7 - Chủ nhật:</span>
-                <span className="font-medium">9:00 - 18:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Ngày lễ:</span>
-                <span className="font-medium">9:00 - 17:00</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Câu hỏi thường gặp</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-1">Làm thế nào để theo dõi đơn hàng?</h4>
-                <p className="text-sm text-muted-foreground">
-                  Bạn có thể theo dõi đơn hàng trong mục &quot;Đơn hàng của tôi&quot; sau khi đăng nhập.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Chính sách đổi trả như thế nào?</h4>
-                <p className="text-sm text-muted-foreground">
-                  Chúng tôi hỗ trợ đổi trả trong vòng 7 ngày nếu sách còn nguyên vẹn.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Có giao hàng toàn quốc không?</h4>
-                <p className="text-sm text-muted-foreground">Có, chúng tôi giao hàng toàn quốc với phí ship hợp lý.</p>
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Ví dụ nội dung tốt</CardTitle>
+                <CardDescription>Mẫu để bạn copy cho nhanh.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border bg-background p-3 text-sm">
+                  <div className="font-medium mb-2">Tiêu đề:</div>
+                  <div className="text-muted-foreground">
+                    Không áp dụng được mã giảm giá khi checkout
+                  </div>
+                  <div className="font-medium mt-4 mb-2">Nội dung:</div>
+                  <div className="text-muted-foreground whitespace-pre-wrap">
+                    {`- Mã: SAVE10
+- Bước: Vào giỏ hàng → Checkout → nhập mã
+- Kết quả: báo “invalid code”
+- Mong đợi: giảm 10% như quảng cáo
+- Thời gian: 10:15 12/03/2026`}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
+

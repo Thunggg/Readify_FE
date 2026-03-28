@@ -19,6 +19,10 @@ import {
   Book,
   UserCog,
   Bell,
+  MessageSquare,
+  FileText,
+  Sparkles,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
@@ -47,7 +51,7 @@ const sidebarGroups = [
       },
       {
         title: "Book Management",
-        href: "/admin/book",
+        href: "/admin/books",
         icon: Book,
         badge: null,
       },
@@ -81,11 +85,41 @@ const sidebarGroups = [
         icon: Tag,
         badge: "New",
       },
+      {
+        title: "Promotion Logs",
+        href: "/admin/promotion-logs",
+        icon: MessageSquare,
+        badge: null,
+      },
+      {
+        title: "Review Management",
+        href: "/admin/reviews",
+        icon: MessageSquare,
+        badge: null,
+      },
+      {
+        title: "Blog Management",
+        href: "/admin/blog",
+        icon: FileText,
+        badge: null,
+      },
+      {
+        title: "Blog Comments",
+        href: "/admin/blog-comments",
+        icon: MessageSquare,
+        badge: null,
+      },
     ],
   },
   {
     title: "Others",
     items: [
+      {
+        title: "Tickets",
+        href: "/admin/tickets",
+        icon: LifeBuoy,
+        badge: null,
+      },
       {
         title: "Orders",
         href: "/admin/orders",
@@ -131,16 +165,13 @@ export default function AdminSidebar() {
     <div
       className={cn(
         "flex h-full flex-col border-r bg-card shadow-sm transition-all duration-300",
-        isCollapsed ? "w-16" : "w-72"
+        isCollapsed ? "w-16" : "w-72",
       )}
     >
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6 justify-between">
         {!isCollapsed && (
-          <Link
-            href="/admin"
-            className="flex items-center gap-3 group"
-          >
+          <Link href="/admin" className="flex items-center gap-3 group">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <LayoutDashboard className="w-4 h-4 text-primary-foreground" />
             </div>
@@ -201,7 +232,7 @@ export default function AdminSidebar() {
                       isActive
                         ? "bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
                         : "text-muted-foreground hover:text-foreground",
-                      isCollapsed && "justify-center px-3 py-4"
+                      isCollapsed && "justify-center px-3 py-4",
                     )}
                     title={isCollapsed ? item.title : undefined}
                   >
@@ -209,7 +240,7 @@ export default function AdminSidebar() {
                       className={cn(
                         "transition-all duration-200",
                         isCollapsed ? "h-5 w-5" : "h-4 w-4",
-                        isActive && !isCollapsed && "text-primary-foreground"
+                        isActive && !isCollapsed && "text-primary-foreground",
                       )}
                     />
                     {!isCollapsed && (
@@ -223,7 +254,7 @@ export default function AdminSidebar() {
                               "ml-auto rounded-full px-2 py-0.5 text-xs font-medium",
                               isActive
                                 ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-primary/10 text-primary"
+                                : "bg-primary/10 text-primary",
                             )}
                           >
                             {item.badge}
@@ -245,7 +276,7 @@ export default function AdminSidebar() {
           variant="ghost"
           className={cn(
             "w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950",
-            isCollapsed && "justify-center px-0"
+            isCollapsed && "justify-center px-0",
           )}
           onClick={handleLogout}
         >

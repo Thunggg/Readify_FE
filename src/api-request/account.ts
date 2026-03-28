@@ -1,6 +1,7 @@
 import http from "@/lib/http";
 import type { ApiPaginatedResponse, ApiResponse } from "@/types/api";
 import type { AdminAccount } from "@/types/account";
+import type { AccountSession } from "@/types/session";
 import type {
   CreateAccountApiRequest,
   UpdateAccountApiRequest,
@@ -12,16 +13,23 @@ import {
 
 export const AccountApiRequest = {
   getMe: async (accessToken?: string) => {
-    const response = await http.get<ApiResponse<{ email: string }>>(
-      "/accounts/me",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
-        },
-        credentials: "include",
-      }
-    );
+    const response = await http.get<
+      ApiResponse<{ email: string; name?: string; role?: number }>
+    >("/accounts/me", {
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Cookie: `accessToken=${accessToken}` } : {}),
+      },
+      credentials: "include",
+    });
+    return response;
+  },
+
+  getSessions: async () => {
+    const response = await http.get<AccountSession[]>("/accounts/sessions", {
+      credentials: "include",
+      cache: "no-store",
+    });
     return response;
   },
 
@@ -40,7 +48,7 @@ export const AccountApiRequest = {
         params,
         credentials: "include",
         cache: "no-store",
-      }
+      },
     );
     return response;
   },
@@ -54,7 +62,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -68,7 +76,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -81,7 +89,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -95,7 +103,7 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
@@ -109,20 +117,29 @@ export const AccountApiRequest = {
           "Content-Type": "application/json",
         },
         credentials: "include",
-      }
+      },
     );
     return response;
   },
 
   refreshToken: async () => {
-    const response = await http.post<ApiResponse<{ accessToken: string }>>("/api/auth/refresh-token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await http.post<ApiResponse<{ accessToken: string }>>(
+      "/api/auth/refresh-token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
       },
-      credentials: "include",
-    });
+    );
     return response;
-  }
+  },
 
+  logoutSessions: async (sessionIds: string[]) => {
+    const response = await http.delete<
+      ApiResponse<{ data: null; message: string; status: number }>
+    >("/accounts/sessions/logout", { sessionIds }, { credentials: "include" });
+    return response;
+  },
 };

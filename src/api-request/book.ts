@@ -6,6 +6,11 @@ import type {
   SearchPublicBooksParams,
   BookSuggestion,
   SearchBookSuggestion,
+  AdminTrendingBooksResponse,
+  AdminBook,
+  SearchAdminBooksParams,
+  CreateBookRequest,
+  UpdateBookRequest,
 } from "@/types/book";
 
 const BASE_PUBLIC = "/book";
@@ -18,11 +23,8 @@ const withCookie = (accessToken?: string) => ({
 const safe = (v?: string | null) => (typeof v === "string" ? v.trim() : "");
 
 export const BookApiRequest = {
-  /* =====================================================
-   * PUBLIC (guest + logged-in)
-   * ===================================================== */
+  // PUBLIC (guest + logged-in)
 
-  /** Get public books list */
   getBooks(params?: SearchPublicBooksParams, accessToken?: string) {
     return http.get<ApiPaginatedResponse<PublicBook>>(BASE_PUBLIC, {
       params,
@@ -84,37 +86,48 @@ export const BookApiRequest = {
     );
   },
 
-  /* =====================================================
-   * ADMIN (login required)
-   * ===================================================== */
+  // =================== ADMIN ===================
 
-  adminGetBooks(accessToken: string, params?: Record<string, any>) {
-    return http.get<ApiPaginatedResponse<any>>(BASE_ADMIN, {
+  adminGetBooks(accessToken: string, params?: SearchAdminBooksParams) {
+    return http.get<ApiPaginatedResponse<AdminBook>>(BASE_ADMIN, {
       params,
       headers: withCookie(accessToken),
     });
   },
 
   adminGetById(accessToken: string, bookId: string) {
-    return http.get<ApiResponse<any>>(`${BASE_ADMIN}/${safe(bookId)}`, {
+    return http.get<ApiResponse<AdminBook>>(`${BASE_ADMIN}/${safe(bookId)}`, {
       headers: withCookie(accessToken),
     });
   },
 
-  adminCreate(accessToken: string, body: Record<string, any>) {
-    return http.post<ApiResponse<any>>(BASE_ADMIN, body, {
+  adminGetBySlug(accessToken: string, slug: string) {
+    return http.get<ApiResponse<AdminBook>>(
+      `${BASE_ADMIN}/slug/${safe(slug)}`,
+      {
+        headers: withCookie(accessToken),
+      }
+    );
+  },
+
+  adminCreate(accessToken: string, body: CreateBookRequest) {
+    return http.post<ApiResponse<AdminBook>>(BASE_ADMIN, body, {
       headers: withCookie(accessToken),
     });
   },
 
-  adminUpdate(accessToken: string, bookId: string, body: Record<string, any>) {
-    return http.put<ApiResponse<any>>(`${BASE_ADMIN}/${safe(bookId)}`, body, {
-      headers: withCookie(accessToken),
-    });
+  adminUpdate(accessToken: string, bookId: string, body: UpdateBookRequest) {
+    return http.patch<ApiResponse<AdminBook>>(
+      `${BASE_ADMIN}/${safe(bookId)}`,
+      body,
+      {
+        headers: withCookie(accessToken),
+      }
+    );
   },
 
   adminDelete(accessToken: string, bookId: string) {
-    return http.delete<ApiResponse<any>>(
+    return http.delete<ApiResponse<null>>(
       `${BASE_ADMIN}/${safe(bookId)}`,
       null,
       {
@@ -124,8 +137,32 @@ export const BookApiRequest = {
   },
 
   adminRestore(accessToken: string, bookId: string) {
-    return http.put<ApiResponse<any>>(
+    return http.patch<ApiResponse<null>>(
       `${BASE_ADMIN}/${safe(bookId)}/restore`,
+      null,
+      {
+        headers: withCookie(accessToken),
+      }
+    );
+  },
+
+  getTrendingRecommendations(params?: {
+  limit?: number;
+  includeWebData?: boolean;
+}) {
+  return http.get<ApiResponse<AdminTrendingBooksResponse>>(
+    `${BASE_ADMIN}/recommendations/trending`,
+    {
+      params: params,
+      credentials: "include",
+      cache: "no-store",
+    }
+  );
+},
+
+  adminPublish(accessToken: string, bookId: string) {
+    return http.post<ApiResponse<AdminBook>>(
+      `${BASE_ADMIN}/${safe(bookId)}/publish`,
       null,
       {
         headers: withCookie(accessToken),
